@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TimeTrack — Privacy Policy</title>
+<style>
+  :root{
+    --bg:#0c0c14; --surface:#15151f; --border:#2a2a3a; --text:#ececf4;
+    --dim:#9595ad; --accent:#8b5cf6; --accent2:#6366f1;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:-apple-system,"Segoe UI","Rubik",system-ui,sans-serif;
+    background:var(--bg);color:var(--text);line-height:1.65;
+    background-image:
+      radial-gradient(1000px 500px at 90% -10%,rgba(139,92,246,.10),transparent),
+      radial-gradient(800px 400px at -10% 5%,rgba(99,102,241,.08),transparent);
+    padding:48px 20px;
+  }
+  .wrap{max-width:760px;margin:0 auto}
+  header.brand{display:flex;align-items:center;gap:14px;margin-bottom:32px}
+  .mark{width:46px;height:46px;border-radius:13px;position:relative;flex-shrink:0;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 6px 18px rgba(99,102,241,.25)}
+  .mark::after{content:"";position:absolute;inset:13px;border:2.5px solid #fff;border-radius:50%;
+    border-top-color:transparent;transform:rotate(45deg)}
+  .brand h1{font-size:22px;font-weight:700;letter-spacing:-.3px}
+  .brand p{font-size:13px;color:var(--dim)}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:18px;
+    padding:32px 34px;margin-bottom:22px}
+  .meta{font-size:13px;color:var(--dim);margin-bottom:6px}
+  .meta a{color:var(--accent)}
+  h2{font-size:20px;font-weight:700;margin:26px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+  h2:first-child{margin-top:0}
+  h3{font-size:15.5px;font-weight:600;margin:20px 0 8px;color:#fff}
+  p{margin-bottom:12px;color:#d7d7e4}
+  ul{margin:0 0 12px 22px}
+  li{margin-bottom:6px;color:#d7d7e4}
+  strong{color:#fff}
+  .rtl{direction:rtl;text-align:right}
+  .rtl ul{margin:0 22px 12px 0}
+  footer{text-align:center;color:var(--dim);font-size:12.5px;margin-top:8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="brand">
+    <div class="mark"></div>
+    <div><h1>TimeTrack</h1><p>Privacy Policy · מדיניות פרטיות</p></div>
+  </header>
+
+  <div class="card">
+    <p class="meta"><strong>Effective date:</strong> 2026-06-25</p>
+    <p class="meta"><strong>Contact:</strong> via the project's GitHub repository — <a href="https://github.com/DrummingBird1/timetrack-extension/issues">open an issue</a></p>
+  </div>
+
+  <div class="card">
+    <h2>English</h2>
+    <p>TimeTrack is a browser extension that tracks how much time you spend on
+    websites. Privacy is the core principle of the product: <strong>all data is
+    stored locally on your device, and nothing is sent anywhere</strong> — unless
+    you explicitly enable a backup target that you control.</p>
+
+    <h3>What data is collected</h3>
+    <p>Locally, and only locally, the extension measures:</p>
+    <ul>
+      <li>The <strong>domain name</strong> of the active site (e.g. <code>youtube.com</code>) — <strong>not</strong> the full URL, query parameters, or page content.</li>
+      <li><strong>Active time</strong> and visit counts per domain, bucketed by day and hour-of-day.</li>
+      <li><strong>Your settings</strong> (goals, limits, categories, theme, etc.).</li>
+    </ul>
+    <p>The extension does <strong>not</strong> collect: full browsing history (URLs),
+    page content, titles, keystrokes, passwords, location, or any personal identifier.</p>
+
+    <h3>Where data is stored</h3>
+    <p>All data lives locally via <code>chrome.storage.local</code> inside your
+    browser. We operate no server, have no access to your data, and run no
+    analytics. The extension contains no remote code and makes no involuntary
+    network requests (even site icons are generated locally).</p>
+
+    <h3>Cloud backup (optional, user-initiated only)</h3>
+    <p>If you enable backup, data is sent <strong>only</strong> to a target you
+    configure and control:</p>
+    <ul>
+      <li><strong>Your Google account</strong> via <code>chrome.storage.sync</code> — Chrome's built-in sync, tied to your account. We are not a party to it.</li>
+      <li><strong>A custom server</strong> at an HTTPS URL you provide — data goes to your server.</li>
+    </ul>
+    <p>You may enable <strong>AES-256 passphrase encryption</strong>; data is then
+    encrypted on your device before leaving, and the target sees only ciphertext.
+    The passphrase is stored locally and never transmitted.</p>
+
+    <h3>Control and deletion</h3>
+    <p>You control all data: export (JSON/CSV), import, set automatic deletion of
+    old data, or erase everything from the Settings screen. Uninstalling the
+    extension deletes all local data.</p>
+
+    <h3>Permissions</h3>
+    <p><code>storage</code>/<code>unlimitedStorage</code> (local storage),
+    <code>tabs</code> (read the active tab's domain — no content access),
+    <code>idle</code> (pause counting when inactive), <code>alarms</code> (periodic
+    save/backup), <code>notifications</code> (limit and summary alerts). No host
+    permissions, no content scripts.</p>
+
+    <h3>Changes &amp; children</h3>
+    <p>The product is not directed at children under 13 and does not knowingly
+    collect their data. Updates to this policy will be posted on this page with a
+    revised effective date.</p>
+  </div>
+
+  <div class="card rtl" dir="rtl">
+    <h2>עברית</h2>
+    <p>TimeTrack הוא תוסף דפדפן למעקב אחר זמן הגלישה שלך. הפרטיות שלך היא עיקרון
+    הליבה של המוצר: <strong>כל הנתונים נשמרים מקומית במכשיר שלך, ושום דבר לא נשלח
+    לאף גורם</strong> — אלא אם תפעיל במפורש גיבוי שאתה שולט בו.</p>
+
+    <h3>אילו נתונים נאספים</h3>
+    <p>התוסף מודד, באופן מקומי בלבד:</p>
+    <ul>
+      <li><strong>שם הדומיין</strong> של האתר הפעיל (לדוגמה <code>youtube.com</code>) — <strong>לא</strong> את הכתובת המלאה, לא פרמטרים, ולא את תוכן הדף.</li>
+      <li><strong>משך הזמן הפעיל</strong> וכמות הביקורים לכל דומיין, מקובצים לפי יום ולפי שעה ביום.</li>
+      <li><strong>ההגדרות שלך</strong> (יעדים, מגבלות, קטגוריות, ערכת נושא וכו׳).</li>
+    </ul>
+    <p>התוסף <strong>אינו</strong> אוסף: היסטוריית גלישה מלאה (URLs), תוכן דפים,
+    כותרות, הקלדות, סיסמאות, מיקום, או כל מזהה אישי.</p>
+
+    <h3>היכן הנתונים נשמרים</h3>
+    <p>כל הנתונים נשמרים מקומית בלבד דרך <code>chrome.storage.local</code> בתוך
+    הדפדפן שלך. אין לנו שרת, אין לנו גישה לנתונים שלך, ואיננו מבצעים שום מעקב
+    אנליטי. לתוסף אין קוד חיצוני ולא מתבצעות קריאות רשת לא-רצוניות (גם האייקונים
+    נוצרים מקומית).</p>
+
+    <h3>גיבוי בענן (אופציונלי, ביוזמתך בלבד)</h3>
+    <p>אם תבחר להפעיל גיבוי, הנתונים יישלחו <strong>אך ורק</strong> ליעד שאתה מגדיר
+    ושולט בו: חשבון Google שלך דרך <code>chrome.storage.sync</code>, או שרת מותאם
+    אישית בכתובת HTTPS שאתה מספק. ניתן להגדיר <strong>הצפנת AES-256 עם סיסמה</strong>,
+    ואז הנתונים מוצפנים במכשיר שלך לפני היציאה — היעד רואה רק טקסט מוצפן. הסיסמה
+    נשמרת מקומית בלבד ולעולם אינה נשלחת.</p>
+
+    <h3>שליטה ומחיקה</h3>
+    <p>אתה שולט בכל הנתונים: ייצוא (JSON/CSV), ייבוא, מחיקה אוטומטית של נתונים
+    ישנים, או מחיקת הכל מתוך מסך ההגדרות. הסרת התוסף מוחקת את כל הנתונים המקומיים.</p>
+
+    <h3>הרשאות</h3>
+    <p><code>storage</code>/<code>unlimitedStorage</code> (שמירה מקומית),
+    <code>tabs</code> (זיהוי דומיין הלשונית — ללא גישה לתוכן), <code>idle</code>
+    (השהיית ספירה בחוסר פעילות), <code>alarms</code> (שמירה וגיבוי תקופתיים),
+    <code>notifications</code> (התראות). אין הרשאות host ואין content scripts.</p>
+  </div>
+
+  <footer>TimeTrack — a privacy-first, local-first browsing-time tracker.</footer>
+</div>
+</body>
+</html>
