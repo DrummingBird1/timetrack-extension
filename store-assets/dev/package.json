@@ -1,0 +1,10 @@
+{
+  "name": "timetrack",
+  "version": "1.0.0",
+  "description": "TimeTrack Chrome extension — dev tooling only (the extension itself has no build step or dependencies).",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test"
+  }
+}

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TimeTrack</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <header class="pop-header">
+    <div class="brand">
+      <div class="brand-mark"></div>
+      <div>
+        <h1>TimeTrack</h1>
+        <span class="brand-sub" id="dateLabel"></span>
+      </div>
+    </div>
+    <label class="switch" id="enabledSwitch">
+      <input type="checkbox" id="enabledToggle" />
+      <span class="switch-track"><span class="switch-thumb"></span></span>
+    </label>
+  </header>
+
+  <section class="now-card" id="nowCard">
+    <div class="now-left">
+      <img id="nowFavicon" alt="" width="20" height="20" />
+      <div>
+        <div class="now-domain" id="nowDomain">—</div>
+        <div class="now-label" data-i18n="popup.activeNow">פעיל כעת</div>
+      </div>
+    </div>
+    <div class="now-time" id="nowTime">00:00</div>
+  </section>
+
+  <section class="focus-card" id="focusCard">
+    <div class="focus-idle" id="focusIdle">
+      <div class="focus-head">
+        <span class="focus-emoji">🧘</span>
+        <span data-i18n="popup.focus">מצב פוקוס</span>
+      </div>
+      <div class="focus-start">
+        <input type="number" id="focusMin" min="1" max="240" value="25" />
+        <span class="focus-unit" data-i18n="popup.minutes">דקות</span>
+        <button id="startFocus" class="focus-btn" data-i18n="popup.startFocus">התחל סשן פוקוס</button>
+      </div>
+    </div>
+    <div class="focus-active hidden" id="focusActive">
+      <div class="fa-left">
+        <div class="focus-label" data-i18n="popup.focusActive">פוקוס פעיל</div>
+        <div class="focus-timer" id="focusTimer">25:00</div>
+      </div>
+      <button id="endFocus" class="focus-btn end" data-i18n="popup.endFocus">סיים</button>
+    </div>
+  </section>
+
+  <section class="totals">
+    <div class="total-card">
+      <span class="total-value" id="todayTotal">0</span>
+      <span class="total-label" data-i18n="popup.today">היום</span>
+    </div>
+    <div class="total-card">
+      <span class="total-value" id="weekTotal">0</span>
+      <span class="total-label" data-i18n="popup.week">7 ימים</span>
+    </div>
+    <div class="total-card">
+      <span class="total-value" id="siteCount">0</span>
+      <span class="total-label" data-i18n="popup.sitesToday">אתרים היום</span>
+    </div>
+  </section>
+
+  <section class="mini-week">
+    <div class="mini-week-head">
+      <span data-i18n="popup.weeklyActivity">פעילות שבועית</span>
+    </div>
+    <div id="weekChart" class="mini-chart"></div>
+  </section>
+
+  <section class="top-sites">
+    <div class="section-head">
+      <span data-i18n="popup.topToday">האתרים המובילים היום</span>
+    </div>
+    <ul id="topList" class="top-list"></ul>
+    <div id="emptyState" class="empty hidden" data-i18n="popup.empty">אין נתונים עדיין — התחל לגלוש 🙂</div>
+  </section>
+
+  <footer class="pop-footer">
+    <button id="openDashboard" class="btn-primary">
+      <span data-i18n="popup.openDashboard">פתח לוח בקרה מלא</span>
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M5 12h14M13 6l6 6-6 6"/>
+      </svg>
+    </button>
+  </footer>
+
+  <script type="module" src="popup.js"></script>
+</body>
+</html>

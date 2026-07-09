@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TimeTrack — מצב פוקוס</title>
+  <link rel="stylesheet" href="blocked.css" />
+</head>
+<body>
+  <main class="card">
+    <div class="emoji">🧘</div>
+    <h1 id="title">מצב פוקוס פעיל</h1>
+    <p class="domain" id="domain"></p>
+    <p class="msg" id="msg">האתר הזה חסום כרגע כדי לעזור לך להישאר ממוקד.</p>
+
+    <div class="timer-wrap">
+      <div class="timer" id="timer">00:00</div>
+      <div class="timer-label" id="timerLabel">נותר לסשן</div>
+    </div>
+
+    <div class="actions">
+      <button class="btn ghost" id="backBtn">חזור אחורה</button>
+      <button class="btn danger" id="endBtn">סיים סשן פוקוס</button>
+    </div>
+  </main>
+  <script type="module" src="blocked.js"></script>
+</body>
+</html>

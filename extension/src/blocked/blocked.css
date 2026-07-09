@@ -1,0 +1,53 @@
+:root {
+  --bg: #0c0c14;
+  --surface: #15151f;
+  --border: #2a2a3a;
+  --text: #ececf4;
+  --text-dim: #9595ad;
+  --accent: #6366f1;
+  --accent-2: #8b5cf6;
+  --danger: #ef4444;
+}
+@media (prefers-color-scheme: light) {
+  :root { --bg: #f3f4f9; --surface: #fff; --border: #e3e5ee; --text: #1a1a2b; --text-dim: #5f6178; }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  min-height: 100vh; display: grid; place-items: center;
+  font-family: -apple-system, "Segoe UI", "Rubik", system-ui, sans-serif;
+  background: var(--bg);
+  background-image:
+    radial-gradient(900px 500px at 80% -10%, rgba(139, 92, 246, 0.12), transparent),
+    radial-gradient(700px 400px at 0% 110%, rgba(99, 102, 241, 0.1), transparent);
+  color: var(--text); padding: 24px;
+}
+.card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 24px; padding: 44px 40px; max-width: 460px; width: 100%;
+  text-align: center; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+}
+.emoji { font-size: 56px; margin-bottom: 12px; }
+h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; }
+.domain {
+  display: inline-block; margin: 14px 0 6px; font-size: 15px; font-weight: 600;
+  color: var(--accent); background: rgba(99, 102, 241, 0.12);
+  padding: 6px 16px; border-radius: 20px;
+}
+.msg { color: var(--text-dim); font-size: 14.5px; line-height: 1.6; margin-top: 6px; }
+.timer-wrap { margin: 32px 0; }
+.timer {
+  font-size: 52px; font-weight: 700; font-variant-numeric: tabular-nums;
+  letter-spacing: -1px;
+  background: linear-gradient(135deg, var(--accent-2), var(--accent));
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+.timer-label { font-size: 13px; color: var(--text-dim); margin-top: 4px; }
+.actions { display: flex; gap: 10px; justify-content: center; }
+.btn {
+  border: 1px solid var(--border); background: none; cursor: pointer;
+  color: var(--text); font-family: inherit; font-size: 14px; font-weight: 600;
+  padding: 12px 22px; border-radius: 12px; transition: 0.15s;
+}
+.btn.ghost:hover { border-color: var(--accent); color: var(--accent); }
+.btn.danger { background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.3); color: var(--danger); }
+.btn.danger:hover { background: var(--danger); color: #fff; }

@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TimeTrack — לוח בקרה</title>
+  <link rel="stylesheet" href="dashboard.css" />
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark"></div>
+        <div class="brand-text">
+          <h1>TimeTrack</h1>
+          <span data-i18n="appTagline">מעקב זמן גלישה</span>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <button class="nav-item active" data-tab="overview">
+          <svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+          <span data-i18n="nav.overview">סקירה כללית</span>
+        </button>
+        <button class="nav-item" data-tab="sites">
+          <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm6.9 6h-2.95a15.6 15.6 0 00-1.38-3.56A8 8 0 0118.92 8zM12 4c.83 1.2 1.48 2.53 1.9 4h-3.8c.42-1.47 1.07-2.8 1.9-4zM4.26 14a7.8 7.8 0 010-4h3.38a16.6 16.6 0 000 4H4.26zm.82 2h2.95c.32 1.25.78 2.45 1.38 3.56A8 8 0 015.08 16zm2.95-8H5.08a8 8 0 014.33-3.56A15.6 15.6 0 008.03 8zM12 20c-.83-1.2-1.48-2.53-1.9-4h3.8c-.42 1.47-1.07 2.8-1.9 4zm2.34-6H9.66a14.7 14.7 0 010-4h4.68a14.7 14.7 0 010 4zm.27 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8 8 0 01-4.33 3.56zM16.36 14a16.6 16.6 0 000-4h3.38a7.8 7.8 0 010 4h-3.38z"/></svg>
+          <span data-i18n="nav.sites">אתרים</span>
+        </button>
+        <button class="nav-item" data-tab="insights">
+          <svg viewBox="0 0 24 24"><path d="M3 3v18h18v-2H5V3H3zm4 12h2v4H7v-4zm4-6h2v10h-2V9zm4 3h2v7h-2v-7zm4-7h2v14h-2V5z"/></svg>
+          <span data-i18n="nav.insights">תובנות חכמות</span>
+        </button>
+        <button class="nav-item" data-tab="settings">
+          <svg viewBox="0 0 24 24"><path d="M19.14 12.94a7.5 7.5 0 000-1.88l2.03-1.58a.5.5 0 00.12-.64l-1.92-3.32a.5.5 0 00-.6-.22l-2.39.96a7 7 0 00-1.62-.94l-.36-2.54a.5.5 0 00-.5-.42h-3.84a.5.5 0 00-.5.42l-.36 2.54c-.59.24-1.13.55-1.62.94l-2.39-.96a.5.5 0 00-.6.22L2.7 8.84a.5.5 0 00.12.64l2.03 1.58a7.5 7.5 0 000 1.88L2.82 14.5a.5.5 0 00-.12.64l1.92 3.32c.13.22.39.31.6.22l2.39-.96c.5.39 1.03.7 1.62.94l.36 2.54c.04.24.25.42.5.42h3.84c.25 0 .46-.18.5-.42l.36-2.54c.59-.24 1.12-.55 1.62-.94l2.39.96c.22.09.47 0 .6-.22l1.92-3.32a.5.5 0 00-.12-.64l-2.05-1.56zM12 15.6a3.6 3.6 0 110-7.2 3.6 3.6 0 010 7.2z"/></svg>
+          <span data-i18n="nav.settings">הגדרות</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-foot">
+        <div class="track-state" id="trackState"></div>
+        <div class="version"><span data-i18n="version">גרסה</span> <span id="appVersion"></span></div>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <h2 id="pageTitle">סקירה כללית</h2>
+          <p id="pageSubtitle" class="subtitle"></p>
+        </div>
+        <div class="range-area">
+          <div class="range-picker" id="rangePicker">
+            <button data-range="1" data-i18n="range.today">היום</button>
+            <button data-range="7" class="active" data-i18n="range.7">7 ימים</button>
+            <button data-range="30" data-i18n="range.30">30 ימים</button>
+            <button data-range="90" data-i18n="range.90">90 ימים</button>
+            <button data-range="all" data-i18n="range.all">הכל</button>
+            <button data-range="custom" data-i18n="range.custom">מותאם</button>
+          </div>
+          <div class="custom-range hidden" id="customRange">
+            <label data-i18n="range.from">מתאריך</label>
+            <input type="date" id="rangeFrom" />
+            <label data-i18n="range.to">עד תאריך</label>
+            <input type="date" id="rangeTo" />
+            <button class="btn" id="rangeApply" data-i18n="range.apply">החל</button>
+          </div>
+        </div>
+      </header>
+
+      <!-- OVERVIEW -->
+      <section class="tab-panel active" id="tab-overview">
+        <div class="cards-grid" id="summaryCards"></div>
+
+        <div class="panel" id="insightsWrap">
+          <div class="panel-head"><h3 data-i18n="panel.insights">תובנות אוטומטיות</h3></div>
+          <div id="insightsPanel" class="insights-list"></div>
+        </div>
+
+        <div class="panel-row">
+          <div class="panel grow">
+            <div class="panel-head">
+              <h3 data-i18n="panel.trend">זמן גלישה לאורך זמן</h3>
+              <span class="panel-hint" id="trendHint"></span>
+            </div>
+            <div id="trendChart" class="chart-box"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><h3 data-i18n="panel.byCategory">פילוח לפי קטגוריה</h3></div>
+            <div class="donut-wrap">
+              <div id="categoryDonut" class="donut-host"></div>
+              <div id="categoryLegend" class="legend"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><h3 data-i18n="panel.compare">השוואת תקופות</h3></div>
+          <div id="comparePanel" class="compare-grid"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><h3 data-i18n="panel.topSites">אתרים מובילים</h3></div>
+          <div id="overviewTop" class="top-list-full"></div>
+        </div>
+      </section>
+
+      <!-- SITES -->
+      <section class="tab-panel" id="tab-sites">
+        <div class="toolbar">
+          <div class="search-box">
+            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 10-.7.7l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0A4.5 4.5 0 119.5 5a4.5 4.5 0 010 9z"/></svg>
+            <input type="search" id="siteSearch" data-i18n-ph="sites.search" placeholder="חיפוש אתר..." />
+          </div>
+          <div class="sort-controls">
+            <label data-i18n="sites.sort">מיון:</label>
+            <select id="siteSort">
+              <option value="time" data-i18n="sort.time">זמן</option>
+              <option value="visits" data-i18n="sort.visits">ביקורים</option>
+              <option value="name" data-i18n="sort.name">שם</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table" id="sitesTable">
+            <thead>
+              <tr>
+                <th data-i18n="th.site">אתר</th>
+                <th data-i18n="th.category">קטגוריה</th>
+                <th data-i18n="th.time">זמן</th>
+                <th data-i18n="th.visits">ביקורים</th>
+                <th data-i18n="th.share">חלק</th>
+                <th data-i18n="th.limit">מגבלה יומית</th>
+              </tr>
+            </thead>
+            <tbody id="sitesBody"></tbody>
+          </table>
+          <div id="sitesEmpty" class="empty hidden" data-i18n="sites.empty">לא נמצאו אתרים בטווח הזמן הזה.</div>
+        </div>
+      </section>
+
+      <!-- INSIGHTS -->
+      <section class="tab-panel" id="tab-insights">
+        <div class="cards-grid" id="insightCards"></div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <h3 data-i18n="panel.heatmap">מפת חום — מתי אתה גולש</h3>
+            <span class="panel-hint" data-i18n="panel.heatmapHint">ימים בשורות, שעות בעמודות</span>
+          </div>
+          <div id="heatmap" class="chart-box"></div>
+        </div>
+
+        <div class="panel-row">
+          <div class="panel grow">
+            <div class="panel-head"><h3 data-i18n="panel.hourly">התפלגות לפי שעות היום</h3></div>
+            <div id="hourlyChart" class="chart-box"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><h3 data-i18n="panel.catDetail">פילוח קטגוריות מפורט</h3></div>
+            <div id="categoryBreakdown" class="cat-breakdown"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SETTINGS -->
+      <section class="tab-panel" id="tab-settings">
+        <div class="settings-grid">
+
+          <div class="panel">
+            <div class="panel-head"><h3 data-i18n="set.general">כללי</h3></div>
+            <div class="setting-row">
+              <div><div class="set-label" data-i18n="set.enabled">מעקב פעיל</div><div class="set-desc" data-i18n="set.enabledDesc">הפעל או השהה את כל המעקב</div></div>
+              <label class="switch"><input type="checkbox" id="setEnabled" /><span class="switch-track"><span class="switch-thumb"></span></span></label>
+            </div>
+            <div class="setting-row">
+              <div><div class="set-label" data-i18n="set.language">שפה</div><div class="set-desc" data-i18n="set.languageDesc">שפת הממשק</div></div>
+              <select id="setLanguage"><option value="he">עברית</option><option value="en">English</option></select>
+            </div>
+            <div class="setting-row">
+              <div><div class="set-label" data-i18n="set.theme">ערכת נושא</div><div class="set-desc" data-i18n="set.themeDesc">מראה הלוח</div></div>
+              <select id="setTheme"><option value="auto" data-i18n="theme.auto">אוטומטי</option><option value="dark" data-i18n="theme.dark">כהה</option><option value="light" data-i18n="theme.light">בהיר</option></select>
+            </div>
+            <div class="setting-row">
+              <div><div class="set-label" data-i18n="set.idle">סף חוסר פעילות (שניות)</div><div class="set-desc" data-i18n="set.idleDesc">הפסק לספור אחרי חוסר פעילות</div></div>
+              <input type="number" id="setIdle" min="15" max="3600" />
+            </div>
+            <div class="setting-row">
+              <div><div class="set-label" data-i18n="set.audible">ספירת אודיו ברקע</div><div class="set-desc" data-i18n="set.audibleDesc">המשך לספור כשמתנגן סאונד</div></div>
+              <label class="switch"><input type="checkbox" id="setAudible" /><span class="switch-track"><span class="switch-thumb"></span></span></label>
+            </div>
+            <div class="setting-row">
+              <div><div class="set-label" data-i18n="set.group">איחוד תתי-דומיינים</div><div class="set-desc" data-i18n="set.groupDesc">mail.google.com → google.com</div></div>
+              <label class="switch"><input type="checkbox" id="setGroup" /><span class="switch-track"><span class="switch-thumb"></span></span></label>
+            </div>
+            <div class="setting-row">
+              <div><div class="set-label" data-i18n="set.weekStart">תחילת שבוע</div><div class="set-desc" data-i18n="set.weekStartDesc">היום הראשון בשבוע</div></div>
+              <select id="setWeekStart"><option value="0" data-i18n="day.sun">ראשון</option><option value="1" data-i18n="day.mon">שני</option></select>
+            </div>
+            <div class="setting-row">
+              <div><div class="set-label" data-i18n="set.realFavicons">אייקוני אתרים אמיתיים</div><div class="set-desc" data-i18n="set.realFaviconsDesc">השתמש באייקונים המקומיים של Chrome (דורש הרשאה)</div></div>
+              <label class="switch"><input type="checkbox" id="setRealFavicons" /><span class="switch-track"><span class="switch-thumb"></span></span></label>
+            </div>
+            <div class="setting-row">
+              <div><div class="set-label" data-i18n="set.shortcuts">קיצורי מקלדת</div><div class="set-desc" data-i18n="set.shortcutsDesc">Alt+Shift+T מעקב · Alt+Shift+F פוקוס · Alt+Shift+D לוח בקרה</div></div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head"><h3 data-i18n="set.goals">יעדים ומגבלות</h3></div>
+            <div class="setting-row">
+              <div><div class="set-label" data-i18n="set.dailyLimit">מגבלת זמן יומית (דקות)</div><div class="set-desc" data-i18n="set.dailyLimitDesc">התראה כשעוברים את הזמן. 0 = כבוי</div></div>
+              <input type="number" id="setDailyLimit" min="0" max="1440" />
+            </div>
+            <div class="setting-row">
+              <div><div class="set-label" data-i18n="set.dailyGoal">יעד פוקוס יומי (דקות)</div><div class="set-desc" data-i18n="set.dailyGoalDesc">יעד זמן פרודוקטיבי. 0 = כבוי</div></div>
+              <input type="number" id="setDailyGoal" min="0" max="1440" />
+            </div>
+            <div class="setting-row">
+              <div><div class="set-label" data-i18n="set.weeklyGoal">יעד שבועי (דקות)</div><div class="set-desc" data-i18n="set.weeklyGoalDesc">יעד זמן פרודוקטיבי לשבוע. 0 = כבוי</div></div>
+              <input type="number" id="setWeeklyGoal" min="0" max="10080" />
+            </div>
+            <div class="setting-row">
+              <div><div class="set-label" data-i18n="set.notify">התראות מגבלה</div><div class="set-desc" data-i18n="set.notifyDesc">קבל התראות מערכת</div></div>
+              <label class="switch"><input type="checkbox" id="setNotify" /><span class="switch-track"><span class="switch-thumb"></span></span></label>
+            </div>
+            <div class="setting-row">
+              <div><div class="set-label" data-i18n="set.weeklySummary">סיכום שבועי</div><div class="set-desc" data-i18n="set.weeklySummaryDesc">התראת תקציר בתחילת כל שבוע</div></div>
+              <label class="switch"><input type="checkbox" id="setWeeklySummary" /><span class="switch-track"><span class="switch-thumb"></span></span></label>
+            </div>
+            <div class="hint-block" data-i18n="set.goalsHint">💡 ניתן להגדיר מגבלה לכל אתר בנפרד מלשונית "אתרים".</div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head"><h3 data-i18n="set.focus">מצב פוקוס</h3></div>
+            <div class="setting-row">
+              <div><div class="set-label" data-i18n="set.focusMinutes">משך ברירת מחדל (דקות)</div><div class="set-desc" data-i18n="set.focusMinutesDesc">אורך סשן פוקוס מומלץ</div></div>
+              <input type="number" id="setFocusMinutes" min="1" max="240" />
+            </div>
+            <div class="setting-row">
+              <div><div class="set-label" data-i18n="set.focusBreak">משך הפסקה (דקות)</div><div class="set-desc" data-i18n="set.focusBreakDesc">הפסקה בין סבבי פוקוס</div></div>
+              <input type="number" id="setFocusBreak" min="0" max="60" />
+            </div>
+            <div class="setting-row">
+              <div><div class="set-label" data-i18n="set.focusCycles">מספר סבבים</div><div class="set-desc" data-i18n="set.focusCyclesDesc">כמה סבבי עבודה→הפסקה</div></div>
+              <input type="number" id="setFocusCycles" min="1" max="12" />
+            </div>
+            <div class="setting-row">
+              <div><div class="set-label" data-i18n="set.focusMode">מצב חסימה</div><div class="set-desc" data-i18n="set.focusModeDesc">רשימת חסימה או רשימת היתר</div></div>
+              <select id="setFocusMode"><option value="block" data-i18n="focusMode.block">חסום קטגוריות נבחרות</option><option value="allow" data-i18n="focusMode.allow">אפשר רק קטגוריות נבחרות</option></select>
+            </div>
+            <div class="field-block" id="focusBlockField">
+              <label class="set-label" data-i18n="set.focusBlock">חסום בזמן פוקוס</label>
+              <div class="set-desc" data-i18n="set.focusBlockDesc">קטגוריות שייחסמו בזמן סשן</div>
+              <div id="focusCats" class="chip-checks"></div>
+            </div>
+            <div class="field-block hidden" id="focusAllowField">
+              <label class="set-label" data-i18n="set.focusAllow">מותר בזמן פוקוס</label>
+              <div class="set-desc" data-i18n="set.focusAllowDesc">קטגוריות מותרות (במצב רשימת היתר)</div>
+              <div id="focusAllowCats" class="chip-checks"></div>
+            </div>
+            <div class="hint-block" data-i18n="set.focusHint">💡 התחל סשן פוקוס מהחלון המהיר של התוסף.</div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head"><h3 data-i18n="set.backup">גיבוי בענן וסנכרון</h3></div>
+            <div class="setting-row">
+              <div><div class="set-label" data-i18n="set.sync">סנכרון לחשבון Google</div><div class="set-desc" data-i18n="set.syncDesc">גיבוי אוטומטי דרך storage.sync</div></div>
+              <label class="switch"><input type="checkbox" id="setSyncEnabled" /><span class="switch-track"><span class="switch-thumb"></span></span></label>
+            </div>
+            <div class="setting-row">
+              <div><div class="set-label" data-i18n="set.backupInterval">תדירות גיבוי (שעות)</div><div class="set-desc" data-i18n="set.backupIntervalDesc">כל כמה זמן לגבות אוטומטית</div></div>
+              <input type="number" id="setBackupInterval" min="1" max="168" />
+            </div>
+            <div class="field-block">
+              <label class="set-label" data-i18n="set.endpoint">שרת גיבוי מותאם (אופציונלי)</label>
+              <input type="url" id="setEndpoint" data-i18n-ph="set.endpointPh" placeholder="https://example.com/timetrack-backup" />
+              <input type="password" id="setEndpointToken" data-i18n-ph="set.tokenPh" placeholder="Bearer token (אופציונלי)" />
+            </div>
+            <div class="setting-row">
+              <div><div class="set-label" data-i18n="set.encrypt">הצפנת גיבוי</div><div class="set-desc" data-i18n="set.encryptDesc">הצפן את הגיבוי בעזרת סיסמה (AES-256)</div></div>
+              <label class="switch"><input type="checkbox" id="setEncrypt" /><span class="switch-track"><span class="switch-thumb"></span></span></label>
+            </div>
+            <div class="field-block">
+              <input type="password" id="setPassphrase" data-i18n-ph="set.passphrasePh" placeholder="סיסמת הצפנה" />
+              <div class="warn-block" id="encryptWarn" data-i18n="set.encryptWarn">⚠️ אם תשכח את הסיסמה לא ניתן יהיה לשחזר את הגיבוי. הסיסמה נשמרת מקומית בלבד.</div>
+            </div>
+            <div class="btn-group">
+              <button class="btn ghost" id="backupNow" data-i18n="btn.backupNow">גבה עכשיו</button>
+              <button class="btn ghost" id="restoreSync" data-i18n="btn.restoreSync">שחזר מהענן</button>
+            </div>
+            <div class="backup-status" id="backupStatus"></div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head"><h3 data-i18n="set.data">ניהול נתונים</h3></div>
+            <div class="setting-row">
+              <div><div class="set-label" data-i18n="set.retention">שמירת נתונים (ימים)</div><div class="set-desc" data-i18n="set.retentionDesc">מחיקה אוטומטית של נתונים ישנים</div></div>
+              <input type="number" id="setRetention" min="7" max="3650" />
+            </div>
+            <div class="field-block">
+              <label class="set-label" data-i18n="set.export">ייצוא נתונים</label>
+              <div class="btn-group">
+                <button class="btn" id="exportJson" data-i18n="btn.exportJson">ייצוא JSON</button>
+                <button class="btn" id="exportCsv" data-i18n="btn.exportCsv">ייצוא CSV</button>
+                <button class="btn" id="exportView" data-i18n="btn.exportView">ייצוא התצוגה הנוכחית</button>
+              </div>
+            </div>
+            <div class="field-block">
+              <label class="set-label" data-i18n="set.import">ייבוא נתונים</label>
+              <div class="btn-group">
+                <input type="file" id="importFile" accept="application/json" hidden />
+                <input type="file" id="importCsvFile" accept=".csv,text/csv" hidden />
+                <button class="btn" id="importBtn" data-i18n="btn.importFile">בחר קובץ גיבוי</button>
+                <button class="btn" id="importCsvBtn" data-i18n="btn.importCsv">ייבוא CSV</button>
+                <select id="importMode"><option value="merge" data-i18n="import.merge">מיזוג</option><option value="replace" data-i18n="import.replace">החלפה</option></select>
+              </div>
+            </div>
+            <div class="storage-info" id="storageInfo"></div>
+            <button class="btn danger" id="clearData" data-i18n="btn.clear">מחק את כל הנתונים</button>
+          </div>
+
+          <div class="panel grow-2">
+            <div class="panel-head"><h3 data-i18n="set.categories">קטגוריות אתרים</h3><span class="panel-hint" data-i18n="set.categoriesHint">שנה סיווג של אתרים לחישוב ציון פוקוס</span></div>
+            <div class="cat-editor">
+              <div class="cat-add">
+                <input type="text" id="catDomain" data-i18n-ph="cat.domainPh" placeholder="דומיין (לדוגמה: example.com)" />
+                <select id="catSelect"></select>
+                <button class="btn" id="catAdd" data-i18n="btn.add">הוסף</button>
+              </div>
+              <div id="catList" class="cat-list"></div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Site detail modal -->
+  <div class="modal hidden" id="siteModal">
+    <div class="modal-card" id="siteModalCard"></div>
+  </div>
+
+  <!-- Onboarding modal -->
+  <div class="modal hidden" id="welcomeModal">
+    <div class="modal-card welcome">
+      <div class="welcome-mark"></div>
+      <h2 data-i18n="welcome.title">ברוך הבא ל-TimeTrack 👋</h2>
+      <p data-i18n="welcome.body">התוסף יתחיל למדוד את זמן הגלישה הפעיל שלך באופן אוטומטי. כל הנתונים נשמרים מקומית במחשב שלך בלבד.</p>
+      <ul class="welcome-feats">
+        <li data-i18n="welcome.f1">📊 פילוח חכם לפי קטגוריות וציון פוקוס</li>
+        <li data-i18n="welcome.f2">🎯 יעדים, מגבלות ומצב פוקוס</li>
+        <li data-i18n="welcome.f3">☁️ גיבוי בענן מוצפן וייצוא נתונים</li>
+      </ul>
+      <button class="btn-primary" id="welcomeCta" data-i18n="welcome.cta">בוא נתחיל</button>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast"></div>
+
+  <script type="module" src="dashboard.js"></script>
+</body>
+</html>
