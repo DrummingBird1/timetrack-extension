@@ -78,6 +78,7 @@ dashboard (no manifest changes needed).
 | `idle` | Pause time counting when the user is idle, so only *active* time is measured. |
 | `alarms` | Periodically commit elapsed time and run optional automatic backups. |
 | `notifications` | Notify the user when a time limit is reached and deliver the optional weekly summary. |
+| `favicon` *(optional)* | Requested **only at runtime** if the user turns on "Real site icons". Displays site icons from Chrome's **local** favicon cache (`_favicon/`) instead of the generated letter avatars. No network requests and no extra data access; off by default, and removed when the user turns it off. |
 | `web_accessible_resources` (block page) | During a focus session, redirect a blocked tab to the extension's own block page. |
 
 ---
