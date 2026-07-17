@@ -186,6 +186,8 @@ body {
 .search-box svg { width: 17px; height: 17px; fill: var(--text-faint); flex-shrink: 0; }
 .search-box input { background: none; border: none; outline: none; color: var(--text); font-family: inherit; font-size: 14px; width: 100%; }
 .sort-controls { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-dim); }
+.all-history-toggle { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-dim); cursor: pointer; user-select: none; }
+.all-history-toggle input { accent-color: var(--accent); width: 15px; height: 15px; }
 
 .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
 .data-table { width: 100%; border-collapse: collapse; }
@@ -349,6 +351,8 @@ select { cursor: pointer; }
 .detail-stat .v { font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .detail-stat .l { font-size: 11px; color: var(--text-dim); margin-top: 3px; }
 .detail-section-title { font-size: 12.5px; color: var(--text-dim); margin-bottom: 8px; font-weight: 600; }
+.chart-box + .detail-section-title { margin-top: 16px; }
+.detail-actions { margin-top: 16px; display: flex; justify-content: flex-end; }
 
 /* Onboarding */
 .welcome { text-align: center; max-width: 460px; }

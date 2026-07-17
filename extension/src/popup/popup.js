@@ -164,8 +164,19 @@ $('openDashboard').addEventListener('click', () => {
   window.close();
 });
 
+// If real favicons were enabled but the optional `favicon` permission was later
+// revoked from Chrome, fall back to generated avatars so icons never break.
+async function ensureFaviconPermission() {
+  if (!settings.realFavicons) return;
+  try {
+    const ok = await chrome.permissions.contains({ permissions: ['favicon'] });
+    if (!ok) settings.realFavicons = false;
+  } catch { /* permissions API edge — keep current setting */ }
+}
+
 async function init() {
   settings = await getSettings();
+  await ensureFaviconPermission();
   applyLang();
   await render();
   await renderFocus();

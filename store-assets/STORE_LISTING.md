@@ -33,9 +33,10 @@ dashboard (no manifest changes needed).
 > • Accurate active-time tracking (pauses when you're idle)
 > • Smart category breakdown + a 0–100 focus score
 > • Weekday × hour heatmap, hourly distribution, trends & period comparison
-> • Per-site drill-down with a daily timeline
+> • Per-site drill-down with daily and hourly timelines
 > • Daily & weekly goals, per-site limits, and a weekly summary
-> • Focus mode (Pomodoro) that blocks distracting sites during a session
+> • Focus mode (Pomodoro) with long breaks — block distracting categories or
+>   specific sites, or allow-list only what you need
 > • Encrypted cloud backup (Google sync or your own server) + JSON/CSV export
 > • Hebrew & English UI, light/dark themes
 >
@@ -51,9 +52,10 @@ dashboard (no manifest changes needed).
 > • מעקב זמן פעיל מדויק (משהה אוטומטית בחוסר פעילות)
 > • פילוח קטגוריות חכם + ציון פוקוס 0–100
 > • מפת חום יום×שעה, התפלגות שעתית, מגמות והשוואת תקופות
-> • פירוט לכל אתר עם ציר זמן יומי
+> • פירוט לכל אתר עם ציר זמן יומי ושעתי
 > • יעדים יומיים ושבועיים, מגבלות לכל אתר, וסיכום שבועי
-> • מצב פוקוס (Pomodoro) שחוסם אתרים מסיחים בזמן סשן
+> • מצב פוקוס (Pomodoro) עם הפסקות ארוכות — חסימת קטגוריות או אתרים ספציפיים,
+>   או רשימת היתר בלבד
 > • גיבוי ענן מוצפן (Google או שרת שלך) + ייצוא JSON/CSV
 > • ממשק עברית ואנגלית, ערכות נושא בהיר/כהה
 >

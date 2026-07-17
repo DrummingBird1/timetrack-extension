@@ -130,17 +130,30 @@ export function busiestHour(dist) {
   return max > 0 ? hour : null;
 }
 
-/** Busiest hour-of-day for one domain, from its per-domain hourly map (v2). */
-export function domainPeakHour(days, domain) {
+/**
+ * Sum one domain's per-hour-of-day seconds across a set of days, from the
+ * per-domain hourly map `dh` (schema v2). Returns a 24-length array, or null if
+ * the domain has no hourly data at all (e.g. only pre-v2 records).
+ */
+export function domainHourly(days, domain) {
   const acc = new Array(24).fill(0);
   let any = false;
   for (const day of Object.values(days)) {
     const rec = day.domains && day.domains[domain];
     if (rec && rec.dh) {
-      for (const [h, v] of Object.entries(rec.dh)) { acc[+h] += v || 0; any = true; }
+      for (const [h, v] of Object.entries(rec.dh)) {
+        const hi = +h;
+        if (hi >= 0 && hi < 24) { acc[hi] += v || 0; any = true; }
+      }
     }
   }
-  if (!any) return null;
+  return any ? acc : null;
+}
+
+/** Busiest hour-of-day for one domain, from its per-domain hourly map (v2). */
+export function domainPeakHour(days, domain) {
+  const acc = domainHourly(days, domain);
+  if (!acc) return null;
   let hour = 0;
   let max = -1;
   acc.forEach((v, h) => { if (v > max) { max = v; hour = h; } });

@@ -103,6 +103,31 @@ test('Pomodoro runs work → break → work → done', async () => {
   assert.equal(f.active, false);
 });
 
+test('a long break replaces the normal break every N cycles', async () => {
+  await storage.saveSettings({ focus: {
+    mode: 'block', defaultMinutes: 1, breakMinutes: 1, longBreakMinutes: 5, longBreakEvery: 2, cycles: 3,
+  } });
+  let f = await send({ type: 'startFocus' });
+  assert.equal(f.phase, 'work');
+  assert.equal(f.cycle, 1);
+
+  clock += 61_000;                 // finish work #1 → cycle 1 not divisible by 2 → normal break
+  f = await send({ type: 'getFocus' });
+  assert.equal(f.phase, 'break');
+  assert.ok(f.remaining <= 61, `expected a short break, got ${f.remaining}s`);
+
+  clock += 61_000;                 // finish normal break → work #2
+  f = await send({ type: 'getFocus' });
+  assert.equal(f.phase, 'work');
+  assert.equal(f.cycle, 2);
+
+  clock += 61_000;                 // finish work #2 → cycle 2 divisible by 2 → LONG break
+  f = await send({ type: 'getFocus' });
+  assert.equal(f.phase, 'break');
+  assert.ok(f.remaining > 61, `expected a long (5-min) break, got ${f.remaining}s`);
+  await send({ type: 'stopFocus' });
+});
+
 test('a stopped session is no longer active', async () => {
   await storage.saveSettings({ focus: { mode: 'block', defaultMinutes: 10, cycles: 1 } });
   await send({ type: 'startFocus' });

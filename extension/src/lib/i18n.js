@@ -248,6 +248,30 @@ const DICT = {
     'set.shortcuts': 'קיצורי מקלדת',
     'set.shortcutsDesc': 'Alt+Shift+T מעקב · Alt+Shift+F פוקוס · Alt+Shift+D לוח בקרה',
     'detail.peakHour': 'שעת שיא',
+    'detail.hourly': 'פעילות לפי שעה',
+    'detail.stopTracking': 'אל תעקוב אחרי אתר זה',
+    'detail.resumeTracking': 'חדש מעקב אחרי אתר זה',
+    // untracked sites (blacklist)
+    'set.blacklist': 'אתרים ללא מעקב',
+    'set.blacklistHint': 'אתרים אלה לעולם לא ייספרו',
+    'blacklist.domainPh': 'דומיין (לדוגמה: example.com)',
+    'blacklist.none': 'אין אתרים ללא מעקב עדיין',
+    'toast.blacklistAdded': 'המעקב אחרי {d} הופסק',
+    'toast.blacklistRemoved': 'המעקב אחרי {d} חודש',
+    // focus specific domains
+    'set.focusBlockDomains': 'דומיינים לחסימה',
+    'set.focusBlockDomainsDesc': 'דומיינים ספציפיים שייחסמו (בנוסף לקטגוריות)',
+    'set.focusAllowDomains': 'דומיינים מותרים',
+    'set.focusAllowDomainsDesc': 'דומיינים ספציפיים שיותרו (בנוסף לקטגוריות)',
+    'focusDomain.ph': 'הוסף דומיין',
+    // long break
+    'set.longBreak': 'משך הפסקה ארוכה (דקות)',
+    'set.longBreakDesc': 'הפסקה ארוכה יותר כל כמה סבבים. 0 = כבוי',
+    'set.longBreakEvery': 'הפסקה ארוכה כל (סבבים)',
+    'set.longBreakEveryDesc': 'אחרי כמה סבבי עבודה לקחת הפסקה ארוכה',
+    // sites all-history
+    'sites.allHistory': 'כל ההיסטוריה',
+    'sites.allHistoryTitle': 'חפש בכל הנתונים, לא רק בטווח הנבחר',
   },
   en: {
     appName: 'TimeTrack',
@@ -479,6 +503,30 @@ const DICT = {
     'set.shortcuts': 'Keyboard shortcuts',
     'set.shortcutsDesc': 'Alt+Shift+T track · Alt+Shift+F focus · Alt+Shift+D dashboard',
     'detail.peakHour': 'Peak hour',
+    'detail.hourly': 'Activity by hour',
+    'detail.stopTracking': "Don't track this site",
+    'detail.resumeTracking': 'Resume tracking this site',
+    // untracked sites (blacklist)
+    'set.blacklist': 'Untracked sites',
+    'set.blacklistHint': 'These sites are never counted',
+    'blacklist.domainPh': 'Domain (e.g. example.com)',
+    'blacklist.none': 'No untracked sites yet',
+    'toast.blacklistAdded': 'Stopped tracking {d}',
+    'toast.blacklistRemoved': 'Resumed tracking {d}',
+    // focus specific domains
+    'set.focusBlockDomains': 'Blocked domains',
+    'set.focusBlockDomainsDesc': 'Specific domains to block (in addition to categories)',
+    'set.focusAllowDomains': 'Allowed domains',
+    'set.focusAllowDomainsDesc': 'Specific domains to allow (in addition to categories)',
+    'focusDomain.ph': 'Add domain',
+    // long break
+    'set.longBreak': 'Long break length (minutes)',
+    'set.longBreakDesc': 'A longer break every few cycles. 0 = off',
+    'set.longBreakEvery': 'Long break every (cycles)',
+    'set.longBreakEveryDesc': 'Work cycles between long breaks',
+    // sites all-history
+    'sites.allHistory': 'All history',
+    'sites.allHistoryTitle': 'Search all data, not just the selected range',
   },
 };
 

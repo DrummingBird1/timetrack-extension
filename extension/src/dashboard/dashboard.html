@@ -121,6 +121,10 @@
               <option value="name" data-i18n="sort.name">שם</option>
             </select>
           </div>
+          <label class="all-history-toggle" data-i18n-title="sites.allHistoryTitle">
+            <input type="checkbox" id="siteAllHistory" />
+            <span data-i18n="sites.allHistory">כל ההיסטוריה</span>
+          </label>
         </div>
         <div class="table-wrap">
           <table class="data-table" id="sitesTable">
@@ -247,6 +251,14 @@
               <input type="number" id="setFocusCycles" min="1" max="12" />
             </div>
             <div class="setting-row">
+              <div><div class="set-label" data-i18n="set.longBreak">משך הפסקה ארוכה (דקות)</div><div class="set-desc" data-i18n="set.longBreakDesc">הפסקה ארוכה יותר כל כמה סבבים. 0 = כבוי</div></div>
+              <input type="number" id="setLongBreak" min="0" max="120" />
+            </div>
+            <div class="setting-row">
+              <div><div class="set-label" data-i18n="set.longBreakEvery">הפסקה ארוכה כל (סבבים)</div><div class="set-desc" data-i18n="set.longBreakEveryDesc">אחרי כמה סבבי עבודה לקחת הפסקה ארוכה</div></div>
+              <input type="number" id="setLongBreakEvery" min="1" max="12" />
+            </div>
+            <div class="setting-row">
               <div><div class="set-label" data-i18n="set.focusMode">מצב חסימה</div><div class="set-desc" data-i18n="set.focusModeDesc">רשימת חסימה או רשימת היתר</div></div>
               <select id="setFocusMode"><option value="block" data-i18n="focusMode.block">חסום קטגוריות נבחרות</option><option value="allow" data-i18n="focusMode.allow">אפשר רק קטגוריות נבחרות</option></select>
             </div>
@@ -254,11 +266,25 @@
               <label class="set-label" data-i18n="set.focusBlock">חסום בזמן פוקוס</label>
               <div class="set-desc" data-i18n="set.focusBlockDesc">קטגוריות שייחסמו בזמן סשן</div>
               <div id="focusCats" class="chip-checks"></div>
+              <label class="set-label" data-i18n="set.focusBlockDomains">דומיינים לחסימה</label>
+              <div class="set-desc" data-i18n="set.focusBlockDomainsDesc">דומיינים ספציפיים שייחסמו (בנוסף לקטגוריות)</div>
+              <div class="cat-add">
+                <input type="text" id="focusBlockDomainInput" data-i18n-ph="focusDomain.ph" placeholder="הוסף דומיין" />
+                <button class="btn" id="focusBlockDomainAdd" data-i18n="btn.add">הוסף</button>
+              </div>
+              <div id="focusBlockDomains" class="cat-list"></div>
             </div>
             <div class="field-block hidden" id="focusAllowField">
               <label class="set-label" data-i18n="set.focusAllow">מותר בזמן פוקוס</label>
               <div class="set-desc" data-i18n="set.focusAllowDesc">קטגוריות מותרות (במצב רשימת היתר)</div>
               <div id="focusAllowCats" class="chip-checks"></div>
+              <label class="set-label" data-i18n="set.focusAllowDomains">דומיינים מותרים</label>
+              <div class="set-desc" data-i18n="set.focusAllowDomainsDesc">דומיינים ספציפיים שיותרו (בנוסף לקטגוריות)</div>
+              <div class="cat-add">
+                <input type="text" id="focusAllowDomainInput" data-i18n-ph="focusDomain.ph" placeholder="הוסף דומיין" />
+                <button class="btn" id="focusAllowDomainAdd" data-i18n="btn.add">הוסף</button>
+              </div>
+              <div id="focusAllowDomains" class="cat-list"></div>
             </div>
             <div class="hint-block" data-i18n="set.focusHint">💡 התחל סשן פוקוס מהחלון המהיר של התוסף.</div>
           </div>
@@ -319,6 +345,17 @@
             </div>
             <div class="storage-info" id="storageInfo"></div>
             <button class="btn danger" id="clearData" data-i18n="btn.clear">מחק את כל הנתונים</button>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head"><h3 data-i18n="set.blacklist">אתרים ללא מעקב</h3><span class="panel-hint" data-i18n="set.blacklistHint">אתרים אלה לעולם לא ייספרו</span></div>
+            <div class="cat-editor">
+              <div class="cat-add">
+                <input type="text" id="blacklistDomain" data-i18n-ph="blacklist.domainPh" placeholder="דומיין (לדוגמה: example.com)" />
+                <button class="btn" id="blacklistAdd" data-i18n="btn.add">הוסף</button>
+              </div>
+              <div id="blacklistList" class="cat-list"></div>
+            </div>
           </div>
 
           <div class="panel grow-2">

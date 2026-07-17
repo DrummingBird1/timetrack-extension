@@ -11,7 +11,7 @@ import {
 import {
   aggregateDomains, totalTime, topSites, byCategory, focusScore, dailyTotals,
   weekHourHeatmap, hourlyDistribution, activeDaysCount, currentStreak, trend, busiestHour,
-  generateInsights, domainPeakHour,
+  generateInsights, domainPeakHour, domainHourly,
 } from '../lib/stats.js';
 import { categorize, CATEGORY_DEFS, CATEGORY_ORDER, categoryDef } from '../lib/categories.js';
 import { barChart, donutChart, heatmap } from '../lib/charts.js';
@@ -24,6 +24,8 @@ let settings = null;
 let currentRange = 7;             // number | 'all' | { from: Date, to: Date }
 let currentTab = 'overview';
 let cache = { keys: [], days: {}, agg: {} };
+let siteAllHistory = false;       // Sites tab: aggregate the whole index, not just the range
+let allCache = null;              // lazily-built full-history cache; invalidated on data changes
 
 function send(type, extra = {}) {
   return chrome.runtime.sendMessage({ type, ...extra }).catch(() => ({}));
@@ -59,6 +61,34 @@ function iconFor(domain) {
     return `${chrome.runtime.getURL('_favicon/')}?pageUrl=${encodeURIComponent('https://' + domain)}&size=32`;
   }
   return favicon(domain);
+}
+
+// Normalize free-typed input to a bare registrable-ish domain, or '' if unusable.
+function cleanDomain(raw) {
+  const d = (raw || '').trim().toLowerCase()
+    .replace(/^https?:\/\//, '').replace(/\/.*$/, '').replace(/^www\./, '');
+  return /^[a-z0-9.-]+\.[a-z]{2,}$/.test(d) ? d : '';
+}
+
+// Guard against a broken-icon state: if the user turned on real favicons but later
+// revoked the optional `favicon` permission from Chrome, fall back automatically.
+async function ensureFaviconPermission() {
+  if (!settings.realFavicons) return;
+  try {
+    const ok = await chrome.permissions.contains({ permissions: ['favicon'] });
+    if (!ok) settings = await saveSettings({ realFavicons: false });
+  } catch { /* permissions API edge — keep current setting */ }
+}
+
+// Sites tab reads either the selected range (default) or the full history.
+async function sitesSource() {
+  if (!siteAllHistory) return cache;
+  if (!allCache) {
+    const keys = await getIndex();
+    const days = await getDays(keys);
+    allCache = { keys, days, agg: aggregateDomains(days) };
+  }
+  return allCache;
 }
 
 function productiveTime(cats) {
@@ -258,10 +288,11 @@ function renderTopList(host, list, total) {
 }
 
 // ---------------- SITES ----------------
-function renderSites() {
+async function renderSites() {
+  const src = await sitesSource();
   const term = $('#siteSearch').value.trim().toLowerCase();
   const sortBy = $('#siteSort').value;
-  let list = Object.values(cache.agg);
+  let list = Object.values(src.agg);
   const total = list.reduce((a, s) => a + s.t, 0) || 1;
   if (term) list = list.filter((s) => s.domain.includes(term));
   list.sort((a, b) =>
@@ -284,7 +315,7 @@ function renderSites() {
       <td>${s.v}</td>
       <td><div class="share-mini"><div class="bar"><div class="fill" style="width:${pct}%"></div></div><span>${pct}%</span></div></td>
       <td><input type="number" class="limit-input" min="0" placeholder="—" value="${limit}" data-domain="${s.domain}"></td>`;
-    tr.addEventListener('click', (e) => { if (!e.target.closest('.limit-input')) openSiteDetail(s.domain); });
+    tr.addEventListener('click', (e) => { if (!e.target.closest('.limit-input')) openSiteDetail(s.domain, src); });
     body.appendChild(tr);
   }
 
@@ -303,17 +334,20 @@ function renderSites() {
 }
 
 // ---------------- SITE DETAIL MODAL ----------------
-function openSiteDetail(domain) {
-  const keys = cache.keys;
-  const timeline = keys.map((k) => ({ key: k, t: cache.days[k]?.domains[domain]?.t || 0 }));
+function openSiteDetail(domain, source = cache) {
+  const keys = source.keys;
+  const days = source.days;
+  const timeline = keys.map((k) => ({ key: k, t: days[k]?.domains[domain]?.t || 0 }));
   const totalT = sum(timeline.map((d) => d.t));
-  const totalV = sum(keys.map((k) => cache.days[k]?.domains[domain]?.v || 0));
+  const totalV = sum(keys.map((k) => days[k]?.domains[domain]?.v || 0));
   const activeD = timeline.filter((d) => d.t > 0).length || 1;
   let busiest = null;
   for (const d of timeline) if (!busiest || d.t > busiest.t) busiest = d;
-  const peakH = domainPeakHour(cache.days, domain);
+  const peakH = domainPeakHour(days, domain);
+  const hourly = domainHourly(days, domain);
   const catKey = categorize(domain, settings.categoryMap);
   const def = categoryDef(catKey);
+  const blocked = settings.blacklist.includes(domain);
 
   const card = $('#siteModalCard');
   card.innerHTML = `
@@ -330,10 +364,15 @@ function openSiteDetail(domain) {
     </div>
     <div class="detail-section-title">${t('detail.category')}: <span style="color:${def.color}">${categoryLabel(catKey)}</span></div>
     <div class="detail-section-title">${t('detail.timeline')}</div>
-    <div id="detailChart" class="chart-box"></div>`;
+    <div id="detailChart" class="chart-box"></div>
+    ${hourly ? `<div class="detail-section-title">${t('detail.hourly')}</div><div id="detailHourly" class="chart-box"></div>` : ''}
+    <div class="detail-actions">
+      <button class="btn ${blocked ? 'ghost' : 'danger'}" id="detailTrackToggle">${blocked ? t('detail.resumeTracking') : t('detail.stopTracking')}</button>
+    </div>`;
 
   $('#siteModal').classList.remove('hidden');
   $('#modalClose').addEventListener('click', closeModal);
+  $('#detailTrackToggle').addEventListener('click', () => toggleBlacklist(domain, source));
 
   const labelEvery = timeline.length > 20 ? Math.ceil(timeline.length / 12) : 1;
   barChart($('#detailChart'), timeline.map((d, i) => ({
@@ -341,6 +380,25 @@ function openSiteDetail(domain) {
     value: d.t,
     title: `${parseDayKey(d.key).toLocaleDateString(locale())}: ${formatDuration(d.t)}`,
   })), { height: 200, valueFmt: formatDuration });
+
+  if (hourly) {
+    barChart($('#detailHourly'), hourly.map((v, h) => ({
+      label: h % 3 === 0 ? `${h}` : '',
+      value: v,
+      title: `${h}:00 - ${h + 1}:00: ${formatDuration(v)}`,
+    })), { height: 170, valueFmt: formatDuration });
+  }
+}
+
+// Toggle a domain in the never-track blacklist from its detail modal.
+async function toggleBlacklist(domain, source) {
+  const set = new Set(settings.blacklist);
+  const wasBlocked = set.has(domain);
+  if (wasBlocked) set.delete(domain); else set.add(domain);
+  settings = await saveSettings({ blacklist: [...set] });
+  await send('settingsChanged');
+  toast(wasBlocked ? t('toast.blacklistRemoved', { d: domain }) : t('toast.blacklistAdded', { d: domain }), 'success');
+  openSiteDetail(domain, source);
 }
 
 function closeModal() {
@@ -407,6 +465,8 @@ function fillSettingsForm() {
   $('#setRealFavicons').checked = settings.realFavicons;
   $('#setFocusMinutes').value = settings.focus.defaultMinutes;
   $('#setFocusBreak').value = settings.focus.breakMinutes;
+  $('#setLongBreak').value = settings.focus.longBreakMinutes;
+  $('#setLongBreakEvery').value = settings.focus.longBreakEvery;
   $('#setFocusCycles').value = settings.focus.cycles;
   $('#setFocusMode').value = settings.focus.mode;
   $('#setSyncEnabled').checked = settings.backup.syncEnabled;
@@ -418,10 +478,13 @@ function fillSettingsForm() {
   $('#setRetention').value = settings.retentionDays;
   renderFocusCats('#focusCats', 'blockCategories');
   renderFocusCats('#focusAllowCats', 'allowCategories');
+  renderFocusDomains('#focusBlockDomains', 'blockDomains');
+  renderFocusDomains('#focusAllowDomains', 'allowDomains');
   updateFocusModeFields();
   renderBackupStatus();
   renderStorageInfo();
   renderCategoryEditor();
+  renderBlacklist();
 }
 
 function updateFocusModeFields() {
@@ -449,6 +512,73 @@ function renderFocusCats(hostSel, settingKey) {
     });
     host.appendChild(label);
   }
+}
+
+// Removable chips for a focus domain list (blockDomains / allowDomains).
+function renderFocusDomains(hostSel, settingKey) {
+  const host = $(hostSel);
+  host.innerHTML = '';
+  for (const domain of settings.focus[settingKey] || []) {
+    const chip = document.createElement('div');
+    chip.className = 'cat-chip';
+    chip.innerHTML = `<span>${domain}</span><span class="x">✕</span>`;
+    chip.querySelector('.x').addEventListener('click', async () => {
+      const next = (settings.focus[settingKey] || []).filter((d) => d !== domain);
+      settings = await saveSettings({ focus: { [settingKey]: next } });
+      renderFocusDomains(hostSel, settingKey);
+    });
+    host.appendChild(chip);
+  }
+}
+
+async function addFocusDomain(inputSel, settingKey, hostSel) {
+  const input = $(inputSel);
+  if (!input.value.trim()) return;
+  const domain = cleanDomain(input.value);
+  if (!domain) { toast(t('toast.badDomain'), 'error'); return; }
+  const set = new Set(settings.focus[settingKey] || []);
+  set.add(domain);
+  settings = await saveSettings({ focus: { [settingKey]: [...set] } });
+  input.value = '';
+  renderFocusDomains(hostSel, settingKey);
+}
+
+// ---- never-track blacklist editor ----
+function renderBlacklist() {
+  const list = $('#blacklistList');
+  list.innerHTML = '';
+  const entries = settings.blacklist || [];
+  if (!entries.length) {
+    list.innerHTML = `<span style="color:var(--text-faint);font-size:12.5px">${t('blacklist.none')}</span>`;
+    return;
+  }
+  for (const domain of entries) {
+    const chip = document.createElement('div');
+    chip.className = 'cat-chip';
+    chip.innerHTML = `<span>🚫 ${domain}</span><span class="x">✕</span>`;
+    chip.querySelector('.x').addEventListener('click', async () => {
+      const next = (settings.blacklist || []).filter((d) => d !== domain);
+      settings = await saveSettings({ blacklist: next });
+      await send('settingsChanged');
+      renderBlacklist();
+      toast(t('toast.blacklistRemoved', { d: domain }), 'success');
+    });
+    list.appendChild(chip);
+  }
+}
+
+async function addBlacklist() {
+  const input = $('#blacklistDomain');
+  if (!input.value.trim()) return;
+  const domain = cleanDomain(input.value);
+  if (!domain) { toast(t('toast.badDomain'), 'error'); return; }
+  const set = new Set(settings.blacklist || []);
+  set.add(domain);
+  settings = await saveSettings({ blacklist: [...set] });
+  await send('settingsChanged');
+  input.value = '';
+  renderBlacklist();
+  toast(t('toast.blacklistAdded', { d: domain }), 'success');
 }
 
 function renderBackupStatus() {
@@ -491,7 +621,15 @@ function wireSettings() {
   $('#setFocusMinutes').addEventListener('change', (e) => persist({ focus: { defaultMinutes: clamp(parseInt(e.target.value, 10) || 25, 1, 240) } }));
   $('#setFocusBreak').addEventListener('change', (e) => persist({ focus: { breakMinutes: clamp(parseInt(e.target.value, 10) || 0, 0, 60) } }));
   $('#setFocusCycles').addEventListener('change', (e) => persist({ focus: { cycles: clamp(parseInt(e.target.value, 10) || 1, 1, 12) } }));
+  $('#setLongBreak').addEventListener('change', (e) => persist({ focus: { longBreakMinutes: clamp(parseInt(e.target.value, 10) || 0, 0, 120) } }));
+  $('#setLongBreakEvery').addEventListener('change', (e) => persist({ focus: { longBreakEvery: clamp(parseInt(e.target.value, 10) || 4, 1, 12) } }));
   $('#setFocusMode').addEventListener('change', async (e) => { await persist({ focus: { mode: e.target.value } }); updateFocusModeFields(); });
+
+  // Focus specific domains (block-list / allow-list beyond categories)
+  $('#focusBlockDomainAdd').addEventListener('click', () => addFocusDomain('#focusBlockDomainInput', 'blockDomains', '#focusBlockDomains'));
+  $('#focusBlockDomainInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') addFocusDomain('#focusBlockDomainInput', 'blockDomains', '#focusBlockDomains'); });
+  $('#focusAllowDomainAdd').addEventListener('click', () => addFocusDomain('#focusAllowDomainInput', 'allowDomains', '#focusAllowDomains'));
+  $('#focusAllowDomainInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') addFocusDomain('#focusAllowDomainInput', 'allowDomains', '#focusAllowDomains'); });
 
   // Real favicons — request the optional `favicon` permission on enable.
   $('#setRealFavicons').addEventListener('change', async (e) => {
@@ -562,6 +700,7 @@ function wireSettings() {
   $('#clearData').addEventListener('click', async () => {
     if (!confirm(t('confirm.clear'))) return;
     await clearAllData();
+    allCache = null;
     await refresh();
     renderStorageInfo();
     toast(t('toast.cleared'), 'success');
@@ -569,10 +708,14 @@ function wireSettings() {
 
   $('#catAdd').addEventListener('click', addCategoryMapping);
   $('#catDomain').addEventListener('keydown', (e) => { if (e.key === 'Enter') addCategoryMapping(); });
+
+  $('#blacklistAdd').addEventListener('click', addBlacklist);
+  $('#blacklistDomain').addEventListener('keydown', (e) => { if (e.key === 'Enter') addBlacklist(); });
 }
 
 async function doRestore(passphrase) {
   const r = await restoreFromSync({ mode: 'replace', passphrase });
+  allCache = null;
   settings = await getSettings();
   applyLanguage();
   applyTheme();
@@ -629,6 +772,7 @@ async function handleImport(e) {
     }
     const mode = $('#importMode').value;
     const count = await importAll(snapshot, { mode, includeSettings: true });
+    allCache = null;
     settings = await getSettings();
     applyLanguage();
     applyTheme();
@@ -703,6 +847,7 @@ async function handleCsvImport(e) {
     if (!count) throw new Error('no valid rows');
     const mode = $('#importMode').value;
     await importAll({ app: 'TimeTrack', version: 2, days }, { mode, includeSettings: false });
+    allCache = null;
     await refresh();
     renderStorageInfo();
     toast(t('toast.importedCsv', { n: count }), 'success');
@@ -802,6 +947,7 @@ async function updateTrackState() {
 // ---------------- init ----------------
 async function init() {
   settings = await getSettings();
+  await ensureFaviconPermission();
   applyTheme();
   applyLanguage();
   $('#appVersion').textContent = chrome.runtime.getManifest().version;
@@ -832,6 +978,11 @@ async function init() {
 
   $('#siteSearch').addEventListener('input', () => { if (currentTab === 'sites') renderSites(); });
   $('#siteSort').addEventListener('change', () => { if (currentTab === 'sites') renderSites(); });
+  $('#siteAllHistory').addEventListener('change', (e) => {
+    siteAllHistory = e.target.checked;
+    if (siteAllHistory) allCache = null;    // rebuild a fresh full-history aggregate
+    if (currentTab === 'sites') renderSites();
+  });
 
   wireSettings();
 

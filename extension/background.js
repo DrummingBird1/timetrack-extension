@@ -118,12 +118,18 @@ async function checkFocusExpiry() {
   if (!focus.active || Date.now() < focus.endsAt) return focus;
 
   if (focus.phase === 'work') {
-    const moreCycles = (focus.cycle || 0) + 1 < (focus.totalCycles || 1);
-    if (moreCycles && focus.breakMs > 0) {
+    const completed = (focus.cycle || 0) + 1;      // work cycles finished so far
+    const moreCycles = completed < (focus.totalCycles || 1);
+    // Every Nth cycle earns a longer break, when configured.
+    const isLong = focus.longBreakMs > 0 && focus.longBreakEvery > 0
+      && completed % focus.longBreakEvery === 0;
+    const breakMs = isLong ? focus.longBreakMs : focus.breakMs;
+    if (moreCycles && breakMs > 0) {
       focus.phase = 'break';
-      focus.endsAt = Date.now() + focus.breakMs;
+      focus.endsAt = Date.now() + breakMs;
       await saveFocus(focus);
-      notify('הפסקה ☕', `${Math.round(focus.breakMs / 60000)} דקות הפסקה. נתראה בסבב הבא.`);
+      const mins = Math.round(breakMs / 60000);
+      notify(isLong ? 'הפסקה ארוכה 🌿' : 'הפסקה ☕', `${mins} דקות הפסקה. נתראה בסבב הבא.`);
       return focus;
     }
     if (moreCycles) {
@@ -399,12 +405,18 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 async function handleMessage(msg) {
   switch (msg.type) {
     case 'getLive': {
-      await refresh();
+      // Read-only: report the current segment without committing. Time is
+      // committed by browser events and the 1-minute tick, so periodic polling
+      // from the popup/dashboard no longer amplifies storage writes. Live seconds
+      // are bounded by the same cap we use for crediting, so a long dormancy
+      // can't show an inflated counter.
       const st = await loadState();
       const settings = await getSettings();
       const today = await getDay(dayKey());
       let live = 0;
-      if (st.counting && st.domain && st.since) live = (Date.now() - st.since) / 1000;
+      if (st.counting && st.domain && st.since) {
+        live = Math.min((Date.now() - st.since) / 1000, MAX_SEGMENT_SECONDS);
+      }
       return {
         enabled: settings.enabled,
         counting: st.counting,
@@ -465,6 +477,8 @@ async function startFocusSession(minutesArg) {
     totalCycles: Math.max(1, Math.min(12, f.cycles || 1)),
     workMs: workMin * 60000,
     breakMs: Math.max(0, Math.min(60, f.breakMinutes || 0)) * 60000,
+    longBreakMs: Math.max(0, Math.min(120, f.longBreakMinutes || 0)) * 60000,
+    longBreakEvery: Math.max(1, Math.min(12, f.longBreakEvery || 4)),
     endsAt: Date.now() + workMin * 60000,
     mode: f.mode === 'allow' ? 'allow' : 'block',
     blockCategories: f.blockCategories || [],

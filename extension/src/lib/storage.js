@@ -34,6 +34,8 @@ export const DEFAULT_SETTINGS = {
   focus: {
     defaultMinutes: 25,                          // suggested work length
     breakMinutes: 5,                             // Pomodoro break length
+    longBreakMinutes: 0,                         // longer break every N cycles (0 = off)
+    longBreakEvery: 4,                           // take the long break every N work cycles
     cycles: 1,                                   // work/break cycles (1 = single)
     mode: 'block',                               // 'block' | 'allow' (allowlist)
     blockCategories: ['social', 'entertainment'], // categories blocked in block mode

@@ -62,6 +62,7 @@ globalThis.chrome = {
   },
 };
 
+const storage = await import('../../../extension/src/lib/storage.js');
 function send(msg) { return new Promise((res) => { messageListener(msg, {}, res); }); }
 const settle = () => new Promise((r) => setTimeout(r, 30));
 
@@ -111,6 +112,18 @@ test('live counter reports the current domain', async () => {
   assert.equal(live.enabled, true);
   assert.equal(live.currentDomain, 'youtube.com');
   assert.equal(live.counting, true);
+});
+
+test('a blacklisted domain is not counted', async () => {
+  await send({ type: 'flush' });                 // commit whatever segment is open
+  const base = youtubeSeconds();
+  await storage.saveSettings({ blacklist: ['youtube.com'] });
+  await send({ type: 'settingsChanged' });        // re-evaluate the current tab under new settings
+  clock += 60_000;                                // a minute passes on the now-blacklisted tab
+  await send({ type: 'flush' });
+  assert.equal(youtubeSeconds(), base, 'counted time on a blacklisted domain');
+  await storage.saveSettings({ blacklist: [] });  // restore for later tests
+  await send({ type: 'settingsChanged' });
 });
 
 test('disabling tracking stops counting', async () => {

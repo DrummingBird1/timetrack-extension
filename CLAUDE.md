@@ -153,8 +153,12 @@ of one giant blob, which keeps writes cheap as history grows.
 See `DEFAULT_SETTINGS` in `src/lib/storage.js`. Notable fields: `idleSeconds`
 (min 15 — Chrome's `idle.setDetectionInterval` floor), `groupSubdomains`,
 `retentionDays`, `dailyLimitMinutes` / `siteLimits` (notifications),
-`categoryMap` (user overrides), `blacklist`, and the `backup` sub-object
-(`syncEnabled`, `endpointUrl`, `endpointToken`, `autoIntervalHours`, `lastBackup`,
+`categoryMap` (user overrides), `blacklist` (never-tracked domains, edited from
+the Settings "untracked sites" panel and the per-site drill-down), the `focus`
+sub-object (work/break/`longBreakMinutes`+`longBreakEvery`, `mode`, and the
+`blockCategories`/`blockDomains`/`allowCategories`/`allowDomains` lists — all
+editable in the focus panel), and the `backup` sub-object (`syncEnabled`,
+`endpointUrl`, `endpointToken`, `autoIntervalHours`, `lastBackup`,
 `lastBackupStatus`). When settings change from the dashboard, it sends
 `settingsChanged` so the worker re-applies the idle interval and refreshes.
 
@@ -185,10 +189,13 @@ stays plaintext by design (a local file the user already controls).
 Runtime session lives in `storage.session` (`ttt_focus`), snapshotted at start so
 editing settings mid-session doesn't change it. It runs a **Pomodoro state
 machine** (`checkFocusExpiry`): `work → break → work … → done` across `totalCycles`
-(fields `phase`, `cycle`, `workMs`, `breakMs`). Blocking is enforced only during
-`work` phases via `blockingLive()`. Two modes (`mode`): **block** (block the
-chosen categories/domains) or **allow** (block everything *except* the allowed
-ones). While a work phase is live, `chrome.tabs.onUpdated` (and `enforceAllTabs`
+(fields `phase`, `cycle`, `workMs`, `breakMs`; plus `longBreakMs`/`longBreakEvery`
+— every Nth completed work cycle earns the longer break when configured, else the
+normal break). Blocking is enforced only during `work` phases via `blockingLive()`.
+Two modes (`mode`): **block** (block the chosen categories/domains) or **allow**
+(block everything *except* the allowed ones). Both modes combine categories with an
+explicit per-domain list (`blockDomains`/`allowDomains`), all edited in the focus
+Settings panel. While a work phase is live, `chrome.tabs.onUpdated` (and `enforceAllTabs`
 at start / on each work resume) redirect any blocked tab to `src/blocked/blocked.html`
 (a web-accessible resource, `use_dynamic_url`). The popup starts/stops sessions via
 `startFocus`/`stopFocus`/`getFocus`; `chrome.commands` also toggles focus/tracking.
@@ -219,7 +226,9 @@ No host permissions — redirection uses the existing `tabs` API.
 - **Trends** (`stats.trend`): current vs. previous equal-length period (% change).
 - **Insights** (`stats.generateInsights`): plain-language this-week-vs-last-week
   observations; returns raw `{key, vars}` that the UI localizes (cat/weekday).
-- **Per-site peak hour** (`stats.domainPeakHour`): from the per-domain `dh` map.
+- **Per-site hourly** (`stats.domainHourly` → the full 24h shape;
+  `stats.domainPeakHour` → its busiest hour): both from the per-domain `dh` map.
+  The drill-down charts the hourly shape next to the daily timeline.
 - **Categories** (`categories.js`): defaults + user overrides via the Settings
   category editor; everything else falls back to `other`.
 
@@ -245,13 +254,18 @@ No host permissions — redirection uses the existing `tabs` API.
   the next `refresh()`. Each commit is capped at `MAX_SEGMENT_SECONDS` (120 s) so
   a long dormancy (sleep/closed browser) can't be counted as active time. The
   1-minute tick keeps segments short, so the cap never bites in normal use.
+- **`getLive` is read-only.** It reports the open segment but does **not** commit
+  or reset `state.since` — only browser events and the 1-minute tick commit time.
+  This keeps the popup/dashboard live poll from amplifying writes. Reported live
+  seconds are bounded by `MAX_SEGMENT_SECONDS`. Use `flush` when you actually want
+  to force a commit (the dashboard does this once on load).
 
 ## Tests
 
-From `store-assets/dev/`, `npm test` (or `node --test`) runs the suite (48 cases):
+From `store-assets/dev/`, `npm test` (or `node --test`) runs the suite (51 cases):
 
 - **Unit** (`utils.test.js`, `stats.test.js`) — the pure modules, imported directly
-  (includes `generateInsights` and `domainPeakHour`).
+  (includes `generateInsights`, `domainPeakHour` and `domainHourly`).
 - **Integration** (`backup.integration.test.js`, `tracking.integration.test.js`,
   `focus.integration.test.js`) — exercise the real `storage.js`/`backup.js`/
   `crypto.js` and the `background.js` tracking + focus engines against an in-memory
@@ -267,6 +281,13 @@ the focus-mode tab redirect — those need the extension loaded in a real browse
 
 - Google Drive OAuth backup (see note above).
 - Translating the built-in default category map / public-suffix list beyond he/en.
-- Per-site **hourly** timeline (day records only store day-level hours, so the
-  drill-down shows a per-day timeline + busiest day, not per-site peak hour).
+- Scheduled focus (auto-start a session at set times / weekdays).
+- Site-table virtualization for very large histories; a settings search box and an
+  onboarding tour with demo data.
+- A dedicated Webtime Tracker importer (the generic CSV import covers migration
+  today, but not their native export format directly).
 - Weekly email summary (only an in-browser notification exists today).
+
+Done in 1.2.0 (previously listed here): per-site **hourly** timeline in the
+drill-down (uses the per-domain `dh` map), and reaching the blacklist / focus
+per-domain settings from the UI.

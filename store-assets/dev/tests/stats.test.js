@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   aggregateDomains, totalTime, topSites, byCategory, focusScore, dailyTotals,
   weekHourHeatmap, hourlyDistribution, activeDaysCount, currentStreak, trend, busiestHour,
-  domainPeakHour, generateInsights,
+  domainPeakHour, domainHourly, generateInsights,
 } from '../../../extension/src/lib/stats.js';
 
 // Two sample days. Hours arrays are sparse but valid (24 slots).
@@ -125,6 +125,21 @@ test('domainPeakHour finds a site\'s busiest hour from its dh map (v2)', () => {
   assert.equal(domainPeakHour(d, 'missing.com'), null);
   // legacy record without dh (pre-v2) → null, no crash
   assert.equal(domainPeakHour({ x: { domains: { 'b.com': { t: 9, v: 1 } }, hours: [] } }, 'b.com'), null);
+});
+
+test('domainHourly sums a site\'s per-hour seconds across days (v2), null without dh', () => {
+  const d = {
+    '2026-06-21': { domains: { 'a.com': { t: 100, v: 1, dh: { 9: 30, 14: 70 } } }, hours: new Array(24).fill(0) },
+    '2026-06-22': { domains: { 'a.com': { t: 50, v: 1, dh: { 14: 50 } } }, hours: new Array(24).fill(0) },
+  };
+  const h = domainHourly(d, 'a.com');
+  assert.equal(h.length, 24);
+  assert.equal(h[9], 30);
+  assert.equal(h[14], 120);             // 70 + 50
+  assert.equal(h[0], 0);
+  assert.equal(domainHourly(d, 'missing.com'), null);
+  // legacy record without dh (pre-v2) → null, no crash
+  assert.equal(domainHourly({ x: { domains: { 'b.com': { t: 9, v: 1 } }, hours: [] } }, 'b.com'), null);
 });
 
 test('generateInsights compares periods; keys stay raw for the UI to localize', () => {
