@@ -4,6 +4,40 @@ All notable changes to TimeTrack are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/); this project uses
 [Semantic Versioning](https://semver.org/).
 
+## [1.2.1] — 2026-08-16
+
+A small patch fixing two real issues found while auditing the encrypted-backup
+path in detail, plus closing test-coverage gaps around cloud-backup failure
+modes. No user-facing feature changes.
+
+### Fixed
+- **`crypto.js` error handling.** A malformed/corrupted encrypted envelope
+  (specifically a bad `salt`) used to throw a raw, unhandled error instead of
+  the intended friendly "backup corrupted" message — `fromB64(envelope.salt)`
+  was evaluated *before* the function's `try` block. Now the whole decrypt path
+  is covered, and `isEncrypted()` also requires `salt`/`iv` to be present.
+- **`backup.js` corrupted-chunk restore.** `restoreFromSync()` already handled a
+  *missing* `chrome.storage.sync` chunk gracefully, but a chunk that existed with
+  *corrupted content* threw a raw `SyntaxError` from an unguarded `JSON.parse`.
+  Both cases now produce the same friendly error.
+
+### Changed
+- **PBKDF2 iterations raised to 600,000** (from 150,000) for new encrypted
+  backups, matching OWASP's current minimum for PBKDF2-HMAC-SHA256. Fully
+  backward-compatible: every encrypted envelope already stores its own
+  `iterations` value, and `decryptJSON` now reads that value instead of a
+  hardcoded constant — old backups keep decrypting exactly as before.
+
+### Notes
+- Verified empirically, not just by reading the code: the new regression tests
+  were run against the pre-fix source (via a temporary `git stash`) to confirm
+  they actually fail without the fix and pass with it, before being finalized.
+- Tests: 51 → 56 (missing vs. corrupted sync chunk, `restoreFromSync` merge mode
+  end-to-end, legacy-iteration backward compatibility, malformed-envelope
+  handling).
+- Added GitHub Actions CI (`.github/workflows/test.yml`) running the suite on
+  every push/PR to `main` — this repo had no CI before this release.
+
 ## [1.2.0] — 2026-07-17
 
 This release closes the gaps where a setting worked in the engine but had no way

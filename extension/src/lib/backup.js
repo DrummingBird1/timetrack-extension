@@ -83,7 +83,12 @@ export async function restoreFromSync({ mode = 'replace', passphrase } = {}) {
     if (piece == null) throw new Error('הגיבוי בענן פגום (חלק חסר)');
     json += piece;
   }
-  let snapshot = JSON.parse(json);
+  let snapshot;
+  try {
+    snapshot = JSON.parse(json);
+  } catch {
+    throw new Error('הגיבוי בענן פגום (תוכן לא תקין)');
+  }
   if (isEncrypted(snapshot)) {
     const pass = passphrase || (await getSettings()).backup.passphrase;
     if (!pass) { const e = new Error('הגיבוי מוצפן — נדרשת סיסמה'); e.code = 'ENCRYPTED'; throw e; }

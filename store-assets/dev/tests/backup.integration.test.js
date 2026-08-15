@@ -55,6 +55,27 @@ const crypto = await import('../../../extension/src/lib/crypto.js');
 
 beforeEach(() => { installChrome(); });
 
+// Hand-builds an envelope shaped exactly like a pre-1.2.1 backup (encrypted at
+// the old, lower iteration count) to prove decryptJSON still honors whatever
+// `iterations` value is stamped on the envelope, not today's constant. Uses
+// globalThis.crypto (Web Crypto) explicitly since the local `crypto` binding in
+// this file shadows it with the imported crypto.js module.
+async function encryptLegacyEnvelope(obj, passphrase, iterations) {
+  const encoder = new TextEncoder();
+  const toB64 = (bytes) => { let s = ''; for (const b of bytes) s += String.fromCharCode(b); return btoa(s); };
+  const salt = globalThis.crypto.getRandomValues(new Uint8Array(16));
+  const iv = globalThis.crypto.getRandomValues(new Uint8Array(12));
+  const base = await globalThis.crypto.subtle.importKey('raw', encoder.encode(passphrase), 'PBKDF2', false, ['deriveKey']);
+  const key = await globalThis.crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt, iterations, hash: 'SHA-256' }, base,
+    { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+  const ct = await globalThis.crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, encoder.encode(JSON.stringify(obj)));
+  return {
+    app: 'TimeTrack', enc: 'aes-256-gcm', kdf: 'pbkdf2-sha256', iterations,
+    salt: toB64(salt), iv: toB64(iv), ct: toB64(new Uint8Array(ct)),
+  };
+}
+
 async function seed(days, domainsPerDay = 4) {
   for (let d = 0; d < days; d++) {
     const date = new Date(2025, 0, 1 + d);
@@ -193,6 +214,33 @@ test('restoreFromSync signals ENCRYPTED when no passphrase is available', async 
   await assert.rejects(() => backup.restoreFromSync({ mode: 'replace' }), (e) => e.code === 'ENCRYPTED');
 });
 
+test('restoreFromSync throws a friendly error when a sync chunk is missing', async () => {
+  await seed(10);
+  const r = await backup.backupToSync();
+  assert.ok(r.chunks >= 1);
+  chrome.storage.sync._store.delete('ttt_sync_0'); // simulate a dropped chunk
+  await assert.rejects(() => backup.restoreFromSync({ mode: 'replace' }), /פגום/);
+});
+
+test('restoreFromSync throws a friendly error when a sync chunk is corrupted (not just missing)', async () => {
+  await seed(10);
+  const r = await backup.backupToSync();
+  assert.ok(r.chunks >= 1);
+  chrome.storage.sync._store.set('ttt_sync_0', 'not valid json{{{'); // corrupt the content
+  await assert.rejects(() => backup.restoreFromSync({ mode: 'replace' }), /פגום/);
+});
+
+test('restoreFromSync merge mode keeps the larger local value end-to-end (no double-count)', async () => {
+  await storage.addTime({ dateKey: '2025-05-01', domain: 'merge-test.com', seconds: 1000, hour: 8 });
+  await backup.backupToSync(); // snapshot captured at 1000s
+  // local grows further after the snapshot was taken
+  await storage.addTime({ dateKey: '2025-05-01', domain: 'merge-test.com', seconds: 500, hour: 8 }); // now 1500
+  const res = await backup.restoreFromSync({ mode: 'merge' });
+  assert.ok(res.days >= 1);
+  const day = await storage.getDay('2025-05-01');
+  assert.equal(day.domains['merge-test.com'].t, 1500); // merge kept the larger value, no double count
+});
+
 // ---------- custom endpoint ----------
 test('backupToEndpoint enforces HTTPS and posts the snapshot', async () => {
   await seed(2);
@@ -226,4 +274,18 @@ test('crypto round-trips and rejects a wrong passphrase', async () => {
   assert.ok(crypto.isEncrypted(env));
   assert.deepEqual(await crypto.decryptJSON(env, 'pw'), obj);
   await assert.rejects(() => crypto.decryptJSON(env, 'nope'));
+});
+
+test('decryptJSON still restores a legacy envelope encrypted at the old (150k) iteration count', async () => {
+  const obj = { legacy: true, value: 42 };
+  const legacyEnv = await encryptLegacyEnvelope(obj, 'old-pass', 150000);
+  assert.equal(legacyEnv.iterations, 150000);
+  assert.ok(crypto.isEncrypted(legacyEnv));
+  assert.deepEqual(await crypto.decryptJSON(legacyEnv, 'old-pass'), obj);
+});
+
+test('a malformed encrypted envelope (bad salt) fails gracefully, not with a raw throw', async () => {
+  const env = await crypto.encryptJSON({ x: 1 }, 'pw');
+  const malformed = { ...env, salt: 'not-valid-base64!!!' };
+  await assert.rejects(() => crypto.decryptJSON(malformed, 'pw'), /סיסמת הפענוח שגויה או שהקובץ פגום/);
 });

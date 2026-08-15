@@ -5,7 +5,10 @@
 
 const enc = new TextEncoder();
 const dec = new TextDecoder();
-const PBKDF2_ITERATIONS = 150000;
+// OWASP's current PBKDF2-HMAC-SHA256 minimum. Old backups carry their own lower
+// `iterations` value in the envelope (see decryptJSON) so they keep decrypting.
+const PBKDF2_ITERATIONS = 600000;
+const LEGACY_ITERATIONS = 150000; // fallback for envelopes written before the bump
 
 function toB64(bytes) {
   let s = '';
@@ -20,11 +23,11 @@ function fromB64(str) {
   return u;
 }
 
-async function deriveKey(passphrase, salt) {
+async function deriveKey(passphrase, salt, iterations = PBKDF2_ITERATIONS) {
   const base = await crypto.subtle.importKey(
     'raw', enc.encode(passphrase), 'PBKDF2', false, ['deriveKey']);
   return crypto.subtle.deriveKey(
-    { name: 'PBKDF2', salt, iterations: PBKDF2_ITERATIONS, hash: 'SHA-256' },
+    { name: 'PBKDF2', salt, iterations, hash: 'SHA-256' },
     base,
     { name: 'AES-GCM', length: 256 },
     false,
@@ -50,14 +53,21 @@ export async function encryptJSON(obj, passphrase) {
 }
 
 export function isEncrypted(obj) {
-  return !!(obj && typeof obj === 'object' && obj.enc === 'aes-256-gcm' && obj.ct);
+  return !!(obj && typeof obj === 'object' && obj.enc === 'aes-256-gcm'
+    && typeof obj.ct === 'string' && obj.ct
+    && typeof obj.salt === 'string' && obj.salt
+    && typeof obj.iv === 'string' && obj.iv);
 }
 
-/** Decrypt an envelope back into the original object. Throws on wrong key. */
+/**
+ * Decrypt an envelope back into the original object. Throws a single friendly
+ * error on wrong passphrase OR a malformed/corrupted envelope (missing/bad
+ * salt/iv/ct all land here too, since fromB64/deriveKey are inside the try).
+ */
 export async function decryptJSON(envelope, passphrase) {
   if (!isEncrypted(envelope)) throw new Error('הקובץ אינו מוצפן');
-  const key = await deriveKey(passphrase, fromB64(envelope.salt));
   try {
+    const key = await deriveKey(passphrase, fromB64(envelope.salt), envelope.iterations || LEGACY_ITERATIONS);
     const pt = await crypto.subtle.decrypt(
       { name: 'AES-GCM', iv: fromB64(envelope.iv) }, key, fromB64(envelope.ct));
     return JSON.parse(dec.decode(pt));
