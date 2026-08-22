@@ -4,6 +4,21 @@ All notable changes to TimeTrack are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/); this project uses
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Housekeeping
+- Renamed `store-assets/dev/` → `dist/` (repo root) — this is the folder holding
+  the test suite, `package.json`, `build.ps1`, and the zip it produces for
+  Chrome Web Store upload. Fixed the two places that hardcoded the old nesting
+  depth: `build.ps1`'s project-root calculation (was two levels up, needed to
+  be one) and every test file's `../../../extension/...` import (needed to be
+  `../../extension/...`) — both verified by actually running the suite and the
+  build from the new location, not just updating paths and assuming. Updated
+  `.github/workflows/test.yml`, `CLAUDE.md`, `README.md`, and
+  `store-assets/STORE_LISTING.md` to match. No functional/extension code changed.
+- Moved `timetrack-v1.2.1.zip` into `archive/old-builds/` alongside the other
+  superseded build zips.
+
 ## [1.3.0] — 2026-08-23
 
 ### Added

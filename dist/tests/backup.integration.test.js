@@ -49,9 +49,9 @@ function installChrome() {
 }
 installChrome();
 
-const storage = await import('../../../extension/src/lib/storage.js');
-const backup = await import('../../../extension/src/lib/backup.js');
-const crypto = await import('../../../extension/src/lib/crypto.js');
+const storage = await import('../../extension/src/lib/storage.js');
+const backup = await import('../../extension/src/lib/backup.js');
+const crypto = await import('../../extension/src/lib/crypto.js');
 
 beforeEach(() => { installChrome(); });
 

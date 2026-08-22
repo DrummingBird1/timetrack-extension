@@ -66,10 +66,10 @@
 ## 🔧 פיתוח
 
 ללא שלב build וללא תלויות — JavaScript מודולרי טהור. הבדיקות (63 מקרים) רצות מ-
-`store-assets/dev`:
+`dist`:
 
 ```bash
-cd store-assets/dev
+cd dist
 npm test               # node --test (ללא תלויות חיצוניות)
 pwsh build.ps1         # יוצר zip להעלאה מתוך extension/
 ```
@@ -87,8 +87,9 @@ extension/               ← ההפצה (טוענים/מעלים לחנות את
   src/dashboard/         — לוח הבקרה המלא
   src/blocked/           — דף חסימה למצב פוקוס
   icons/                 — אייקונים
-store-assets/            ← נכסים לחנות: מדיניות פרטיות, טקסט רישום, תמונות, בדיקות
+store-assets/            ← נכסים לחנות: מדיניות פרטיות, טקסט רישום, תמונות
   site/                  — קוד המקור לאתר התדמית (מפורסם ל-GitHub Pages)
+dist/                    ← כלי פיתוח: בדיקות, package.json, build.ps1, וה-zip שנוצר
 archive/                 ← נכסים ישנים שהוחלפו (תמונות/גרסאות build ישנות)
 ```
 

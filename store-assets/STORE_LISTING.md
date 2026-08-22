@@ -129,8 +129,8 @@ The only missing visual is **screenshots**, which must show the real running UI
 - [ ] Fill single-purpose, permission justifications, and data disclosures
       (sections 2–4).
 - [ ] Bump `version` in `extension/manifest.json` for each upload.
-- [ ] Build the upload zip: `pwsh store-assets/dev/build.ps1` (zips `extension/`),
-      then upload the resulting `store-assets/dev/timetrack-v<version>.zip`.
+- [ ] Build the upload zip: `pwsh dist/build.ps1` (zips `extension/`),
+      then upload the resulting `dist/timetrack-v<version>.zip`.
 
 ### Optional hardening (verify in-browser first)
 

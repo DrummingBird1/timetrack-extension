@@ -4,7 +4,7 @@ import {
   aggregateDomains, totalTime, topSites, byCategory, focusScore, dailyTotals,
   weekHourHeatmap, hourlyDistribution, activeDaysCount, currentStreak, trend, busiestHour,
   domainPeakHour, domainHourly, generateInsights,
-} from '../../../extension/src/lib/stats.js';
+} from '../../extension/src/lib/stats.js';
 
 // Two sample days. Hours arrays are sparse but valid (24 slots).
 function hours(map) {

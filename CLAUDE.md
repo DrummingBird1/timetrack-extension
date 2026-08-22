@@ -14,15 +14,19 @@ unless the user explicitly enables a backup target. The UI is **Hebrew, RTL**.
 
 ## Repository layout
 
-Three top-level folders (plus root docs):
+Four top-level folders (plus root docs):
 
 - **`extension/`** — the shippable extension (this is what you load-unpacked and
   zip for the store). Self-contained: `manifest.json`, `background.js`, `icons/`,
   `src/`.
-- **`store-assets/`** — everything for the Chrome Web Store: `PRIVACY.md`,
-  `STORE_LISTING.md`, `promo/` (promo graphics), `screenshots/`, `site/` (the
-  marketing website source, deployed to the `gh-pages` branch — see below), and
-  `dev/` (the test suite, `package.json`, and `build.ps1`).
+- **`store-assets/`** — everything for the Chrome Web Store listing itself:
+  `PRIVACY.md`, `STORE_LISTING.md`, `promo/` (promo graphics), `screenshots/`,
+  and `site/` (the marketing website source, deployed to the `gh-pages` branch
+  — see below).
+- **`dist/`** — dev tooling and build output: the test suite (`tests/`),
+  `package.json`, `build.ps1`, and the zip(s) it produces
+  (`timetrack-v<version>.zip`, gitignored). Despite the name, nothing here ships
+  inside the extension — `build.ps1` zips `extension/`'s contents only.
 - **`archive/`** — superseded assets kept for reference (old screenshots/promo
   images, old build zips). Not part of the current release; see `archive/README.md`.
 
@@ -135,13 +139,13 @@ of one giant blob, which keeps writes cheap as history grows.
 | `src/lib/charts.js` | Dependency-free SVG charts (bar, donut, heatmap, sparkline). CSP-safe. |
 | `src/lib/backup.js` | Cloud backup: chunked `storage.sync`, custom REST endpoint, `runAutoBackup`. |
 | `src/lib/crypto.js` | Optional AES-256-GCM backup encryption (PBKDF2 key from passphrase). |
-| `src/lib/i18n.js` | Runtime he/en dictionary + `t()` + `localize()` (live language switch). |
+| `src/lib/i18n.js` | Runtime six-language dictionary (he/en/ar/ru/es/fr) + `t()` + `localize()` (live language switch). |
 | `src/popup/*` | Toolbar popup: today total, live counter, top sites, 7-day mini chart, tracking toggle, focus session. |
 | `src/dashboard/*` | Options page: Overview / Sites / Insights / Settings tabs. |
 | `src/blocked/*` | Focus-mode block page shown when a blocked site is opened during a session. |
-| `store-assets/dev/tests/*` | Node `node:test` unit + integration tests. `npm test` (run from `store-assets/dev`). |
-| `store-assets/dev/package.json` | Dev-only (test script + `"type":"module"`); the extension has no deps/build. |
-| `store-assets/dev/build.ps1` | Builds `timetrack-v<version>.zip` from `extension/` (store upload). |
+| `dist/tests/*` | Node `node:test` unit + integration tests. `npm test` (run from `dist`). |
+| `dist/package.json` | Dev-only (test script + `"type":"module"`); the extension has no deps/build. |
+| `dist/build.ps1` | Builds `timetrack-v<version>.zip` from `extension/` (store upload). |
 | `store-assets/PRIVACY.md` / `STORE_LISTING.md` | Privacy policy + Chrome Web Store submission pack. |
 | `icons/*` | Generated gradient clock icons (16/32/48/128). |
 
@@ -291,7 +295,7 @@ No host permissions — redirection uses the existing `tabs` API.
 
 ## Tests
 
-From `store-assets/dev/`, `npm test` (or `node --test`) runs the suite (63 cases):
+From `dist/`, `npm test` (or `node --test`) runs the suite (63 cases):
 
 - **Unit** (`utils.test.js`, `stats.test.js`, `i18n.test.js`) — the pure modules,
   imported directly (includes `generateInsights`, `domainPeakHour`,

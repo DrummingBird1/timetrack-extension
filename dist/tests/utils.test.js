@@ -4,7 +4,7 @@ import {
   dayKey, parseDayKey, addDays, rangeKeys, keysBetween, startOfWeek,
   hostnameFromUrl, registrableDomain, domainFromUrl,
   formatDuration, formatClock, favicon, setDurationLocale, weekdaysShort, sum, clamp,
-} from '../../../extension/src/lib/utils.js';
+} from '../../extension/src/lib/utils.js';
 
 test('dayKey / parseDayKey round-trip (local, zero-padded)', () => {
   const d = new Date(2026, 0, 5); // 5 Jan 2026

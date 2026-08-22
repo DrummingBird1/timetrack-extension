@@ -6,7 +6,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { setLang, getLang, dir, locale, t, categoryLabel } from '../../../extension/src/lib/i18n.js';
+import { setLang, getLang, dir, locale, t, categoryLabel } from '../../extension/src/lib/i18n.js';
 
 const LANGS = ['he', 'en', 'ar', 'ru', 'es', 'fr'];
 
@@ -27,7 +27,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const i18nPath = path.join(path.dirname(fileURLToPath(import.meta.url)), '../../../extension/src/lib/i18n.js');
+const i18nPath = path.join(path.dirname(fileURLToPath(import.meta.url)), '../../extension/src/lib/i18n.js');
 const src = fs.readFileSync(i18nPath, 'utf8');
 const dictMatch = src.match(/const DICT = (\{[\s\S]*?\n\};)/);
 if (!dictMatch) throw new Error('could not locate DICT in i18n.js — test needs updating to match file structure');

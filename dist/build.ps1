@@ -1,11 +1,11 @@
 # Builds a clean Chrome Web Store upload zip from the extension/ folder.
 # The zip contains ONLY the runtime files, with manifest.json at the zip root.
-# Output: store-assets/dev/timetrack-v<version>.zip
-# Usage:  pwsh store-assets/dev/build.ps1
+# Output: dist/timetrack-v<version>.zip
+# Usage:  pwsh dist/build.ps1
 
 $ErrorActionPreference = 'Stop'
-# store-assets/dev/build.ps1  ->  project root is two levels up
-$root = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
+# dist/build.ps1  ->  project root is one level up
+$root = Split-Path -Parent $PSScriptRoot
 $extDir = Join-Path $root 'extension'
 
 $manifest = Get-Content (Join-Path $extDir 'manifest.json') -Raw | ConvertFrom-Json

@@ -54,11 +54,11 @@ globalThis.chrome = {
   },
 };
 
-const storage = await import('../../../extension/src/lib/storage.js');
+const storage = await import('../../extension/src/lib/storage.js');
 const send = (msg) => new Promise((res) => messageListener(msg, {}, res));
 const settle = () => new Promise((r) => setTimeout(r, 20));
 
-before(async () => { await import('../../../extension/background.js'); await settle(); });
+before(async () => { await import('../../extension/background.js'); await settle(); });
 beforeEach(() => { updates = []; tabsList = []; });
 
 test('block mode redirects a blocked site to the block page', async () => {

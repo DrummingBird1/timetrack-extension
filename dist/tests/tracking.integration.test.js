@@ -62,7 +62,7 @@ globalThis.chrome = {
   },
 };
 
-const storage = await import('../../../extension/src/lib/storage.js');
+const storage = await import('../../extension/src/lib/storage.js');
 function send(msg) { return new Promise((res) => { messageListener(msg, {}, res); }); }
 const settle = () => new Promise((r) => setTimeout(r, 30));
 
@@ -74,7 +74,7 @@ function youtubeSeconds() {
 }
 
 before(async () => {
-  await import('../../../extension/background.js'); // runs init(), registers listeners, starts a segment
+  await import('../../extension/background.js'); // runs init(), registers listeners, starts a segment
   await settle();
 });
 
