@@ -91,9 +91,12 @@ test('favicon is a local data URI, never a network URL', () => {
   assert.equal(favicon('youtube.com'), uri);
 });
 
-test('weekdaysShort returns 7 labels per language', () => {
-  assert.equal(weekdaysShort('he').length, 7);
+test('weekdaysShort returns 7 labels per language, falls back to Hebrew for unknown', () => {
+  for (const l of ['he', 'en', 'ar', 'ru', 'es', 'fr']) {
+    assert.equal(weekdaysShort(l).length, 7, `${l} should have 7 weekday labels`);
+  }
   assert.equal(weekdaysShort('en')[0], 'Su');
+  assert.deepEqual(weekdaysShort('xx'), weekdaysShort('he')); // unrecognized -> Hebrew fallback
 });
 
 test('sum and clamp', () => {

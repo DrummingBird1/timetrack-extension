@@ -1,0 +1,32 @@
+<svg viewBox="0 0 360 300" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="privAccent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8b5cf6"/>
+      <stop offset="1" stop-color="#6366f1"/>
+    </linearGradient>
+    <radialGradient id="privGlow" cx="0.5" cy="0.4" r="0.6">
+      <stop offset="0" stop-color="#8b5cf6" stop-opacity="0.20"/>
+      <stop offset="1" stop-color="#8b5cf6" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="360" height="300" rx="24" fill="#15151f"/>
+  <rect width="360" height="300" rx="24" fill="url(#privGlow)"/>
+
+  <!-- device silhouette behind the shield -->
+  <rect x="110" y="150" width="140" height="90" rx="10" fill="#1c1c28" stroke="#2a2a3a" stroke-width="1.5"/>
+  <rect x="122" y="162" width="116" height="8" rx="4" fill="#232331"/>
+  <rect x="122" y="176" width="80" height="8" rx="4" fill="#232331"/>
+
+  <!-- shield -->
+  <g transform="translate(180,120)">
+    <path d="M0,-58 L52,-38 V6 C52,44 26,66 0,78 C-26,66 -52,44 -52,6 V-38 Z"
+      fill="url(#privAccent)" stroke="#0c0c14" stroke-width="4"/>
+    <!-- lock -->
+    <rect x="-18" y="-8" width="36" height="30" rx="7" fill="#0c0c14"/>
+    <path d="M-11,-8 V-18 a11,11 0 0 1 22,0 V-8" fill="none" stroke="#0c0c14" stroke-width="6"/>
+    <circle cx="0" cy="6" r="5" fill="#8b5cf6"/>
+  </g>
+
+  <rect x="70" y="238" width="220" height="14" rx="7" fill="#232331"/>
+  <rect x="118" y="264" width="124" height="10" rx="5" fill="#65657c"/>
+</svg>

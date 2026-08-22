@@ -4,6 +4,49 @@ All notable changes to TimeTrack are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/); this project uses
 [Semantic Versioning](https://semver.org/).
 
+## [1.3.0] — 2026-08-23
+
+### Added
+- **Four new UI languages**: Arabic, Russian, Spanish, and French, alongside the
+  existing Hebrew (default) and English. The full interface — dashboard, popup,
+  focus mode, block page — switches live between all six, same as before.
+  Professionally translated (all 249 UI strings per language), with every
+  `{placeholder}` token and emoji verified to match the source exactly.
+- **Marketing website** at `store-assets/site/` (deployed to GitHub Pages),
+  replacing the previous privacy-policy-only page. Bilingual (English/Hebrew)
+  with a live toggle; the privacy policy is now presented as a section within
+  the same site rather than a standalone page.
+- **New promotional graphics** (`store-assets/promo/`): a hero illustration and
+  four feature graphics (focus mode, insights, privacy, backup), hand-authored
+  as SVG in the app's own visual language — dependency-free, matching the
+  extension's existing hand-rolled-chart philosophy.
+
+### Changed
+- **`i18n.js`'s `dir()`/`locale()` generalized** from a hardcoded Hebrew-is-the-
+  only-RTL-language binary to a per-language lookup table (`LANG_META`), so
+  adding a language no longer requires touching direction/locale logic by hand.
+  Same generalization applied to `utils.js`'s `weekdaysShort()`/`weekdaysFull()`
+  and `DURATION_UNITS`.
+- Fixed three call sites (`dashboard.js`, `popup.js`, `blocked.js`) that set
+  `document.documentElement.lang` via the same old he/en-only binary — they now
+  use the normalized language from `i18n.getLang()`, so Arabic/Russian/Spanish/
+  French pages get a correct `lang` attribute instead of being mislabeled `he`.
+
+### Housekeeping
+- Old screenshots, promo images, and superseded build zips moved to a new
+  `archive/` folder at the repo root (git history preserved for tracked files
+  via `git mv`) — see `archive/README.md`.
+
+### Notes
+- Tests: 56 → 63. New `i18n.test.js` programmatically verifies all six
+  languages have the exact same key set as the Hebrew source, identical
+  placeholder tokens per key, and that no language is a silent untranslated
+  copy — this is now a permanent regression guard, not a one-time manual check.
+- No schema change; no changes to tracking/focus/backup engine logic in this
+  release (see [1.2.1] for the most recent logic changes).
+- Chrome Web Store screenshots still need a real in-browser capture pass before
+  store submission (unchanged standing gap — see `store-assets/screenshots/README.md`).
+
 ## [1.2.1] — 2026-08-16
 
 A small patch fixing two real issues found while auditing the encrypted-backup

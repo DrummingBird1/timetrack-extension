@@ -14,16 +14,34 @@ unless the user explicitly enables a backup target. The UI is **Hebrew, RTL**.
 
 ## Repository layout
 
-Exactly two top-level folders (plus root docs):
+Three top-level folders (plus root docs):
 
 - **`extension/`** — the shippable extension (this is what you load-unpacked and
   zip for the store). Self-contained: `manifest.json`, `background.js`, `icons/`,
   `src/`.
 - **`store-assets/`** — everything for the Chrome Web Store: `PRIVACY.md`,
-  `STORE_LISTING.md`, `promo/` (promo images), `screenshots/`, and `dev/`
-  (the test suite, `package.json`, and `build.ps1`).
+  `STORE_LISTING.md`, `promo/` (promo graphics), `screenshots/`, `site/` (the
+  marketing website source, deployed to the `gh-pages` branch — see below), and
+  `dev/` (the test suite, `package.json`, and `build.ps1`).
+- **`archive/`** — superseded assets kept for reference (old screenshots/promo
+  images, old build zips). Not part of the current release; see `archive/README.md`.
 
 Paths below are relative to `extension/`.
+
+## Marketing site (GitHub Pages)
+
+`store-assets/site/index.html` is the source of truth for the public site at
+`https://drummingbird1.github.io/timetrack-extension/` — a single self-contained
+file (inline CSS/SVG/JS, no external requests, no build step), matching the
+extension's own no-dependency ethos. It has a tiny two-language (en/he) runtime
+toggle (a `STR` dict + `data-t` attributes, `localStorage`-persisted) — this is
+deliberately a separate, much smaller pattern from `extension/src/lib/i18n.js`
+(the site isn't part of the shippable extension bundle, and only needs the two
+languages the maintainer writes copy in). The privacy-policy section's content
+mirrors `store-assets/PRIVACY.md`; keep them in sync when the policy changes.
+**Deploying it is a manual step** — copy `store-assets/site/*` (including
+`.nojekyll`) to the `gh-pages` branch root and push; this does not happen
+automatically on a release.
 
 ## How to run / load it
 
@@ -140,11 +158,22 @@ of one giant blob, which keeps writes cheap as history grows.
   goes through `storage.js`; only `background.js` *writes* tracking data.
 - **Theming:** all colors are CSS variables; charts read them via
   `getComputedStyle`. Light/dark/auto handled by `data-theme` on `<html>`.
-- **i18n:** UI text lives in `i18n.js` (he + en). In HTML use `data-i18n` /
-  `data-i18n-ph` / `data-i18n-title` and call `localize()`; in JS use `t(key,
-  vars)`. Adding a string means adding the key to **both** language blocks.
-  `setLang()` also flips `formatDuration` units and `dir`. Default is Hebrew, RTL.
-  Durations format via `formatDuration`/`formatClock`; dates via `locale()`.
+- **i18n:** UI text lives in `i18n.js` — six languages: `he` (default, RTL),
+  `en`, `ar` (RTL), `ru`, `es`, `fr`. In HTML use `data-i18n` / `data-i18n-ph` /
+  `data-i18n-title` and call `localize()`; in JS use `t(key, vars)`. Adding a
+  string means adding the key to **all six** language blocks — `i18n.test.js`
+  enforces this (fails the build if any language's key set or `{placeholder}`
+  tokens drift from `he`, the source language). Direction/locale come from the
+  `LANG_META` lookup (`dir()`/`locale()`) — extend that table, don't hardcode a
+  he-or-not binary anywhere; the same applies to `utils.js`'s
+  `weekdaysShort()`/`weekdaysFull()`/`DURATION_UNITS`, which use the same
+  per-language lookup pattern. `setLang()` also flips `formatDuration` units.
+  When setting `document.documentElement.lang` from settings, use
+  `i18n.getLang()` (the normalized/fallback-applied value), not
+  `settings.language` directly — three UI entry points do this correctly now
+  (`dashboard.js`, `popup.js`, `blocked.js`); don't reintroduce a raw binary
+  check when adding a fourth. Durations format via `formatDuration`/
+  `formatClock`; dates via `locale()`.
 - **Time math:** all day-keys are **local** dates. Use `dayKey()` / `parseDayKey()`,
   never hand-roll date strings (UTC drift bugs).
 
@@ -262,10 +291,12 @@ No host permissions — redirection uses the existing `tabs` API.
 
 ## Tests
 
-From `store-assets/dev/`, `npm test` (or `node --test`) runs the suite (51 cases):
+From `store-assets/dev/`, `npm test` (or `node --test`) runs the suite (63 cases):
 
-- **Unit** (`utils.test.js`, `stats.test.js`) — the pure modules, imported directly
-  (includes `generateInsights`, `domainPeakHour` and `domainHourly`).
+- **Unit** (`utils.test.js`, `stats.test.js`, `i18n.test.js`) — the pure modules,
+  imported directly (includes `generateInsights`, `domainPeakHour`,
+  `domainHourly`, and cross-language key/placeholder parity across all six
+  `i18n.js` dictionaries).
 - **Integration** (`backup.integration.test.js`, `tracking.integration.test.js`,
   `focus.integration.test.js`) — exercise the real `storage.js`/`backup.js`/
   `crypto.js` and the `background.js` tracking + focus engines against an in-memory
@@ -280,14 +311,20 @@ the focus-mode tab redirect — those need the extension loaded in a real browse
 ## Ideas / not-yet-done
 
 - Google Drive OAuth backup (see note above).
-- Translating the built-in default category map / public-suffix list beyond he/en.
+- Extending `DEFAULT_DOMAIN_CATEGORY` (`categories.js`) and `MULTI_TLDS`
+  (`utils.js`) for domains/TLDs more common outside Israeli/US/global-English
+  usage — the UI text is now translated into all 6 languages, but the built-in
+  category defaults still skew toward he/en-market sites.
 - Scheduled focus (auto-start a session at set times / weekdays).
 - Site-table virtualization for very large histories; a settings search box and an
   onboarding tour with demo data.
 - A dedicated Webtime Tracker importer (the generic CSV import covers migration
   today, but not their native export format directly).
 - Weekly email summary (only an in-browser notification exists today).
+- Automate the `store-assets/site/` → `gh-pages` deploy (currently a manual copy
+  + push) — e.g. a GitHub Actions workflow triggered on changes to that folder.
 
 Done in 1.2.0 (previously listed here): per-site **hourly** timeline in the
 drill-down (uses the per-domain `dh` map), and reaching the blacklist / focus
-per-domain settings from the UI.
+per-domain settings from the UI. Done in 1.3.0: UI translated into Arabic,
+Russian, Spanish, and French (6 languages total); the marketing/privacy site.

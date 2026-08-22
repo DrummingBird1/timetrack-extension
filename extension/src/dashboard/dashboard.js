@@ -15,7 +15,7 @@ import {
 } from '../lib/stats.js';
 import { categorize, CATEGORY_DEFS, CATEGORY_ORDER, categoryDef } from '../lib/categories.js';
 import { barChart, donutChart, heatmap } from '../lib/charts.js';
-import { setLang, t, dir, locale, localize, categoryLabel } from '../lib/i18n.js';
+import { setLang, getLang, t, dir, locale, localize, categoryLabel } from '../lib/i18n.js';
 
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => document.querySelectorAll(s);
@@ -47,7 +47,7 @@ function applyTheme() {
 
 function applyLanguage() {
   setLang(settings.language || 'he');
-  document.documentElement.lang = settings.language === 'en' ? 'en' : 'he';
+  document.documentElement.lang = getLang();
   document.documentElement.dir = dir();
   localize(document);
   $('#pageTitle').textContent = t(`title.${currentTab}`);

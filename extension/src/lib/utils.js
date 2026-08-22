@@ -102,6 +102,10 @@ export function domainFromUrl(url, groupSubdomains = true) {
 const DURATION_UNITS = {
   he: { h: 'שע׳', m: 'דק׳', s: 'שנ׳' },
   en: { h: 'h', m: 'm', s: 's' },
+  ar: { h: 'س', m: 'د', s: 'ث' },
+  ru: { h: 'ч', m: 'мин', s: 'с' },
+  es: { h: 'h', m: 'min', s: 's' },
+  fr: { h: 'h', m: 'min', s: 's' },
 };
 let durLang = 'he';
 export function setDurationLocale(l) {
@@ -161,13 +165,24 @@ export const WEEKDAYS_HE = ['א׳', 'ב׳', 'ג׳', 'ד׳', 'ה׳', 'ו׳', 'ש�
 export const WEEKDAYS_FULL_HE = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
 export const WEEKDAYS_EN = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 export const WEEKDAYS_FULL_EN = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+export const WEEKDAYS_AR = ['أحد', 'اثن', 'ثلا', 'أرب', 'خمي', 'جمع', 'سبت'];
+export const WEEKDAYS_FULL_AR = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+export const WEEKDAYS_RU = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+export const WEEKDAYS_FULL_RU = ['Воскресенье', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'];
+export const WEEKDAYS_ES = ['Do', 'Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá'];
+export const WEEKDAYS_FULL_ES = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+export const WEEKDAYS_FR = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+export const WEEKDAYS_FULL_FR = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+
+const WEEKDAYS_SHORT_BY_LANG = { he: WEEKDAYS_HE, en: WEEKDAYS_EN, ar: WEEKDAYS_AR, ru: WEEKDAYS_RU, es: WEEKDAYS_ES, fr: WEEKDAYS_FR };
+const WEEKDAYS_FULL_BY_LANG = { he: WEEKDAYS_FULL_HE, en: WEEKDAYS_FULL_EN, ar: WEEKDAYS_FULL_AR, ru: WEEKDAYS_FULL_RU, es: WEEKDAYS_FULL_ES, fr: WEEKDAYS_FULL_FR };
 
 export function weekdaysShort(l = 'he') {
-  return l === 'en' ? WEEKDAYS_EN : WEEKDAYS_HE;
+  return WEEKDAYS_SHORT_BY_LANG[l] || WEEKDAYS_HE;
 }
 
 export function weekdaysFull(l = 'he') {
-  return l === 'en' ? WEEKDAYS_FULL_EN : WEEKDAYS_FULL_HE;
+  return WEEKDAYS_FULL_BY_LANG[l] || WEEKDAYS_FULL_HE;
 }
 
 export function clamp(n, lo, hi) {

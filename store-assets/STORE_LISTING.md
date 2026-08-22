@@ -38,7 +38,7 @@ dashboard (no manifest changes needed).
 > • Focus mode (Pomodoro) with long breaks — block distracting categories or
 >   specific sites, or allow-list only what you need
 > • Encrypted cloud backup (Google sync or your own server) + JSON/CSV export
-> • Hebrew & English UI, light/dark themes
+> • Six languages — Hebrew, English, Arabic, Russian, Spanish, French — light/dark themes
 >
 > No external dependencies, no remote code, no analytics, no third-party trackers.
 > Site icons are generated locally so no domain you visit ever leaves your device.
@@ -57,7 +57,7 @@ dashboard (no manifest changes needed).
 > • מצב פוקוס (Pomodoro) עם הפסקות ארוכות — חסימת קטגוריות או אתרים ספציפיים,
 >   או רשימת היתר בלבד
 > • גיבוי ענן מוצפן (Google או שרת שלך) + ייצוא JSON/CSV
-> • ממשק עברית ואנגלית, ערכות נושא בהיר/כהה
+> • שש שפות — עברית, אנגלית, ערבית, רוסית, ספרדית, צרפתית — ערכות נושא בהיר/כהה
 >
 > ללא תלויות חיצוניות, ללא קוד מרוחק, ללא אנליטיקס וללא מעקב צד-שלישי.
 

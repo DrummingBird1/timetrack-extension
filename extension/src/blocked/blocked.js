@@ -1,5 +1,5 @@
 import { getSettings } from '../lib/storage.js';
-import { setLang, t, dir } from '../lib/i18n.js';
+import { setLang, getLang, t, dir } from '../lib/i18n.js';
 import { formatClock } from '../lib/utils.js';
 
 const $ = (id) => document.getElementById(id);
@@ -36,7 +36,7 @@ function tick(endsAt) {
 async function main() {
   const settings = await getSettings();
   setLang(settings.language || 'he');
-  document.documentElement.lang = settings.language === 'en' ? 'en' : 'he';
+  document.documentElement.lang = getLang();
   document.documentElement.dir = dir();
   localizeStatic();
 

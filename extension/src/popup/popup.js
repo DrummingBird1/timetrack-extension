@@ -4,7 +4,7 @@ import {
 } from '../lib/utils.js';
 import { aggregateDomains, topSites, dailyTotals } from '../lib/stats.js';
 import { barChart } from '../lib/charts.js';
-import { setLang, t, dir, locale, localize } from '../lib/i18n.js';
+import { setLang, getLang, t, dir, locale, localize } from '../lib/i18n.js';
 
 const $ = (id) => document.getElementById(id);
 let live = null;
@@ -25,7 +25,7 @@ function iconFor(domain) {
 
 function applyLang() {
   setLang(settings.language || 'he');
-  document.documentElement.lang = settings.language === 'en' ? 'en' : 'he';
+  document.documentElement.lang = getLang();
   document.documentElement.dir = dir();
   if (settings.theme === 'light') document.documentElement.style.colorScheme = 'light';
   else if (settings.theme === 'dark') document.documentElement.style.colorScheme = 'dark';
