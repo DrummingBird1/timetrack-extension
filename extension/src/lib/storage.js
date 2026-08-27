@@ -30,6 +30,7 @@ export const DEFAULT_SETTINGS = {
   weeklySummary: true,           // weekly digest notification
   categoryMap: {},               // domain -> category override
   blacklist: [],                 // domains never tracked
+  pinnedSites: [],                // domains pinned to the top of the Sites table
   realFavicons: false,           // use Chrome's local _favicon icons (opt-in perm)
   focus: {
     defaultMinutes: 25,                          // suggested work length
@@ -73,6 +74,21 @@ export async function getSettings() {
 export async function saveSettings(patch) {
   const current = await getSettings();
   const next = deepMerge(current, patch);
+  await chrome.storage.local.set({ [K.SETTINGS]: next });
+  return next;
+}
+
+/**
+ * Replace one top-level settings key with an exact value, bypassing deepMerge's
+ * add/update-only recursion for that key. Needed whenever a caller must DELETE a
+ * property from a nested object (categoryMap, siteLimits) — deepMerge can only
+ * ever add or overwrite keys it sees in the patch, so a patch built by locally
+ * deleting a key and passing the smaller object leaves the old key untouched in
+ * storage (arrays don't have this problem: deepMerge replaces them wholesale).
+ */
+export async function saveSettingsKey(key, value) {
+  const current = await getSettings();
+  const next = { ...current, [key]: value };
   await chrome.storage.local.set({ [K.SETTINGS]: next });
   return next;
 }
@@ -193,6 +209,10 @@ export async function exportAll() {
 /**
  * Restore a snapshot. mode "replace" wipes existing days first; "merge" keeps
  * the larger time/visits per domain so re-importing never double counts.
+ * Returns { days, domainsChanged }: domainsChanged counts domain-day records
+ * whose merged value actually differs from what was already stored (null in
+ * "replace" mode, where the concept of a "conflict" doesn't apply — everything
+ * is wiped first).
  */
 export async function importAll(snapshot, { mode = 'merge', includeSettings = true } = {}) {
   if (!snapshot || typeof snapshot !== 'object' || !snapshot.days) {
@@ -206,16 +226,43 @@ export async function importAll(snapshot, { mode = 'merge', includeSettings = tr
   const writes = {};
   const idx = new Set(await getIndex());
   const existing = await getDays(Object.keys(snapshot.days));
+  let domainsChanged = 0;
 
   for (const [key, incoming] of Object.entries(snapshot.days)) {
     const base = existing[key] || emptyDay();
-    const merged = mode === 'replace' ? incoming : mergeDay(base, incoming);
-    writes[K.day(key)] = merged;
+    if (mode === 'replace') {
+      writes[K.day(key)] = incoming;
+    } else {
+      const { day, changed } = mergeDay(base, incoming);
+      writes[K.day(key)] = day;
+      domainsChanged += changed;
+    }
     idx.add(key);
   }
   writes[K.INDEX] = [...idx].sort();
   await chrome.storage.local.set(writes);
-  return Object.keys(snapshot.days).length;
+  return { days: Object.keys(snapshot.days).length, domainsChanged: mode === 'merge' ? domainsChanged : null };
+}
+
+/** Pure summary of a snapshot's shape — for confirming a restore before committing it. */
+export function summarizeSnapshot(snapshot) {
+  const days = (snapshot && snapshot.days) || {};
+  const keys = Object.keys(days).sort();
+  let totalSeconds = 0;
+  const sites = new Set();
+  for (const day of Object.values(days)) {
+    for (const [domain, rec] of Object.entries(day.domains || {})) {
+      totalSeconds += rec.t || 0;
+      sites.add(domain);
+    }
+  }
+  return {
+    dayCount: keys.length,
+    firstDay: keys[0] || null,
+    lastDay: keys[keys.length - 1] || null,
+    totalSeconds,
+    siteCount: sites.size,
+  };
 }
 
 function mergeDh(a = {}, b = {}) {
@@ -224,18 +271,99 @@ function mergeDh(a = {}, b = {}) {
   return Object.keys(out).length ? out : undefined;
 }
 
+/** Returns { day, changed } — changed counts domains whose merged value grew. */
 function mergeDay(a, b) {
   const out = { domains: { ...a.domains }, hours: (a.hours || new Array(24).fill(0)).slice() };
+  let changed = 0;
   for (const [domain, rec] of Object.entries(b.domains || {})) {
     const cur = out.domains[domain] || { t: 0, v: 0 };
     const merged = { t: Math.max(cur.t, rec.t || 0), v: Math.max(cur.v, rec.v || 0) };
     const dh = mergeDh(cur.dh, rec.dh);
     if (dh) merged.dh = dh;
+    if (merged.t !== cur.t || merged.v !== cur.v) changed++;
     out.domains[domain] = merged;
   }
   const bh = b.hours || [];
   for (let i = 0; i < 24; i++) out.hours[i] = Math.max(out.hours[i] || 0, bh[i] || 0);
-  return out;
+  return { day: out, changed };
+}
+
+/**
+ * Combine one domain's entire history into another (e.g. a site rebranded) and
+ * remove the old domain. Sums t/v/dh per day (these are two distinct domains
+ * being combined, not a duplicate re-import of the same data — max-merging like
+ * importAll would silently drop whichever domain has less time). Also migrates
+ * categoryMap/siteLimits/blacklist/focus per-domain lists that reference the old
+ * domain. Returns the number of day records touched.
+ */
+export async function mergeDomainAlias(oldDomain, newDomain) {
+  if (!oldDomain || !newDomain || oldDomain === newDomain) return 0;
+  const idx = await getIndex();
+  const days = await getDays(idx);
+  const writes = {};
+  let touched = 0;
+
+  for (const key of idx) {
+    const day = days[key];
+    const oldRec = day && day.domains && day.domains[oldDomain];
+    if (!oldRec) continue;
+    const newRec = day.domains[newDomain] || { t: 0, v: 0 };
+    const merged = { t: (newRec.t || 0) + (oldRec.t || 0), v: (newRec.v || 0) + (oldRec.v || 0) };
+    const dh = sumDh(newRec.dh, oldRec.dh);
+    if (dh) merged.dh = dh;
+    const nextDomains = { ...day.domains, [newDomain]: merged };
+    delete nextDomains[oldDomain];
+    writes[K.day(key)] = { ...day, domains: nextDomains };
+    touched++;
+  }
+  if (touched) await chrome.storage.local.set(writes);
+
+  const settings = await getSettings();
+  if (settings.categoryMap[oldDomain] != null) {
+    const map = { ...settings.categoryMap };
+    if (map[newDomain] == null) map[newDomain] = map[oldDomain];
+    delete map[oldDomain];
+    await saveSettingsKey('categoryMap', map);
+  }
+  const freshAfterCat = await getSettings();
+  if (freshAfterCat.siteLimits[oldDomain] != null) {
+    const limits = { ...freshAfterCat.siteLimits };
+    if (limits[newDomain] == null) limits[newDomain] = limits[oldDomain];
+    delete limits[oldDomain];
+    await saveSettingsKey('siteLimits', limits);
+  }
+  const freshAfterLimits = await getSettings();
+  if (freshAfterLimits.blacklist.includes(oldDomain)) {
+    const set = new Set(freshAfterLimits.blacklist);
+    set.delete(oldDomain);
+    set.add(newDomain);
+    await saveSettings({ blacklist: [...set] });
+  }
+  const freshAfterBlacklist = await getSettings();
+  for (const listKey of ['blockDomains', 'allowDomains']) {
+    const list = freshAfterBlacklist.focus[listKey] || [];
+    if (list.includes(oldDomain)) {
+      const set = new Set(list);
+      set.delete(oldDomain);
+      set.add(newDomain);
+      await saveSettings({ focus: { [listKey]: [...set] } });
+    }
+  }
+  if (freshAfterBlacklist.pinnedSites && freshAfterBlacklist.pinnedSites.includes(oldDomain)) {
+    const set = new Set(freshAfterBlacklist.pinnedSites);
+    set.delete(oldDomain);
+    set.add(newDomain);
+    await saveSettings({ pinnedSites: [...set] });
+  }
+
+  return touched;
+}
+
+/** Sum (not max) two per-domain hourly maps — used when combining distinct domains. */
+function sumDh(a = {}, b = {}) {
+  const out = { ...a };
+  for (const [h, v] of Object.entries(b)) out[h] = (out[h] || 0) + (v || 0);
+  return Object.keys(out).length ? out : undefined;
 }
 
 // ---- schema migrations ----

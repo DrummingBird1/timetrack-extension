@@ -189,6 +189,23 @@ export function clamp(n, lo, hi) {
   return Math.min(hi, Math.max(lo, n));
 }
 
+/**
+ * Hand-rolled passphrase strength heuristic (no dependency): counts character
+ * classes present and combines with length. Returns null for an empty string
+ * (caller should hide the meter), otherwise 'weak' | 'medium' | 'strong'.
+ */
+export function passphraseStrength(pw) {
+  if (!pw) return null;
+  let classes = 0;
+  if (/[a-z]/.test(pw)) classes++;
+  if (/[A-Z]/.test(pw)) classes++;
+  if (/[0-9]/.test(pw)) classes++;
+  if (/[^a-zA-Z0-9]/.test(pw)) classes++;
+  if (pw.length < 8 || classes < 2) return 'weak';
+  if (pw.length >= 12 && classes >= 3) return 'strong';
+  return 'medium';
+}
+
 export function sum(arr) {
   return arr.reduce((a, b) => a + b, 0);
 }

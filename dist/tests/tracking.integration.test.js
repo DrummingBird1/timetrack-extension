@@ -10,7 +10,9 @@ let clock = Date.now();
 const realNow = Date.now;
 Date.now = () => clock;
 
-function area() {
+let mockBytesInUse = 0; // controllable per-test for the storage-quota-warning tests
+
+function area({ trackBytes = false } = {}) {
   const store = new Map();
   return {
     _store: store,
@@ -22,7 +24,7 @@ function area() {
     },
     async set(obj) { for (const [k, v] of Object.entries(obj)) store.set(k, structuredClone(v)); },
     async remove(keys) { for (const k of (Array.isArray(keys) ? keys : [keys])) store.delete(k); },
-    async getBytesInUse() { return 0; },
+    async getBytesInUse() { return trackBytes ? mockBytesInUse : 0; },
   };
 }
 
@@ -33,8 +35,10 @@ function evt() { const fns = []; return { addListener: (f) => fns.push(f), _fire
 const activeTab = { id: 1, url: 'https://youtube.com/watch?v=1', audible: false };
 let messageListener = null;
 
+let createdNotifications = [];
+
 globalThis.chrome = {
-  storage: { local: area(), session: area() },
+  storage: { local: area({ trackBytes: true }), session: area() },
   tabs: {
     query: async (q) => (q && q.active ? [activeTab] : [activeTab]),
     update: async () => {},
@@ -50,10 +54,14 @@ globalThis.chrome = {
     queryState: async () => 'active',
     onStateChanged: (listeners.idle = evt()),
   },
-  alarms: { create: () => {}, onAlarm: evt() },
+  alarms: { create: () => {}, onAlarm: (listeners.alarm = evt()) },
   commands: { onCommand: evt() },
   action: { setBadgeBackgroundColor: () => {}, setBadgeText: () => {} },
-  notifications: { create: () => {} },
+  notifications: {
+    create: (id, opts) => { createdNotifications.push({ id, opts }); },
+    clear: () => {},
+    onButtonClicked: evt(),
+  },
   runtime: {
     getURL: (p) => `chrome-extension://test/${p}`,
     onMessage: { addListener: (f) => { messageListener = f; } },
@@ -63,6 +71,7 @@ globalThis.chrome = {
 };
 
 const storage = await import('../../extension/src/lib/storage.js');
+const { dayKey } = await import('../../extension/src/lib/utils.js');
 function send(msg) { return new Promise((res) => { messageListener(msg, {}, res); }); }
 const settle = () => new Promise((r) => setTimeout(r, 30));
 
@@ -132,5 +141,93 @@ test('disabling tracking stops counting', async () => {
   clock += 60_000;
   await send({ type: 'flush' });
   assert.equal(youtubeSeconds(), base, 'counted while disabled');
+});
+
+test('daily limit fires an 80% warning then a 100%-reached notification, each once', async () => {
+  await send({ type: 'setEnabled', value: true });
+  await storage.saveSettings({ notifyLimits: true, dailyLimitMinutes: 10, blacklist: [] }); // 600s
+  const today = dayKey();
+  await chrome.storage.local.remove([`ttt_day_${today}`, 'ttt_index']); // clean slate for exact limit math
+  await send({ type: 'settingsChanged' });
+
+  await storage.addTime({ dateKey: today, domain: 'youtube.com', seconds: 500, hour: 12 }); // 83% of 600s
+  createdNotifications = [];
+  await send({ type: 'flush' });
+  await settle();
+  const warn = createdNotifications.find((n) => n.id === `daily:${today}:80`);
+  assert.ok(warn, 'expected an 80% warning notification');
+  assert.equal(warn.opts.buttons?.length, 1, 'limit notifications offer a snooze button');
+
+  await storage.addTime({ dateKey: today, domain: 'youtube.com', seconds: 150, hour: 12 }); // now 650s, past 600s
+  createdNotifications = [];
+  await send({ type: 'flush' });
+  await settle();
+  const reached = createdNotifications.find((n) => n.id === `daily:${today}`);
+  assert.ok(reached, 'expected the 100%-reached notification');
+
+  // Both are deduped for the rest of the day: flushing again fires neither again.
+  createdNotifications = [];
+  await send({ type: 'flush' });
+  await settle();
+  assert.equal(createdNotifications.filter((n) => n.id.startsWith('daily:')).length, 0);
+
+  await storage.saveSettings({ dailyLimitMinutes: 0 }); // restore for later tests
+});
+
+test('snoozing a limit notification suppresses it for the snooze window', async () => {
+  await storage.saveSettings({ siteLimits: { 'youtube.com': 5 } }); // 300s
+  const today = dayKey();
+  await chrome.storage.local.remove([`ttt_day_${today}`, 'ttt_index']);
+  await send({ type: 'settingsChanged' });
+
+  await storage.addTime({ dateKey: today, domain: 'youtube.com', seconds: 260, hour: 12 }); // 87% of 300s
+  createdNotifications = [];
+  await send({ type: 'flush' });
+  await settle();
+  const warnId = `site:${today}:youtube.com:80`;
+  assert.ok(createdNotifications.some((n) => n.id === warnId), 'expected the site 80% warning');
+
+  await chrome.notifications.onButtonClicked._fire(warnId, 0); // click its snooze button
+  await settle();
+
+  // Push well past 100% - normally fires the reached notification, but the
+  // snooze should suppress both it and any repeat of the warning.
+  createdNotifications = [];
+  await storage.addTime({ dateKey: today, domain: 'youtube.com', seconds: 100, hour: 12 }); // 360s > 300s
+  await send({ type: 'flush' });
+  await settle();
+  assert.equal(createdNotifications.filter((n) => n.id.startsWith('site:')).length, 0, 'snoozed limit should not fire');
+
+  await storage.saveSettings({ siteLimits: {} }); // restore for later tests
+});
+
+test('a storage-quota warning fires once when local storage crosses the threshold', async () => {
+  // Storage warnings use notify()'s default '' id (not snoozable/deduped-by-id
+  // like limit notifications), so detect them by their message content instead
+  // (the notif.storageWarn.* keys), since other plain notify() calls (e.g. the
+  // weekly summary, if it happens to also fire on this alarm tick) share that
+  // same empty id.
+  mockBytesInUse = 0;
+  createdNotifications = [];
+  await listeners.alarm._fire({ name: 'ttt_backup' });
+  await settle();
+  const hasWarnBelow = createdNotifications.some((n) => /TimeTrack is using|משתמש ב-/.test(n.opts?.message || ''));
+  assert.equal(hasWarnBelow, false, 'no warning below the threshold');
+
+  mockBytesInUse = 260 * 1024 * 1024; // over the 250MB threshold
+  createdNotifications = [];
+  await listeners.alarm._fire({ name: 'ttt_backup' });
+  await settle();
+  const warned = createdNotifications.some((n) => /TimeTrack is using|משתמש ב-/.test(n.opts?.message || ''));
+  assert.ok(warned, 'expected a storage warning once over the threshold');
+
+  // Deduped via meta.lastStorageWarning: firing the alarm again does not repeat it.
+  createdNotifications = [];
+  await listeners.alarm._fire({ name: 'ttt_backup' });
+  await settle();
+  const warnedAgain = createdNotifications.some((n) => /TimeTrack is using|משתמש ב-/.test(n.opts?.message || ''));
+  assert.equal(warnedAgain, false, 'storage warning should be deduped, not repeated on every alarm tick');
+
+  mockBytesInUse = 0;
   Date.now = realNow; // restore for any later files (each file is its own process anyway)
 });

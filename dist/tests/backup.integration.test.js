@@ -104,20 +104,34 @@ test('exportAll / importAll round-trip (replace) is lossless', async () => {
   const snap = await storage.exportAll();
   await storage.clearAllData();
   assert.equal((await storage.getIndex()).length, 0);
-  const n = await storage.importAll(snap, { mode: 'replace' });
-  assert.equal(n, 5);
+  const r = await storage.importAll(snap, { mode: 'replace' });
+  assert.equal(r.days, 5);
+  assert.equal(r.domainsChanged, null, 'replace mode has no conflict-count concept');
   const day = await storage.getDay('2025-01-03');
   assert.equal(day.domains['site0.example.com'].t, 600);
 });
 
-test('importAll merge keeps the larger value (safe re-import)', async () => {
+test('importAll merge keeps the larger value and reports how many domain-days actually changed', async () => {
   await storage.addTime({ dateKey: '2025-04-01', domain: 'x.com', seconds: 1000, hour: 8 });
-  const snap = await storage.exportAll();
-  // bump local higher, then merge the older (smaller) snapshot back in
-  await storage.addTime({ dateKey: '2025-04-01', domain: 'x.com', seconds: 500, hour: 8 }); // now 1500
-  await storage.importAll(snap, { mode: 'merge' });
-  const day = await storage.getDay('2025-04-01');
-  assert.equal(day.domains['x.com'].t, 1500); // kept the larger, no double-count
+  const snap = await storage.exportAll(); // snapshot: 04-01 x.com=1000
+  await storage.clearAllData();
+  // Local now has a SMALLER value on the day the snapshot covers (merge should
+  // pick up the snapshot's larger value -> counts as changed), plus a day the
+  // snapshot doesn't cover at all (must be left untouched and not counted).
+  await storage.addTime({ dateKey: '2025-04-01', domain: 'x.com', seconds: 300, hour: 8 });
+  await storage.addTime({ dateKey: '2025-04-02', domain: 'x.com', seconds: 700, hour: 8 });
+
+  const r = await storage.importAll(snap, { mode: 'merge' });
+  assert.equal(r.days, 1); // snap only covers 04-01
+  assert.equal(r.domainsChanged, 1, 'x.com on 04-01 grew from the local 300 to the snapshot value 1000');
+  const day01 = await storage.getDay('2025-04-01');
+  assert.equal(day01.domains['x.com'].t, 1000); // merge picked up the larger snapshot value
+  const day02 = await storage.getDay('2025-04-02');
+  assert.equal(day02.domains['x.com'].t, 700); // untouched — the snapshot never covered this day
+
+  // Re-importing the SAME snapshot again is now a true no-op (nothing left to grow).
+  const r2 = await storage.importAll(snap, { mode: 'merge' });
+  assert.equal(r2.domainsChanged, 0, 're-importing an already-merged snapshot changes nothing');
 });
 
 test('pruneOld removes only days older than retention', async () => {
@@ -136,6 +150,70 @@ test('migrate stamps the schema version', async () => {
   assert.equal(r.to, storage.SCHEMA_VERSION);
   const meta = await storage.getMeta();
   assert.equal(meta.version, storage.SCHEMA_VERSION);
+});
+
+test('summarizeSnapshot reports day range, total time, and site count', () => {
+  const snap = { days: {
+    '2025-05-01': { domains: { 'a.com': { t: 100, v: 1 }, 'b.com': { t: 50, v: 1 } }, hours: new Array(24).fill(0) },
+    '2025-05-03': { domains: { 'a.com': { t: 200, v: 1 } }, hours: new Array(24).fill(0) },
+  } };
+  const s = storage.summarizeSnapshot(snap);
+  assert.deepEqual(s, { dayCount: 2, firstDay: '2025-05-01', lastDay: '2025-05-03', totalSeconds: 350, siteCount: 2 });
+  assert.deepEqual(storage.summarizeSnapshot({ days: {} }), { dayCount: 0, firstDay: null, lastDay: null, totalSeconds: 0, siteCount: 0 });
+});
+
+// ---------- settings key deletion (real bug: deepMerge can't delete nested keys) ----------
+test('saveSettingsKey actually deletes a key from a nested object (saveSettings cannot)', async () => {
+  await storage.saveSettings({ categoryMap: { 'a.com': 'social', 'b.com': 'news' } });
+  // Reproduce the bug: building a patch with the key already removed locally and
+  // passing it through saveSettings (deepMerge) leaves the old key untouched,
+  // because deepMerge only ever adds/overwrites keys it sees in the patch.
+  const afterBrokenPattern = { ...(await storage.getSettings()).categoryMap };
+  delete afterBrokenPattern['a.com'];
+  const viaSaveSettings = await storage.saveSettings({ categoryMap: afterBrokenPattern });
+  assert.ok('a.com' in viaSaveSettings.categoryMap, 'documents the deepMerge limitation this test guards against');
+
+  // saveSettingsKey does a full top-level replace, so deletion actually works.
+  const viaSaveSettingsKey = await storage.saveSettingsKey('categoryMap', afterBrokenPattern);
+  assert.ok(!('a.com' in viaSaveSettingsKey.categoryMap), 'a.com should be gone');
+  assert.equal(viaSaveSettingsKey.categoryMap['b.com'], 'news', 'other keys are preserved');
+});
+
+// ---------- domain alias-merge ----------
+test('mergeDomainAlias sums (not max-merges) two distinct domains across the full history and removes the old one', async () => {
+  await storage.addTime({ dateKey: '2025-06-01', domain: 'old-brand.com', seconds: 300, hour: 9 });
+  await storage.addVisit('2025-06-01', 'old-brand.com');
+  await storage.addTime({ dateKey: '2025-06-01', domain: 'new-brand.com', seconds: 100, hour: 10 });
+  await storage.addVisit('2025-06-01', 'new-brand.com');
+  await storage.addTime({ dateKey: '2025-06-02', domain: 'old-brand.com', seconds: 50, hour: 8 });
+  await storage.saveSettings({
+    categoryMap: { 'old-brand.com': 'productivity' },
+    siteLimits: { 'old-brand.com': 30 },
+    blacklist: ['unrelated.com'],
+  });
+
+  const touched = await storage.mergeDomainAlias('old-brand.com', 'new-brand.com');
+  assert.equal(touched, 2); // 06-01 and 06-02 both had old-brand.com
+
+  const day1 = await storage.getDay('2025-06-01');
+  assert.equal(day1.domains['new-brand.com'].t, 400); // 300 + 100, summed not maxed
+  assert.equal(day1.domains['new-brand.com'].v, 2);    // 1 + 1
+  assert.ok(!('old-brand.com' in day1.domains), 'old domain removed');
+  const day2 = await storage.getDay('2025-06-02');
+  assert.equal(day2.domains['new-brand.com'].t, 50); // old-brand.com's only entry that day
+  assert.ok(!('old-brand.com' in day2.domains));
+
+  const settings = await storage.getSettings();
+  assert.equal(settings.categoryMap['new-brand.com'], 'productivity');
+  assert.ok(!('old-brand.com' in settings.categoryMap));
+  assert.equal(settings.siteLimits['new-brand.com'], 30);
+  assert.ok(!('old-brand.com' in settings.siteLimits));
+});
+
+test('mergeDomainAlias is a no-op for missing/identical/empty domains', async () => {
+  assert.equal(await storage.mergeDomainAlias('', 'x.com'), 0);
+  assert.equal(await storage.mergeDomainAlias('x.com', 'x.com'), 0);
+  assert.equal(await storage.mergeDomainAlias('never-existed.com', 'x.com'), 0);
 });
 
 // ---------- Google sync backup ----------
@@ -203,6 +281,35 @@ test('encrypted sync backup is ciphertext and restores with passphrase', async (
   const res = await backup.restoreFromSync({ mode: 'replace', passphrase: 'correct horse battery' });
   assert.equal(res.days, 8);
   assert.deepEqual(await storage.getDay('2025-01-04'), before);
+});
+
+test('peekSync previews a plaintext backup without importing it', async () => {
+  await seed(4);
+  await backup.backupToSync();
+  const before = (await storage.getIndex()).length;
+
+  const preview = await backup.peekSync();
+  assert.equal(preview.dayCount, 4);
+  assert.equal(preview.firstDay, '2025-01-01');
+  assert.equal(preview.lastDay, '2025-01-04');
+  assert.equal(preview.siteCount, 4); // seed() uses 4 domains/day by default
+  assert.equal(preview.encrypted, false);
+  assert.ok(preview.totalSeconds > 0);
+
+  // peeking must not have imported anything
+  assert.equal((await storage.getIndex()).length, before);
+});
+
+test('peekSync reports encrypted:true without needing to fully restore, and still needs a passphrase', async () => {
+  await seed(2);
+  await storage.saveSettings({ backup: { encrypt: true, passphrase: 'peekaboo' } });
+  await backup.backupToSync();
+  await storage.saveSettings({ backup: { passphrase: '' } }); // simulate a fresh device
+
+  await assert.rejects(() => backup.peekSync(), (e) => e.code === 'ENCRYPTED');
+  const preview = await backup.peekSync({ passphrase: 'peekaboo' });
+  assert.equal(preview.encrypted, true);
+  assert.equal(preview.dayCount, 2);
 });
 
 test('restoreFromSync signals ENCRYPTED when no passphrase is available', async () => {

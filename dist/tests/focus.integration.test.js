@@ -45,7 +45,7 @@ globalThis.chrome = {
   alarms: { create: () => {}, onAlarm: evt() },
   commands: { onCommand: evt() },
   action: { setBadgeBackgroundColor: () => {}, setBadgeText: () => {} },
-  notifications: { create: () => {} },
+  notifications: { create: () => {}, clear: () => {}, onButtonClicked: evt() },
   runtime: {
     getURL: (p) => `chrome-extension://test/${p}`,
     onMessage: { addListener: (f) => { messageListener = f; } },

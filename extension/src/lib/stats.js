@@ -150,6 +150,25 @@ export function domainHourly(days, domain) {
   return any ? acc : null;
 }
 
+/**
+ * First and last day-key (within the given ordered keys) on which a domain has
+ * any recorded visit. `keys` should be sorted ascending (oldest first), as every
+ * caller in this codebase already keeps them. Returns { first, last } of day-keys,
+ * or nulls if the domain has no visits in range.
+ */
+export function firstLastVisit(days, keys, domain) {
+  let first = null;
+  let last = null;
+  for (const key of keys) {
+    const rec = days[key] && days[key].domains && days[key].domains[domain];
+    if (rec && (rec.v > 0 || rec.t > 0)) {
+      if (first == null) first = key;
+      last = key;
+    }
+  }
+  return { first, last };
+}
+
 /** Busiest hour-of-day for one domain, from its per-domain hourly map (v2). */
 export function domainPeakHour(days, domain) {
   const acc = domainHourly(days, domain);

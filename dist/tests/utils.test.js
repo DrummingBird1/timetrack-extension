@@ -4,6 +4,7 @@ import {
   dayKey, parseDayKey, addDays, rangeKeys, keysBetween, startOfWeek,
   hostnameFromUrl, registrableDomain, domainFromUrl,
   formatDuration, formatClock, favicon, setDurationLocale, weekdaysShort, sum, clamp,
+  passphraseStrength,
 } from '../../extension/src/lib/utils.js';
 
 test('dayKey / parseDayKey round-trip (local, zero-padded)', () => {
@@ -97,6 +98,15 @@ test('weekdaysShort returns 7 labels per language, falls back to Hebrew for unkn
   }
   assert.equal(weekdaysShort('en')[0], 'Su');
   assert.deepEqual(weekdaysShort('xx'), weekdaysShort('he')); // unrecognized -> Hebrew fallback
+});
+
+test('passphraseStrength classifies by length and character-class diversity', () => {
+  assert.equal(passphraseStrength(''), null);
+  assert.equal(passphraseStrength('short'), 'weak');           // < 8 chars
+  assert.equal(passphraseStrength('alllowercase'), 'weak');    // 12+ chars but only 1 class
+  assert.equal(passphraseStrength('abcd1234'), 'medium');      // 8+ chars, 2 classes, < 12
+  assert.equal(passphraseStrength('Abcdefgh1234'), 'strong');  // 12+ chars, 3 classes
+  assert.equal(passphraseStrength('Abcd1234!@#$'), 'strong');  // 12+ chars, 4 classes
 });
 
 test('sum and clamp', () => {

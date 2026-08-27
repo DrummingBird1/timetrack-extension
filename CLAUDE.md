@@ -187,13 +187,25 @@ See `DEFAULT_SETTINGS` in `src/lib/storage.js`. Notable fields: `idleSeconds`
 (min 15 — Chrome's `idle.setDetectionInterval` floor), `groupSubdomains`,
 `retentionDays`, `dailyLimitMinutes` / `siteLimits` (notifications),
 `categoryMap` (user overrides), `blacklist` (never-tracked domains, edited from
-the Settings "untracked sites" panel and the per-site drill-down), the `focus`
-sub-object (work/break/`longBreakMinutes`+`longBreakEvery`, `mode`, and the
+the Settings "untracked sites" panel and the per-site drill-down), `pinnedSites`
+(domains pinned to the top of the Sites table), the `focus` sub-object
+(work/break/`longBreakMinutes`+`longBreakEvery`, `mode`, and the
 `blockCategories`/`blockDomains`/`allowCategories`/`allowDomains` lists — all
 editable in the focus panel), and the `backup` sub-object (`syncEnabled`,
 `endpointUrl`, `endpointToken`, `autoIntervalHours`, `lastBackup`,
 `lastBackupStatus`). When settings change from the dashboard, it sends
 `settingsChanged` so the worker re-applies the idle interval and refreshes.
+
+`categoryMap` and `siteLimits` are **plain objects**, not arrays — deleting a
+key from one requires `storage.saveSettingsKey(key, value)`, not
+`saveSettings({key: value})`. `deepMerge` (the engine behind `saveSettings`)
+only ever *adds or overwrites* keys it sees in a patch; it can't delete one,
+since the merge starts from a full copy of the old object and only touches keys
+present in the new one. Arrays (`blacklist`, `focus.blockDomains`, `pinnedSites`,
+etc.) don't have this problem — `deepMerge` replaces an array wholesale via
+`patch.slice()`. This bit two existing features (category-mapping removal,
+site-limit clearing) before being caught and fixed in v1.4.0; `saveSettingsKey`
+exists specifically to sidestep it for any future nested-object deletion.
 
 ## Cloud backup
 
@@ -295,19 +307,23 @@ No host permissions — redirection uses the existing `tabs` API.
 
 ## Tests
 
-From `dist/`, `npm test` (or `node --test`) runs the suite (63 cases):
+From `dist/`, `npm test` (or `node --test`) runs the suite (74 cases):
 
 - **Unit** (`utils.test.js`, `stats.test.js`, `i18n.test.js`) — the pure modules,
   imported directly (includes `generateInsights`, `domainPeakHour`,
-  `domainHourly`, and cross-language key/placeholder parity across all six
-  `i18n.js` dictionaries).
+  `domainHourly`, `firstLastVisit`, `passphraseStrength`, and cross-language
+  key/placeholder parity across all six `i18n.js` dictionaries).
 - **Integration** (`backup.integration.test.js`, `tracking.integration.test.js`,
   `focus.integration.test.js`) — exercise the real `storage.js`/`backup.js`/
   `crypto.js` and the `background.js` tracking + focus engines against an in-memory
   **mock of the chrome.* APIs**. The sync mock enforces Google's real quotas
   (8 KB/item, 100 KB total); the tracking/focus mocks drive tabs/idle events and
-  the Pomodoro state machine with a controllable clock. These caught a real
-  sync-quota bug, so keep them green when touching backup, tracking, or focus.
+  the Pomodoro state machine with a controllable clock; the tracking mock also
+  records `chrome.notifications.create` calls and can fire `onButtonClicked` and
+  the `ttt_backup` alarm directly, so the 80%/100%/snooze limit-notification
+  flow and the storage-quota warning are driven end-to-end, not just unit-tested.
+  These caught a real sync-quota bug (and, in v1.4.0, the `deepMerge`
+  key-deletion bug), so keep them green when touching backup, tracking, or focus.
 
 What tests can't cover here: DOM rendering (popup/dashboard), chart output, and
 the focus-mode tab redirect — those need the extension loaded in a real browser.
@@ -320,15 +336,24 @@ the focus-mode tab redirect — those need the extension loaded in a real browse
   usage — the UI text is now translated into all 6 languages, but the built-in
   category defaults still skew toward he/en-market sites.
 - Scheduled focus (auto-start a session at set times / weekdays).
-- Site-table virtualization for very large histories; a settings search box and an
-  onboarding tour with demo data.
+- Site-table virtualization for very large histories; an onboarding tour with
+  demo data.
 - A dedicated Webtime Tracker importer (the generic CSV import covers migration
   today, but not their native export format directly).
 - Weekly email summary (only an in-browser notification exists today).
 - Automate the `store-assets/site/` → `gh-pages` deploy (currently a manual copy
   + push) — e.g. a GitHub Actions workflow triggered on changes to that folder.
+- Category time budgets (weekly cap per category, distinct from the existing
+  per-site/day `siteLimits`); arbitrary custom-range-vs-custom-range comparison
+  (`stats.trend()` is already generic — today's UI only ever feeds it
+  this-week-vs-last-week); a focus-score trend line + "best week"; a goal-met
+  streak distinct from the tracking streak; bulk actions on the Sites tab
+  (multi-select rows → categorize/blacklist/limit together).
 
 Done in 1.2.0 (previously listed here): per-site **hourly** timeline in the
 drill-down (uses the per-domain `dh` map), and reaching the blacklist / focus
 per-domain settings from the UI. Done in 1.3.0: UI translated into Arabic,
 Russian, Spanish, and French (6 languages total); the marketing/privacy site.
+Done in 1.4.0: preview-before-restore, passphrase strength meter, merge-conflict
+counts, 80%-approaching limit warnings + snooze, first/last-visit timestamps,
+the settings search box, pinned sites, and domain rename/alias-merge.

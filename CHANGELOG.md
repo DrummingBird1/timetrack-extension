@@ -4,7 +4,55 @@ All notable changes to TimeTrack are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/); this project uses
 [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.4.0] — 2026-08-27
+
+The "backup & sites trust" release — the ten items proposed in the post-1.3.0
+roadmap, closing out the last of the reachability gaps between what the engine
+already did and what the UI actually exposed, plus two real bugs found along
+the way.
+
+### Added
+- **Preview-before-restore.** Restoring from the cloud now shows a summary (day
+  range, total time, site count, encrypted y/n) and lets you pick replace/merge,
+  instead of a bare confirm dialog. New `backup.peekSync()` fetches and decrypts
+  the snapshot without importing it.
+- **Passphrase strength meter** under the encryption passphrase field — a small
+  hand-rolled length/character-class heuristic (`utils.passphraseStrength`), no
+  dependency.
+- **Merge-conflict counts.** `importAll()` now reports how many domain-day
+  records actually changed during a merge, surfaced in the import/restore toast.
+- **80%-approaching warnings** for daily and per-site time limits, alongside the
+  existing 100%-reached notification.
+- **Snooze on limit notifications** — a button on both the warning and the
+  reached notification suppresses that specific limit for an hour (the first
+  interactive `chrome.notifications` buttons in this codebase).
+- **First/last-visit timestamps** in the site drill-down (`stats.firstLastVisit`).
+- **Settings-wide search box** — filters the whole Settings tab by text match;
+  a panel whose header matches stays fully visible, otherwise its rows are
+  filtered individually.
+- **Pinned sites** — pin any site to the top of the Sites table
+  (`settings.pinnedSites`).
+- **Domain rename / alias-merge** — combine a rebranded site's history into
+  another domain from its drill-down (`storage.mergeDomainAlias`); sums, not
+  max-merges, since these are two distinct domains being combined, and migrates
+  any categoryMap/siteLimits/blacklist/focus/pinned references too.
+- **Storage-quota warning** — one heads-up notification (deduped for a week) if
+  local storage crosses a soft 250MB threshold.
+
+### Fixed
+- **`saveSettings` couldn't delete a key from `categoryMap`/`siteLimits`.**
+  `deepMerge` can only add/overwrite keys it sees in a patch — a patch built by
+  locally deleting a key and passing the smaller object left the old key
+  untouched in storage. This silently broke the existing "remove category
+  mapping" and "clear site limit" UI actions (arrays like `blacklist` were never
+  affected — `deepMerge` replaces those wholesale). Fixed with a new
+  `storage.saveSettingsKey(key, value)` that replaces one top-level settings key
+  exactly, bypassing the recursive add-only merge for that key.
+- **All `background.js` notifications were Hebrew-only**, regardless of the
+  selected UI language — every `notify()` call site used a hardcoded Hebrew
+  string. The service worker now imports `i18n.js` and calls `setLang()` before
+  building any notification, so focus-mode, limit, and weekly-summary
+  notifications respect the other five languages shipped in v1.3.0.
 
 ### Housekeeping
 - Renamed `store-assets/dev/` → `dist/` (repo root) — this is the folder holding
@@ -15,9 +63,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/); this project use
   `../../extension/...`) — both verified by actually running the suite and the
   build from the new location, not just updating paths and assuming. Updated
   `.github/workflows/test.yml`, `CLAUDE.md`, `README.md`, and
-  `store-assets/STORE_LISTING.md` to match. No functional/extension code changed.
+  `store-assets/STORE_LISTING.md` to match.
 - Moved `timetrack-v1.2.1.zip` into `archive/old-builds/` alongside the other
   superseded build zips.
+
+### Notes
+- Tests: 63 → 74. New coverage includes: the `saveSettingsKey` deletion fix
+  (reproduces the bug against `saveSettings` first, then proves the fix),
+  `mergeDomainAlias` (sum-not-max semantics + settings migration), `peekSync`,
+  `summarizeSnapshot`, `firstLastVisit`, `passphraseStrength`, and integration
+  tests driving the real 80%/100%/snooze notification flow and the storage
+  warning through the actual background.js alarm handler.
+- No schema change; no new permissions (notification buttons use the existing
+  `notifications` permission).
 
 ## [1.3.0] — 2026-08-23
 

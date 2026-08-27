@@ -130,6 +130,7 @@
           <table class="data-table" id="sitesTable">
             <thead>
               <tr>
+                <th class="th-pin"></th>
                 <th data-i18n="th.site">אתר</th>
                 <th data-i18n="th.category">קטגוריה</th>
                 <th data-i18n="th.time">זמן</th>
@@ -170,6 +171,10 @@
 
       <!-- SETTINGS -->
       <section class="tab-panel" id="tab-settings">
+        <div class="search-box settings-search">
+          <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 10-.7.7l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0A4.5 4.5 0 119.5 5a4.5 4.5 0 010 9z"/></svg>
+          <input type="search" id="settingsSearch" data-i18n-ph="set.searchPh" placeholder="חיפוש בהגדרות..." />
+        </div>
         <div class="settings-grid">
 
           <div class="panel">
@@ -317,6 +322,7 @@
             </div>
             <div class="field-block">
               <input type="password" id="setPassphrase" data-i18n-ph="set.passphrasePh" placeholder="סיסמת הצפנה" />
+              <div class="pass-strength hidden" id="passStrength"><span class="pass-strength-bar"><span id="passStrengthFill"></span></span><span id="passStrengthLabel"></span></div>
               <div class="warn-block" id="encryptWarn" data-i18n="set.encryptWarn">⚠️ אם תשכח את הסיסמה לא ניתן יהיה לשחזר את הגיבוי. הסיסמה נשמרת מקומית בלבד.</div>
             </div>
             <div class="btn-group">
@@ -385,6 +391,11 @@
   <!-- Site detail modal -->
   <div class="modal hidden" id="siteModal">
     <div class="modal-card" id="siteModalCard"></div>
+  </div>
+
+  <!-- Restore preview modal -->
+  <div class="modal hidden" id="restoreModal">
+    <div class="modal-card" id="restoreModalCard"></div>
   </div>
 
   <!-- Onboarding modal -->

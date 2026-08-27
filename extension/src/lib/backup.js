@@ -5,7 +5,7 @@
 // Either target can be end-to-end encrypted with a passphrase (see crypto.js):
 // the server / sync store only ciphertext. File export/import lives in storage.js.
 
-import { exportAll, importAll, getSettings, saveSettings } from './storage.js';
+import { exportAll, importAll, getSettings, saveSettings, summarizeSnapshot } from './storage.js';
 import { encryptJSON, decryptJSON, isEncrypted } from './crypto.js';
 
 const SYNC_PREFIX = 'ttt_sync_';
@@ -71,7 +71,8 @@ export async function backupToSync() {
   return { chunks: chunks.length, trimmed, bytes: json.length, encrypted };
 }
 
-export async function restoreFromSync({ mode = 'replace', passphrase } = {}) {
+/** Fetch, reassemble, and (if needed) decrypt the sync backup — no import side effect. */
+async function fetchSyncSnapshot(passphrase) {
   const meta = (await chrome.storage.sync.get(SYNC_META))[SYNC_META];
   if (!meta || !meta.chunks) throw new Error('לא נמצא גיבוי בענן');
   const keys = [];
@@ -89,13 +90,29 @@ export async function restoreFromSync({ mode = 'replace', passphrase } = {}) {
   } catch {
     throw new Error('הגיבוי בענן פגום (תוכן לא תקין)');
   }
-  if (isEncrypted(snapshot)) {
+  const wasEncrypted = isEncrypted(snapshot);
+  if (wasEncrypted) {
     const pass = passphrase || (await getSettings()).backup.passphrase;
     if (!pass) { const e = new Error('הגיבוי מוצפן — נדרשת סיסמה'); e.code = 'ENCRYPTED'; throw e; }
     snapshot = await decryptJSON(snapshot, pass);
   }
-  const count = await importAll(snapshot, { mode, includeSettings: true });
-  return { days: count, ts: meta.ts };
+  return { snapshot, meta, wasEncrypted };
+}
+
+/**
+ * Fetch + decrypt the cloud backup and summarize it, WITHOUT importing —
+ * lets the UI show what a restore would do (day range, total time, site count,
+ * encrypted y/n) before the user commits to replace/merge.
+ */
+export async function peekSync({ passphrase } = {}) {
+  const { snapshot, meta, wasEncrypted } = await fetchSyncSnapshot(passphrase);
+  return { ...summarizeSnapshot(snapshot), encrypted: wasEncrypted, ts: meta.ts };
+}
+
+export async function restoreFromSync({ mode = 'replace', passphrase } = {}) {
+  const { snapshot, meta } = await fetchSyncSnapshot(passphrase);
+  const { days, domainsChanged } = await importAll(snapshot, { mode, includeSettings: true });
+  return { days, domainsChanged, ts: meta.ts };
 }
 
 export async function backupToEndpoint(url, token) {

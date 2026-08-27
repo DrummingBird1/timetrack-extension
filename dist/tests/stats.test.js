@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   aggregateDomains, totalTime, topSites, byCategory, focusScore, dailyTotals,
   weekHourHeatmap, hourlyDistribution, activeDaysCount, currentStreak, trend, busiestHour,
-  domainPeakHour, domainHourly, generateInsights,
+  domainPeakHour, domainHourly, generateInsights, firstLastVisit,
 } from '../../extension/src/lib/stats.js';
 
 // Two sample days. Hours arrays are sparse but valid (24 slots).
@@ -140,6 +140,18 @@ test('domainHourly sums a site\'s per-hour seconds across days (v2), null withou
   assert.equal(domainHourly(d, 'missing.com'), null);
   // legacy record without dh (pre-v2) → null, no crash
   assert.equal(domainHourly({ x: { domains: { 'b.com': { t: 9, v: 1 } }, hours: [] } }, 'b.com'), null);
+});
+
+test('firstLastVisit finds the first and last day a domain was visited within a range', () => {
+  const keys = ['2026-06-20', '2026-06-21', '2026-06-22', '2026-06-23'];
+  // github.com appears on both 06-21 and 06-22 (see sample `days` above)
+  assert.deepEqual(firstLastVisit(days, keys, 'github.com'), { first: '2026-06-21', last: '2026-06-22' });
+  // youtube.com only appears on 06-21
+  assert.deepEqual(firstLastVisit(days, keys, 'youtube.com'), { first: '2026-06-21', last: '2026-06-21' });
+  // a domain never visited in range
+  assert.deepEqual(firstLastVisit(days, keys, 'never-visited.com'), { first: null, last: null });
+  // empty key list
+  assert.deepEqual(firstLastVisit(days, [], 'github.com'), { first: null, last: null });
 });
 
 test('generateInsights compares periods; keys stay raw for the UI to localize', () => {

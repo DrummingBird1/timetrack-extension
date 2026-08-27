@@ -8,18 +8,22 @@
 
 import {
   getSettings, saveSettings, addTime, addVisit, getDay, getDays, pruneOld,
-  saveMeta, getMeta, migrate,
+  saveMeta, getMeta, migrate, storageFootprint,
 } from './src/lib/storage.js';
 import { domainFromUrl, dayKey, rangeKeys, addDays, formatDuration } from './src/lib/utils.js';
 import { runAutoBackup } from './src/lib/backup.js';
 import { categorize } from './src/lib/categories.js';
 import { aggregateDomains, totalTime, topSites, byCategory, focusScore } from './src/lib/stats.js';
+import { setLang, t } from './src/lib/i18n.js';
 
 const SESSION_STATE = 'ttt_state';
 const FOCUS_STATE = 'ttt_focus';
 const NOTIFIED = 'ttt_notified';
+const SNOOZED = 'ttt_snoozed';
 const TICK_ALARM = 'ttt_tick';
 const BACKUP_ALARM = 'ttt_backup';
+const SNOOZE_MS = 60 * 60 * 1000;              // "+1h" snooze button on limit notifications
+const STORAGE_WARN_BYTES = 250 * 1024 * 1024;  // soft heads-up threshold (unlimitedStorage has no hard extension cap, but disk is still finite)
 
 // The worker is ephemeral: it cold-starts on most ticks, so a segment is
 // normally committed within ~60s. We cap the credit per commit so a long
@@ -116,6 +120,8 @@ function focusView(focus) {
 async function checkFocusExpiry() {
   const focus = await loadFocus();
   if (!focus.active || Date.now() < focus.endsAt) return focus;
+  const settings = await getSettings();
+  setLang(settings.language || 'he');
 
   if (focus.phase === 'work') {
     const completed = (focus.cycle || 0) + 1;      // work cycles finished so far
@@ -129,19 +135,19 @@ async function checkFocusExpiry() {
       focus.endsAt = Date.now() + breakMs;
       await saveFocus(focus);
       const mins = Math.round(breakMs / 60000);
-      notify(isLong ? 'הפסקה ארוכה 🌿' : 'הפסקה ☕', `${mins} דקות הפסקה. נתראה בסבב הבא.`);
+      notify(isLong ? t('notif.longBreak.title') : t('notif.break.title'), t('notif.break.body', { m: mins }));
       return focus;
     }
     if (moreCycles) {
       focus.cycle += 1;
       focus.endsAt = Date.now() + focus.workMs;
       await saveFocus(focus);
-      await enforceAllTabs(await getSettings(), focus);
+      await enforceAllTabs(settings, focus);
       return focus;
     }
     focus.active = false;
     await saveFocus(focus);
-    notify('סשן הפוקוס הושלם 🎉', 'כל הכבוד! חזרת לגלישה רגילה.');
+    notify(t('notif.focusComplete.title'), t('notif.focusComplete.body'));
     return focus;
   }
 
@@ -150,8 +156,8 @@ async function checkFocusExpiry() {
   focus.phase = 'work';
   focus.endsAt = Date.now() + focus.workMs;
   await saveFocus(focus);
-  notify('חזרה לעבודה 🧘', 'סבב פוקוס חדש התחיל.');
-  await enforceAllTabs(await getSettings(), focus);
+  notify(t('notif.workResume.title'), t('notif.workResume.body'));
+  await enforceAllTabs(settings, focus);
   return focus;
 }
 
@@ -226,7 +232,7 @@ function updateBadge(settings, counting) {
   } catch { /* action may be unavailable */ }
 }
 
-// ---- limit notifications (deduped per day) ----
+// ---- limit notifications (deduped per day, snoozable) ----
 async function notifiedSet() {
   const r = await chrome.storage.session.get(NOTIFIED);
   return r[NOTIFIED] || {};
@@ -237,8 +243,29 @@ async function markNotified(key) {
   await chrome.storage.session.set({ [NOTIFIED]: set });
 }
 
+async function snoozedSet() {
+  const r = await chrome.storage.session.get(SNOOZED);
+  return r[SNOOZED] || {};
+}
+async function isSnoozedKey(key) {
+  const set = await snoozedSet();
+  return !!(set[key] && Date.now() < set[key]);
+}
+async function setSnoozeKey(key) {
+  const set = await snoozedSet();
+  set[key] = Date.now() + SNOOZE_MS;
+  await chrome.storage.session.set({ [SNOOZED]: set });
+}
+
+/**
+ * Checks the daily and per-site limits, firing an 80%-approaching warning and a
+ * 100%-reached notification (each deduped once per day via `notified`). A limit
+ * key can be snoozed for an hour from either notification's button, which
+ * suppresses both the warning and the reached notification for that key.
+ */
 async function checkLimits(settings, domain) {
   if (!settings.notifyLimits) return;
+  setLang(settings.language || 'he');
   const today = dayKey();
   const day = await getDay(today);
   if (!day) return;
@@ -248,25 +275,41 @@ async function checkLimits(settings, domain) {
   for (const rec of Object.values(day.domains)) total += rec.t || 0;
 
   if (settings.dailyLimitMinutes > 0) {
-    const k = `daily:${today}`;
-    if (!set[k] && total >= settings.dailyLimitMinutes * 60) {
-      notify('הגעת למגבלת הזמן היומית', `עברת ${settings.dailyLimitMinutes} דקות גלישה היום.`);
-      await markNotified(k);
+    const limitSec = settings.dailyLimitMinutes * 60;
+    const baseKey = `daily:${today}`;
+    if (!(await isSnoozedKey(baseKey))) {
+      const warnKey = `${baseKey}:80`;
+      if (!set[warnKey] && total >= limitSec * 0.8 && total < limitSec) {
+        notifyLimit(warnKey, t('notif.dailyLimitWarn.title'), t('notif.dailyLimitWarn.body', { n: settings.dailyLimitMinutes }));
+        await markNotified(warnKey);
+      }
+      if (!set[baseKey] && total >= limitSec) {
+        notifyLimit(baseKey, t('notif.dailyLimit.title'), t('notif.dailyLimit.body', { n: settings.dailyLimitMinutes }));
+        await markNotified(baseKey);
+      }
     }
   }
   if (domain && settings.siteLimits[domain] > 0) {
+    const limitSec = settings.siteLimits[domain] * 60;
     const used = day.domains[domain]?.t || 0;
-    const k = `site:${today}:${domain}`;
-    if (!set[k] && used >= settings.siteLimits[domain] * 60) {
-      notify('מגבלת אתר הושגה', `${domain}: עברת ${settings.siteLimits[domain]} דקות היום.`);
-      await markNotified(k);
+    const baseKey = `site:${today}:${domain}`;
+    if (!(await isSnoozedKey(baseKey))) {
+      const warnKey = `${baseKey}:80`;
+      if (!set[warnKey] && used >= limitSec * 0.8 && used < limitSec) {
+        notifyLimit(warnKey, t('notif.siteLimitWarn.title'), t('notif.siteLimitWarn.body', { d: domain, n: settings.siteLimits[domain] }));
+        await markNotified(warnKey);
+      }
+      if (!set[baseKey] && used >= limitSec) {
+        notifyLimit(baseKey, t('notif.siteLimit.title'), t('notif.siteLimit.body', { d: domain, n: settings.siteLimits[domain] }));
+        await markNotified(baseKey);
+      }
     }
   }
 }
 
-function notify(title, message) {
+function notify(title, message, id) {
   try {
-    chrome.notifications.create({
+    chrome.notifications.create(id || '', {
       type: 'basic',
       iconUrl: chrome.runtime.getURL('icons/icon128.png'),
       title,
@@ -274,6 +317,44 @@ function notify(title, message) {
       priority: 1,
     });
   } catch { /* notifications permission may be revoked */ }
+}
+
+// Limit notifications use their dedup key as a stable notification id and add a
+// snooze button, so `onButtonClicked` can map a click straight back to the key.
+function notifyLimit(id, title, message) {
+  try {
+    chrome.notifications.create(id, {
+      type: 'basic',
+      iconUrl: chrome.runtime.getURL('icons/icon128.png'),
+      title,
+      message,
+      priority: 1,
+      buttons: [{ title: t('notif.snoozeBtn') }],
+    });
+  } catch { /* notifications permission may be revoked, or buttons unsupported */ }
+}
+
+// Snoozing either the 80%-warning or the 100%-reached notification for a limit
+// suppresses both for the rest of the snooze window (strip a trailing ":80").
+chrome.notifications.onButtonClicked.addListener(async (notificationId, buttonIndex) => {
+  if (buttonIndex !== 0) return;
+  const baseKey = notificationId.endsWith(':80') ? notificationId.slice(0, -3) : notificationId;
+  if (baseKey.startsWith('daily:') || baseKey.startsWith('site:')) {
+    await setSnoozeKey(baseKey);
+    try { chrome.notifications.clear(notificationId); } catch { /* already gone */ }
+  }
+});
+
+// One-time (per week) heads-up if local storage is getting large. unlimitedStorage
+// removes Chrome's extension-storage cap, but disk space is still finite.
+async function maybeStorageWarning(settings) {
+  const meta = await getMeta();
+  if (Date.now() - (meta.lastStorageWarning || 0) < 7 * 86400000) return;
+  const bytes = await storageFootprint();
+  if (bytes < STORAGE_WARN_BYTES) return;
+  setLang(settings.language || 'he');
+  notify(t('notif.storageWarn.title'), t('notif.storageWarn.body', { v: `${(bytes / (1024 * 1024)).toFixed(0)} MB` }));
+  await saveMeta({ lastStorageWarning: Date.now() });
 }
 
 // ---- idle detection ----
@@ -319,6 +400,7 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
   } else if (alarm.name === BACKUP_ALARM) {
     await maybeAutoBackup();
     await maybeWeeklySummary();
+    await maybeStorageWarning(await getSettings());
   }
 });
 
@@ -330,6 +412,7 @@ async function maybeWeeklySummary() {
   if (new Date().getDay() !== settings.weekStart) return;
   const meta = await getMeta();
   if (Date.now() - (meta.lastWeeklySummary || 0) < 6 * 86400000) return;
+  setLang(settings.language || 'he');
 
   const keys = rangeKeys(7, addDays(new Date(), -1)); // previous 7 days
   const days = await getDays(keys);
@@ -338,10 +421,10 @@ async function maybeWeeklySummary() {
   const agg = aggregateDomains(days);
   const top = topSites(agg, 1)[0];
   const score = focusScore(byCategory(agg, settings.categoryMap));
-  const parts = [`סה״כ ${formatDuration(total)}`];
-  if (top) parts.push(`מוביל: ${top.domain}`);
-  if (score != null) parts.push(`פוקוס: ${score}/100`);
-  notify('סיכום השבוע שלך 📊', parts.join(' • '));
+  const parts = [t('notif.weekly.total', { v: formatDuration(total) })];
+  if (top) parts.push(t('notif.weekly.top', { d: top.domain }));
+  if (score != null) parts.push(t('notif.weekly.focus', { n: score }));
+  notify(t('notif.weekly.title'), parts.join(' • '));
   await saveMeta({ lastWeeklySummary: Date.now() });
 }
 
@@ -488,8 +571,9 @@ async function startFocusSession(minutesArg) {
   };
   await saveFocus(focus);
   await enforceAllTabs(settings, focus);
-  const cyc = focus.totalCycles > 1 ? ` (${focus.totalCycles} סבבים)` : '';
-  notify('מצב פוקוס הופעל 🧘', `נחסום הסחות דעת ל-${workMin} דקות${cyc}. בהצלחה!`);
+  setLang(settings.language || 'he');
+  const cyc = focus.totalCycles > 1 ? t('notif.focusStart.cycles', { n: focus.totalCycles }) : '';
+  notify(t('notif.focusStart.title'), t('notif.focusStart.body', { m: workMin, cyc }));
   return focusView(focus);
 }
 
@@ -500,11 +584,16 @@ chrome.commands.onCommand.addListener(async (command) => {
     const next = await saveSettings({ enabled: !settings.enabled });
     await refresh();
     updateBadge(next, false);
-    notify('TimeTrack', next.enabled ? 'המעקב הופעל' : 'המעקב הושהה');
+    setLang(next.language || 'he');
+    notify('TimeTrack', next.enabled ? t('notif.trackOn') : t('notif.trackOff'));
   } else if (command === 'start-focus') {
     const focus = await loadFocus();
-    if (sessionLive(focus)) { focus.active = false; await saveFocus(focus); notify('TimeTrack', 'סשן הפוקוס הסתיים'); }
-    else await startFocusSession();
+    if (sessionLive(focus)) {
+      focus.active = false;
+      await saveFocus(focus);
+      setLang((await getSettings()).language || 'he');
+      notify('TimeTrack', t('notif.focusEndedCmd'));
+    } else await startFocusSession();
   } else if (command === 'open-dashboard') {
     chrome.runtime.openOptionsPage();
   }

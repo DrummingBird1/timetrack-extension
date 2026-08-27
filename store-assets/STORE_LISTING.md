@@ -37,7 +37,9 @@ dashboard (no manifest changes needed).
 > • Daily & weekly goals, per-site limits, and a weekly summary
 > • Focus mode (Pomodoro) with long breaks — block distracting categories or
 >   specific sites, or allow-list only what you need
-> • Encrypted cloud backup (Google sync or your own server) + JSON/CSV export
+> • Encrypted cloud backup with a restore preview before you commit, a passphrase
+>   strength meter, and 80%-approaching limit warnings you can snooze for an hour
+> • Pin favorite sites, merge a rebranded domain's history, search your settings
 > • Six languages — Hebrew, English, Arabic, Russian, Spanish, French — light/dark themes
 >
 > No external dependencies, no remote code, no analytics, no third-party trackers.
@@ -56,7 +58,9 @@ dashboard (no manifest changes needed).
 > • יעדים יומיים ושבועיים, מגבלות לכל אתר, וסיכום שבועי
 > • מצב פוקוס (Pomodoro) עם הפסקות ארוכות — חסימת קטגוריות או אתרים ספציפיים,
 >   או רשימת היתר בלבד
-> • גיבוי ענן מוצפן (Google או שרת שלך) + ייצוא JSON/CSV
+> • גיבוי ענן מוצפן עם תצוגה מקדימה לפני שחזור, מד עוצמת סיסמה, והתראות
+>   התקרבות למגבלה (80%) שניתן להשתיק לשעה
+> • הצמדת אתרים מועדפים, מיזוג היסטוריה של דומיין ששונה, וחיפוש בהגדרות
 > • שש שפות — עברית, אנגלית, ערבית, רוסית, ספרדית, צרפתית — ערכות נושא בהיר/כהה
 >
 > ללא תלויות חיצוניות, ללא קוד מרוחק, ללא אנליטיקס וללא מעקב צד-שלישי.

@@ -1,17 +1,17 @@
 import {
-  getSettings, saveSettings, getIndex, getDays, getDay, exportAll, importAll,
-  clearAllData, pruneOld, storageFootprint,
+  getSettings, saveSettings, saveSettingsKey, getIndex, getDays, getDay, exportAll, importAll,
+  clearAllData, pruneOld, storageFootprint, mergeDomainAlias, summarizeSnapshot,
 } from '../lib/storage.js';
-import { restoreFromSync } from '../lib/backup.js';
+import { restoreFromSync, peekSync } from '../lib/backup.js';
 import { isEncrypted, decryptJSON } from '../lib/crypto.js';
 import {
   dayKey, rangeKeys, keysBetween, parseDayKey, addDays, formatDuration, favicon,
-  weekdaysShort, weekdaysFull, sum, clamp,
+  weekdaysShort, weekdaysFull, sum, clamp, passphraseStrength,
 } from '../lib/utils.js';
 import {
   aggregateDomains, totalTime, topSites, byCategory, focusScore, dailyTotals,
   weekHourHeatmap, hourlyDistribution, activeDaysCount, currentStreak, trend, busiestHour,
-  generateInsights, domainPeakHour, domainHourly,
+  generateInsights, domainPeakHour, domainHourly, firstLastVisit,
 } from '../lib/stats.js';
 import { categorize, CATEGORY_DEFS, CATEGORY_ORDER, categoryDef } from '../lib/categories.js';
 import { barChart, donutChart, heatmap } from '../lib/charts.js';
@@ -287,16 +287,21 @@ function renderTopList(host, list, total) {
   }
 }
 
+const PIN_ICON = '<svg viewBox="0 0 24 24"><path d="M16 3l5 5-3.5 3.5L19 14l-1.5 1.5L14 12l-3 3 1 4-1.5 1.5L6 16l-4.5 4.5L0 19 4.5 14.5 1 11l1.5-1.5 4 1 3-3-3.5-3.5L8 2l5.5 5.5L16 3z"/></svg>';
+
 // ---------------- SITES ----------------
 async function renderSites() {
   const src = await sitesSource();
   const term = $('#siteSearch').value.trim().toLowerCase();
   const sortBy = $('#siteSort').value;
+  const pinned = new Set(settings.pinnedSites || []);
   let list = Object.values(src.agg);
   const total = list.reduce((a, s) => a + s.t, 0) || 1;
   if (term) list = list.filter((s) => s.domain.includes(term));
   list.sort((a, b) =>
     sortBy === 'visits' ? b.v - a.v : sortBy === 'name' ? a.domain.localeCompare(b.domain) : b.t - a.t);
+  // Pinned sites float to the top, keeping their relative order from the sort above.
+  list.sort((a, b) => (pinned.has(b.domain) ? 1 : 0) - (pinned.has(a.domain) ? 1 : 0));
 
   const body = $('#sitesBody');
   body.innerHTML = '';
@@ -307,15 +312,17 @@ async function renderSites() {
     const def = categoryDef(catKey);
     const pct = ((s.t / total) * 100).toFixed(1);
     const limit = settings.siteLimits[s.domain] || '';
+    const isPinned = pinned.has(s.domain);
     const tr = document.createElement('tr');
     tr.innerHTML = `
+      <td class="pin-cell"><button class="pin-btn${isPinned ? ' on' : ''}" data-domain="${s.domain}" title="${isPinned ? t('sites.unpin') : t('sites.pin')}">${PIN_ICON}</button></td>
       <td><div class="site-cell"><img src="${iconFor(s.domain)}" loading="lazy" alt=""><span class="dom">${s.domain}</span></div></td>
       <td><span class="cat-pill" style="background:${def.color}22;color:${def.color}">${categoryLabel(catKey)}</span></td>
       <td>${formatDuration(s.t)}</td>
       <td>${s.v}</td>
       <td><div class="share-mini"><div class="bar"><div class="fill" style="width:${pct}%"></div></div><span>${pct}%</span></div></td>
       <td><input type="number" class="limit-input" min="0" placeholder="—" value="${limit}" data-domain="${s.domain}"></td>`;
-    tr.addEventListener('click', (e) => { if (!e.target.closest('.limit-input')) openSiteDetail(s.domain, src); });
+    tr.addEventListener('click', (e) => { if (!e.target.closest('.limit-input') && !e.target.closest('.pin-btn')) openSiteDetail(s.domain, src); });
     body.appendChild(tr);
   }
 
@@ -326,9 +333,20 @@ async function renderSites() {
       const val = parseInt(inp.value, 10);
       const siteLimits = { ...settings.siteLimits };
       if (val > 0) siteLimits[dom] = val; else delete siteLimits[dom];
-      settings = await saveSettings({ siteLimits });
+      settings = await saveSettingsKey('siteLimits', siteLimits);
       send('settingsChanged');
       toast(val > 0 ? t('toast.limitSaved', { d: dom }) : t('toast.limitRemoved', { d: dom }), 'success');
+    });
+  });
+
+  body.querySelectorAll('.pin-btn').forEach((btn) => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const dom = btn.dataset.domain;
+      const set = new Set(settings.pinnedSites || []);
+      if (set.has(dom)) set.delete(dom); else set.add(dom);
+      settings = await saveSettings({ pinnedSites: [...set] });
+      renderSites();
     });
   });
 }
@@ -348,6 +366,8 @@ function openSiteDetail(domain, source = cache) {
   const catKey = categorize(domain, settings.categoryMap);
   const def = categoryDef(catKey);
   const blocked = settings.blacklist.includes(domain);
+  const { first, last } = firstLastVisit(days, keys, domain);
+  const fmtDay = (k) => k ? parseDayKey(k).toLocaleDateString(locale(), { day: 'numeric', month: 'short' }) : '—';
 
   const card = $('#siteModalCard');
   card.innerHTML = `
@@ -360,19 +380,31 @@ function openSiteDetail(domain, source = cache) {
       <div class="detail-stat"><div class="v">${totalV}</div><div class="l">${t('detail.visits')}</div></div>
       <div class="detail-stat"><div class="v">${formatDuration(totalT / activeD)}</div><div class="l">${t('detail.dailyAvg')}</div></div>
       <div class="detail-stat"><div class="v">${peakH == null ? '—' : `${peakH}:00`}</div><div class="l">${t('detail.peakHour')}</div></div>
-      <div class="detail-stat"><div class="v">${busiest && busiest.t ? parseDayKey(busiest.key).toLocaleDateString(locale(), { day: 'numeric', month: 'short' }) : '—'}</div><div class="l">${t('detail.peak')}</div></div>
+      <div class="detail-stat"><div class="v">${busiest && busiest.t ? fmtDay(busiest.key) : '—'}</div><div class="l">${t('detail.peak')}</div></div>
+      <div class="detail-stat"><div class="v">${fmtDay(first)}</div><div class="l">${t('detail.firstVisit')}</div></div>
+      <div class="detail-stat"><div class="v">${fmtDay(last)}</div><div class="l">${t('detail.lastVisit')}</div></div>
     </div>
     <div class="detail-section-title">${t('detail.category')}: <span style="color:${def.color}">${categoryLabel(catKey)}</span></div>
     <div class="detail-section-title">${t('detail.timeline')}</div>
     <div id="detailChart" class="chart-box"></div>
     ${hourly ? `<div class="detail-section-title">${t('detail.hourly')}</div><div id="detailHourly" class="chart-box"></div>` : ''}
+    <div class="detail-section-title">${t('detail.mergeInto')}</div>
+    <div class="set-desc" style="margin-bottom:9px">${t('detail.mergeIntoDesc')}</div>
     <div class="detail-actions">
-      <button class="btn ${blocked ? 'ghost' : 'danger'}" id="detailTrackToggle">${blocked ? t('detail.resumeTracking') : t('detail.stopTracking')}</button>
+      <div class="detail-merge">
+        <input type="text" id="mergeDomainInput" placeholder="${t('detail.mergeIntoPh')}" />
+        <button class="btn" id="mergeDomainBtn">${t('detail.mergeBtn')}</button>
+      </div>
+      <div class="detail-track-row">
+        <button class="btn ${blocked ? 'ghost' : 'danger'}" id="detailTrackToggle">${blocked ? t('detail.resumeTracking') : t('detail.stopTracking')}</button>
+      </div>
     </div>`;
 
   $('#siteModal').classList.remove('hidden');
   $('#modalClose').addEventListener('click', closeModal);
   $('#detailTrackToggle').addEventListener('click', () => toggleBlacklist(domain, source));
+  $('#mergeDomainBtn').addEventListener('click', () => mergeDomainInto(domain));
+  $('#mergeDomainInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') mergeDomainInto(domain); });
 
   const labelEvery = timeline.length > 20 ? Math.ceil(timeline.length / 12) : 1;
   barChart($('#detailChart'), timeline.map((d, i) => ({
@@ -390,6 +422,21 @@ function openSiteDetail(domain, source = cache) {
   }
 }
 
+// Combine a rebranded/renamed site's history into another domain, from its detail modal.
+async function mergeDomainInto(oldDomain) {
+  const input = $('#mergeDomainInput');
+  const newDomain = cleanDomain(input.value);
+  if (!newDomain || newDomain === oldDomain) { toast(t('toast.mergeSameDomain'), 'error'); return; }
+  if (!confirm(t('confirm.mergeDomain', { old: oldDomain, new: newDomain }))) return;
+  toast(t('toast.mergeWorking'));
+  const days = await mergeDomainAlias(oldDomain, newDomain);
+  settings = await getSettings();
+  allCache = null;
+  closeModal();
+  await refresh();
+  toast(t('toast.mergeDone', { old: oldDomain, new: newDomain, days }), 'success');
+}
+
 // Toggle a domain in the never-track blacklist from its detail modal.
 async function toggleBlacklist(domain, source) {
   const set = new Set(settings.blacklist);
@@ -404,6 +451,7 @@ async function toggleBlacklist(domain, source) {
 function closeModal() {
   $('#siteModal').classList.add('hidden');
   $('#welcomeModal').classList.add('hidden');
+  $('#restoreModal').classList.add('hidden');
 }
 
 // ---------------- INSIGHTS ----------------
@@ -475,6 +523,7 @@ function fillSettingsForm() {
   $('#setEndpointToken').value = settings.backup.endpointToken;
   $('#setEncrypt').checked = settings.backup.encrypt;
   $('#setPassphrase').value = settings.backup.passphrase;
+  updatePassStrength(settings.backup.passphrase);
   $('#setRetention').value = settings.retentionDays;
   renderFocusCats('#focusCats', 'blockCategories');
   renderFocusCats('#focusAllowCats', 'allowCategories');
@@ -485,6 +534,7 @@ function fillSettingsForm() {
   renderStorageInfo();
   renderCategoryEditor();
   renderBlacklist();
+  filterSettings();
 }
 
 function updateFocusModeFields() {
@@ -581,6 +631,35 @@ async function addBlacklist() {
   toast(t('toast.blacklistAdded', { d: domain }), 'success');
 }
 
+// Filters the Settings tab by text match: a panel whose header matches stays
+// fully visible; otherwise each of its direct children is shown/hidden on its
+// own text content, and the whole panel hides if nothing in it matched.
+function filterSettings() {
+  const term = $('#settingsSearch').value.trim().toLowerCase();
+  const panels = $$('#tab-settings .settings-grid > .panel');
+  panels.forEach((panel) => {
+    const header = panel.querySelector('.panel-head');
+    const headerMatch = !term || (header && header.textContent.toLowerCase().includes(term));
+    let anyVisible = false;
+    for (const child of panel.children) {
+      if (child.classList.contains('panel-head')) continue;
+      const show = !term || headerMatch || child.textContent.toLowerCase().includes(term);
+      child.classList.toggle('search-hidden', !show);
+      if (show) anyVisible = true;
+    }
+    panel.classList.toggle('search-hidden', !!term && !headerMatch && !anyVisible);
+  });
+}
+
+function updatePassStrength(pw) {
+  const el = $('#passStrength');
+  const strength = passphraseStrength(pw);
+  el.classList.toggle('hidden', !strength);
+  if (!strength) return;
+  el.className = `pass-strength ${strength}`;
+  $('#passStrengthLabel').textContent = t(`set.passStrength.${strength}`);
+}
+
 function renderBackupStatus() {
   const b = settings.backup;
   const last = b.lastBackup ? new Date(b.lastBackup).toLocaleString(locale()) : t('backup.never');
@@ -665,6 +744,7 @@ function wireSettings() {
     persist({ backup: { encrypt: e.target.checked } });
   });
   $('#setPassphrase').addEventListener('change', (e) => persist({ backup: { passphrase: e.target.value } }));
+  $('#setPassphrase').addEventListener('input', (e) => updatePassStrength(e.target.value));
 
   $('#backupNow').addEventListener('click', async () => {
     toast(t('toast.backingUp'));
@@ -674,19 +754,7 @@ function wireSettings() {
     toast(r?.ran ? t('toast.backupDone') : (r?.status || t('toast.noTarget')), r?.ok === false ? 'error' : 'success');
   });
 
-  $('#restoreSync').addEventListener('click', async () => {
-    if (!confirm(t('confirm.restore'))) return;
-    try {
-      await doRestore();
-    } catch (e) {
-      if (e.code === 'ENCRYPTED') {
-        const pass = prompt(t('prompt.passphrase'));
-        if (pass) { try { await doRestore(pass); } catch (e2) { toast(e2.message, 'error'); } }
-      } else {
-        toast(e.message, 'error');
-      }
-    }
-  });
+  $('#restoreSync').addEventListener('click', startRestoreFlow);
 
   // Export / import
   $('#exportJson').addEventListener('click', () => exportData(false));
@@ -713,15 +781,84 @@ function wireSettings() {
   $('#blacklistDomain').addEventListener('keydown', (e) => { if (e.key === 'Enter') addBlacklist(); });
 }
 
-async function doRestore(passphrase) {
-  const r = await restoreFromSync({ mode: 'replace', passphrase });
+// Fetch + decrypt the cloud backup and show a preview (day range, total time,
+// site count, encrypted y/n, and a replace/merge choice) before committing.
+async function startRestoreFlow() {
+  try {
+    const preview = await peekSync();
+    showRestorePreview(preview);
+  } catch (e) {
+    if (e.code === 'ENCRYPTED') {
+      const pass = prompt(t('prompt.passphrase'));
+      if (!pass) return;
+      try {
+        showRestorePreview(await peekSync({ passphrase: pass }), pass);
+      } catch (e2) {
+        toast(e2.message, 'error');
+      }
+    } else {
+      toast(e.message, 'error');
+    }
+  }
+}
+
+function showRestorePreview(preview, passphrase) {
+  const fmtDay = (k) => k ? parseDayKey(k).toLocaleDateString(locale(), { day: 'numeric', month: 'short' }) : '—';
+  const range = preview.dayCount ? `${fmtDay(preview.firstDay)} – ${fmtDay(preview.lastDay)}` : '—';
+  const card = $('#restoreModalCard');
+  card.innerHTML = `
+    <div class="modal-head">
+      <h3>${t('restore.previewTitle')}</h3>
+      <button class="modal-close" id="restoreModalClose">✕</button>
+    </div>
+    <div class="detail-stats">
+      <div class="detail-stat"><div class="v">${preview.dayCount}</div><div class="l">${t('restore.dayRange')}</div></div>
+      <div class="detail-stat"><div class="v">${formatDuration(preview.totalSeconds)}</div><div class="l">${t('restore.totalTime')}</div></div>
+      <div class="detail-stat"><div class="v">${preview.siteCount}</div><div class="l">${t('restore.siteCount')}</div></div>
+      <div class="detail-stat"><div class="v">${preview.encrypted ? t('restore.yes') : t('restore.no')}</div><div class="l">${t('restore.encrypted')}</div></div>
+    </div>
+    <div class="detail-section-title">${range}</div>
+    <div class="setting-row">
+      <div class="set-label">${t('set.import')}</div>
+      <select id="restoreModeSelect">
+        <option value="replace">${t('import.replace')}</option>
+        <option value="merge">${t('import.merge')}</option>
+      </select>
+    </div>
+    <div class="btn-group" style="justify-content:flex-end;margin-top:16px">
+      <button class="btn ghost" id="restoreModalCancel">${t('restore.cancelBtn')}</button>
+      <button class="btn-primary" id="restoreModalConfirm">${t('restore.confirmBtn')}</button>
+    </div>`;
+  $('#restoreModal').classList.remove('hidden');
+  $('#restoreModalClose').addEventListener('click', closeRestoreModal);
+  $('#restoreModalCancel').addEventListener('click', closeRestoreModal);
+  $('#restoreModalConfirm').addEventListener('click', async () => {
+    const mode = $('#restoreModeSelect').value;
+    closeRestoreModal();
+    try {
+      await doRestore(passphrase, mode);
+    } catch (e) {
+      toast(e.message, 'error');
+    }
+  });
+}
+
+function closeRestoreModal() {
+  $('#restoreModal').classList.add('hidden');
+}
+
+async function doRestore(passphrase, mode = 'replace') {
+  const r = await restoreFromSync({ mode, passphrase });
   allCache = null;
   settings = await getSettings();
   applyLanguage();
   applyTheme();
   await refresh();
   fillSettingsForm();
-  toast(t('toast.restored', { n: r.days }), 'success');
+  const msg = mode === 'merge' && r.domainsChanged != null
+    ? t('toast.importedWithChanges', { n: r.days, mode: t('import.merge'), c: r.domainsChanged })
+    : t('toast.restored', { n: r.days });
+  toast(msg, 'success');
 }
 
 // ---- export / import ----
@@ -771,14 +908,18 @@ async function handleImport(e) {
       snapshot = await decryptJSON(snapshot, pass);
     }
     const mode = $('#importMode').value;
-    const count = await importAll(snapshot, { mode, includeSettings: true });
+    const r = await importAll(snapshot, { mode, includeSettings: true });
     allCache = null;
     settings = await getSettings();
     applyLanguage();
     applyTheme();
     await refresh();
     fillSettingsForm();
-    toast(t('toast.imported', { n: count, mode: mode === 'merge' ? t('import.merge') : t('import.replace') }), 'success');
+    const modeLabel = mode === 'merge' ? t('import.merge') : t('import.replace');
+    const msg = mode === 'merge' && r.domainsChanged != null
+      ? t('toast.importedWithChanges', { n: r.days, mode: modeLabel, c: r.domainsChanged })
+      : t('toast.imported', { n: r.days, mode: modeLabel });
+    toast(msg, 'success');
   } catch (err) {
     toast(t('toast.importErr', { e: err.message }), 'error');
   } finally {
@@ -881,7 +1022,7 @@ function renderCategoryEditor() {
     chip.querySelector('.x').addEventListener('click', async () => {
       const map = { ...settings.categoryMap };
       delete map[domain];
-      settings = await saveSettings({ categoryMap: map });
+      settings = await saveSettingsKey('categoryMap', map);
       renderCategoryEditor();
       rerenderCharts();
     });
@@ -983,12 +1124,14 @@ async function init() {
     if (siteAllHistory) allCache = null;    // rebuild a fresh full-history aggregate
     if (currentTab === 'sites') renderSites();
   });
+  $('#settingsSearch').addEventListener('input', filterSettings);
 
   wireSettings();
 
   // modal dismissal
   $('#siteModal').addEventListener('click', (e) => { if (e.target.id === 'siteModal') closeModal(); });
   $('#welcomeModal').addEventListener('click', (e) => { if (e.target.id === 'welcomeModal') closeModal(); });
+  $('#restoreModal').addEventListener('click', (e) => { if (e.target.id === 'restoreModal') closeModal(); });
   $('#welcomeCta').addEventListener('click', closeModal);
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
 
