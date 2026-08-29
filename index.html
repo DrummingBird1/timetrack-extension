@@ -35,12 +35,16 @@
   nav.site-nav{display:flex;align-items:center;gap:22px;font-size:14px}
   nav.site-nav a{color:var(--dim);text-decoration:none}
   nav.site-nav a:hover{color:var(--text)}
-  #langToggle{
+  #langSelect{
     background:var(--surface-2);border:1px solid var(--border);color:var(--text);
-    border-radius:9px;padding:7px 13px;font-size:13px;font-weight:600;cursor:pointer;
-    font-family:inherit;
+    border-radius:9px;padding:7px 30px 7px 13px;font-size:13px;font-weight:600;cursor:pointer;
+    font-family:inherit;appearance:none;-webkit-appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%239595ad'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 12px center;
   }
-  #langToggle:hover{border-color:var(--accent)}
+  #langSelect:hover{border-color:var(--accent)}
+  [dir="rtl"] #langSelect{padding:7px 13px 7px 30px;background-position:left 12px center}
+  #langSelect option{background:var(--surface-2);color:var(--text)}
 
   /* ---- hero ---- */
   .hero{padding:56px 0 72px;display:grid;grid-template-columns:1.05fr 1fr;gap:48px;align-items:center}
@@ -123,7 +127,14 @@
       <a class="nav-link" href="#features" data-t="navFeatures">Features</a>
       <a class="nav-link" href="#privacy" data-t="navPrivacy">Privacy</a>
       <a href="https://github.com/DrummingBird1/timetrack-extension">GitHub</a>
-      <button id="langToggle" type="button">עברית</button>
+      <select id="langSelect" aria-label="Language">
+        <option value="en">English</option>
+        <option value="he">עברית</option>
+        <option value="ar">العربية</option>
+        <option value="ru">Русский</option>
+        <option value="es">Español</option>
+        <option value="fr">Français</option>
+      </select>
     </nav>
   </header>
 
@@ -306,7 +317,7 @@
       <p class="meta"><strong>Contact:</strong> via the project's GitHub repository — <a href="https://github.com/DrummingBird1/timetrack-extension/issues">open an issue</a></p>
     </div>
 
-    <div class="card">
+    <div class="card privacy-card" data-lang="en">
       <h2>English</h2>
       <p>TimeTrack is a browser extension that tracks how much time you spend on
       websites. Privacy is the core principle of the product: <strong>all data is
@@ -358,7 +369,7 @@
       revised effective date.</p>
     </div>
 
-    <div class="card rtl" dir="rtl">
+    <div class="card rtl privacy-card" data-lang="he" dir="rtl">
       <h2>עברית</h2>
       <p>TimeTrack הוא תוסף דפדפן למעקב אחר זמן הגלישה שלך. הפרטיות שלך היא עיקרון
       הליבה של המוצר: <strong>כל הנתונים נשמרים מקומית במכשיר שלך, ושום דבר לא נשלח
@@ -397,6 +408,142 @@
       (השהיית ספירה בחוסר פעילות), <code>alarms</code> (שמירה וגיבוי תקופתיים),
       <code>notifications</code> (התראות). אין הרשאות host ואין content scripts.</p>
     </div>
+
+    <div class="card rtl privacy-card" data-lang="ar" dir="rtl">
+      <h2>العربية</h2>
+      <p>TimeTrack هي إضافة متصفح تتتبع مقدار الوقت الذي تقضيه في المواقع الإلكترونية. الخصوصية هي المبدأ الأساسي للمنتج: <strong>جميع البيانات تُخزَّن محليًا على جهازك، ولا يُرسَل أي شيء إلى أي مكان</strong> — ما لم تُفعّل صراحةً وجهة نسخ احتياطي تتحكم بها بنفسك.</p>
+
+      <h3>ما هي البيانات التي تُجمَع</h3>
+      <p>محليًا، ومحليًا فقط، تقيس الإضافة:</p>
+      <ul>
+        <li><strong>اسم النطاق</strong> للموقع النشط (مثل <code>youtube.com</code>) — <strong>وليس</strong> عنوان URL الكامل، أو معاملات الاستعلام، أو محتوى الصفحة.</li>
+        <li><strong>الوقت الفعلي</strong> وعدد الزيارات لكل نطاق، مجمَّعة حسب اليوم وساعة اليوم.</li>
+        <li><strong>إعداداتك</strong> (الأهداف، الحدود، التصنيفات، السمة، وما إلى ذلك).</li>
+      </ul>
+      <p>الإضافة <strong>لا</strong> تجمع: سجل التصفح الكامل (عناوين URL)، محتوى الصفحات، العناوين، ضغطات المفاتيح، كلمات المرور، الموقع الجغرافي، أو أي معرّف شخصي.</p>
+
+      <h3>أين تُخزَّن البيانات</h3>
+      <p>تعيش جميع البيانات محليًا عبر <code>chrome.storage.local</code> داخل متصفحك. نحن لا نُشغّل أي خادم، وليس لدينا وصول إلى بياناتك، ولا نُشغّل أي تحليلات. لا تحتوي الإضافة على أي كود عن بُعد ولا تُجري أي طلبات شبكة غير إرادية (حتى أيقونات المواقع تُنشأ محليًا).</p>
+
+      <h3>النسخ الاحتياطي السحابي (اختياري، بمبادرة المستخدم فقط)</h3>
+      <p>إذا فعّلت النسخ الاحتياطي، تُرسَل البيانات <strong>فقط</strong> إلى وجهة تُهيّئها وتتحكم بها بنفسك:</p>
+      <ul>
+        <li><strong>حساب Google الخاص بك</strong> عبر <code>chrome.storage.sync</code> — مزامنة Chrome المدمجة، المرتبطة بحسابك. نحن لسنا طرفًا في هذه العملية.</li>
+        <li><strong>خادم مخصص</strong> على عنوان HTTPS تُقدّمه أنت — تُرسَل البيانات إلى خادمك.</li>
+      </ul>
+      <p>يمكنك تفعيل <strong>تشفير AES-256 بعبارة مرور</strong>؛ عندئذٍ تُشفَّر البيانات على جهازك قبل مغادرته، ولا ترى الوجهة سوى نص مشفّر. تُخزَّن عبارة المرور محليًا ولا تُنقَل أبدًا.</p>
+
+      <h3>التحكم والحذف</h3>
+      <p>أنت تتحكم في جميع البيانات: التصدير (JSON/CSV)، الاستيراد، ضبط الحذف التلقائي للبيانات القديمة، أو مسح كل شيء من شاشة الإعدادات. إلغاء تثبيت الإضافة يحذف جميع البيانات المحلية.</p>
+
+      <h3>الأذونات</h3>
+      <p><code>storage</code>/<code>unlimitedStorage</code> (تخزين محلي)، <code>tabs</code> (قراءة نطاق التبويب النشط — بلا وصول للمحتوى)، <code>idle</code> (إيقاف العد مؤقتًا عند عدم النشاط)، <code>alarms</code> (حفظ/نسخ احتياطي دوري)، <code>notifications</code> (تنبيهات الحدود والملخصات). لا أذونات host، لا سكربتات محتوى.</p>
+
+      <h3>التغييرات والقُصَّر</h3>
+      <p>المنتج غير موجَّه للأطفال دون سن 13 عامًا ولا يجمع بياناتهم عن علم. ستُنشَر تحديثات هذه السياسة على هذه الصفحة بتاريخ سريان مُحدَّث.</p>
+    </div>
+
+    <div class="card privacy-card" data-lang="ru">
+      <h2>Русский</h2>
+      <p>TimeTrack — это расширение браузера, которое отслеживает, сколько времени вы проводите на веб-сайтах. Приватность — ключевой принцип продукта: <strong>все данные хранятся локально на вашем устройстве, и ничего никуда не отправляется</strong> — если только вы явно не включите резервное копирование на цель, которую сами контролируете.</p>
+
+      <h3>Какие данные собираются</h3>
+      <p>Локально и только локально расширение измеряет:</p>
+      <ul>
+        <li><strong>Доменное имя</strong> активного сайта (например, <code>youtube.com</code>) — <strong>не</strong> полный URL, параметры запроса или содержимое страницы.</li>
+        <li><strong>Активное время</strong> и количество визитов по каждому домену, сгруппированные по дням и часам суток.</li>
+        <li><strong>Ваши настройки</strong> (цели, лимиты, категории, тема оформления и т. д.).</li>
+      </ul>
+      <p>Расширение <strong>не</strong> собирает: полную историю браузера (URL-адреса), содержимое страниц, заголовки, нажатия клавиш, пароли, местоположение или какие-либо личные идентификаторы.</p>
+
+      <h3>Где хранятся данные</h3>
+      <p>Все данные хранятся локально через <code>chrome.storage.local</code> внутри вашего браузера. Мы не эксплуатируем никакой сервер, не имеем доступа к вашим данным и не используем никакую аналитику. Расширение не содержит удалённого кода и не выполняет непроизвольных сетевых запросов (даже иконки сайтов генерируются локально).</p>
+
+      <h3>Облачное резервное копирование (опционально, только по инициативе пользователя)</h3>
+      <p>Если вы включите резервное копирование, данные отправляются <strong>только</strong> на цель, которую вы сами настраиваете и контролируете:</p>
+      <ul>
+        <li><strong>Ваш аккаунт Google</strong> через <code>chrome.storage.sync</code> — встроенную синхронизацию Chrome, привязанную к вашему аккаунту. Мы не являемся стороной этого процесса.</li>
+        <li><strong>Собственный сервер</strong> по указанному вами адресу <code>HTTPS</code> — данные отправляются на ваш сервер.</li>
+      </ul>
+      <p>Вы можете включить <strong>шифрование AES-256 по парольной фразе</strong>; в этом случае данные шифруются на вашем устройстве перед отправкой, и цель резервного копирования видит только зашифрованный текст. Парольная фраза хранится локально и никогда не передаётся.</p>
+
+      <h3>Контроль и удаление</h3>
+      <p>Вы полностью контролируете свои данные: можете экспортировать их (JSON/CSV), импортировать, настроить автоматическое удаление старых данных или удалить всё с экрана Настроек. Удаление расширения удаляет все локальные данные.</p>
+
+      <h3>Разрешения</h3>
+      <p><code>storage</code>/<code>unlimitedStorage</code> (локальное хранилище), <code>tabs</code> (чтение домена активной вкладки — без доступа к содержимому), <code>idle</code> (приостановка учёта при бездействии), <code>alarms</code> (периодическое сохранение и резервное копирование), <code>notifications</code> (оповещения о лимитах и сводки). Без разрешения на хосты, без content scripts.</p>
+
+      <h3>Изменения и дети</h3>
+      <p>Продукт не предназначен для детей младше 13 лет и сознательно не собирает их данные. Обновления этой политики будут публиковаться на этой странице с указанием новой даты вступления в силу.</p>
+    </div>
+
+    <div class="card privacy-card" data-lang="es">
+      <h2>Español</h2>
+      <p>TimeTrack es una extensión de navegador que registra cuánto tiempo dedica a los sitios web. La privacidad es el principio fundamental del producto: <strong>todos los datos se almacenan localmente en su dispositivo y no se envía nada a ningún lugar</strong>, a menos que active explícitamente un destino de copia de seguridad que usted controle.</p>
+
+      <h3>Qué datos se recopilan</h3>
+      <p>De forma local, y solo local, la extensión mide:</p>
+      <ul>
+        <li>El <strong>nombre de dominio</strong> del sitio activo (por ejemplo, <code>youtube.com</code>) — <strong>no</strong> la URL completa, los parámetros de consulta ni el contenido de la página.</li>
+        <li><strong>Tiempo activo</strong> y número de visitas por dominio, agrupados por día y por hora del día.</li>
+        <li><strong>Su configuración</strong> (objetivos, límites, categorías, tema, etc.).</li>
+      </ul>
+      <p>La extensión <strong>no</strong> recopila: historial de navegación completo (URL), contenido de las páginas, títulos, pulsaciones de teclado, contraseñas, ubicación ni ningún identificador personal.</p>
+
+      <h3>Dónde se almacenan los datos</h3>
+      <p>Todos los datos residen localmente mediante <code>chrome.storage.local</code> dentro de su navegador. No operamos ningún servidor, no tenemos acceso a sus datos y no ejecutamos ningún tipo de analítica. La extensión no contiene código remoto y no realiza solicitudes de red involuntarias (incluso los iconos de los sitios se generan localmente).</p>
+
+      <h3>Copia de seguridad en la nube (opcional, solo por iniciativa del usuario)</h3>
+      <p>Si activa la copia de seguridad, los datos se envían <strong>únicamente</strong> al destino que usted configure y controle:</p>
+      <ul>
+        <li><strong>Su cuenta de Google</strong> mediante <code>chrome.storage.sync</code> — la sincronización integrada de Chrome, vinculada a su cuenta. No somos parte de este proceso.</li>
+        <li><strong>Un servidor personalizado</strong> en una URL <code>HTTPS</code> que usted proporcione — los datos se envían a su servidor.</li>
+      </ul>
+      <p>Puede activar el <strong>cifrado mediante frase de contraseña AES-256</strong>; en ese caso, los datos se cifran en su dispositivo antes de salir, y el destino solo recibe texto cifrado. La frase de contraseña se almacena localmente y nunca se transmite.</p>
+
+      <h3>Control y eliminación</h3>
+      <p>Usted controla todos los datos: puede exportarlos (JSON/CSV), importarlos, configurar la eliminación automática de datos antiguos o borrarlo todo desde la pantalla de Configuración. Al desinstalar la extensión se eliminan todos los datos locales.</p>
+
+      <h3>Permisos</h3>
+      <p><code>storage</code>/<code>unlimitedStorage</code> (almacenamiento local), <code>tabs</code> (leer el dominio de la pestaña activa — sin acceso al contenido), <code>idle</code> (pausar el conteo cuando está inactivo), <code>alarms</code> (guardado periódico y copia de seguridad), <code>notifications</code> (alertas de límites y resúmenes). Sin permisos de host, sin scripts de contenido.</p>
+
+      <h3>Cambios y menores de edad</h3>
+      <p>El producto no está dirigido a menores de 13 años y no recopila conscientemente sus datos. Las actualizaciones de esta política se publicarán en esta página con una fecha de vigencia revisada.</p>
+    </div>
+
+    <div class="card privacy-card" data-lang="fr">
+      <h2>Français</h2>
+      <p>TimeTrack est une extension de navigateur qui mesure le temps que vous passez sur les sites web. La confidentialité est le principe fondamental du produit : <strong>toutes les données sont stockées localement sur votre appareil, et rien n'est envoyé nulle part</strong> — sauf si vous activez explicitement une destination de sauvegarde que vous contrôlez.</p>
+
+      <h3>Quelles données sont collectées</h3>
+      <p>Localement, et uniquement localement, l'extension mesure :</p>
+      <ul>
+        <li>Le <strong>nom de domaine</strong> du site actif (par exemple <code>youtube.com</code>) — <strong>pas</strong> l'URL complète, les paramètres de requête, ni le contenu de la page.</li>
+        <li>Le <strong>temps actif</strong> et le nombre de visites par domaine, ventilés par jour et par heure de la journée.</li>
+        <li><strong>Vos paramètres</strong> (objectifs, limites, catégories, thème, etc.).</li>
+      </ul>
+      <p>L'extension ne collecte <strong>pas</strong> : l'historique de navigation complet (URL), le contenu des pages, les titres, les frappes clavier, les mots de passe, la localisation, ni aucun identifiant personnel.</p>
+
+      <h3>Où les données sont stockées</h3>
+      <p>Toutes les données résident localement via <code>chrome.storage.local</code>, dans votre navigateur. Nous n'exploitons aucun serveur, n'avons aucun accès à vos données et n'utilisons aucun outil d'analyse. L'extension ne contient aucun code distant et n'effectue aucune requête réseau involontaire (même les icônes de site sont générées localement).</p>
+
+      <h3>Sauvegarde cloud (optionnelle, à l'initiative de l'utilisateur uniquement)</h3>
+      <p>Si vous activez la sauvegarde, les données ne sont envoyées <strong>qu'</strong>à une destination que vous configurez et contrôlez :</p>
+      <ul>
+        <li><strong>Votre compte Google</strong> via <code>chrome.storage.sync</code> — la synchronisation intégrée de Chrome, liée à votre compte. Nous n'intervenons à aucun moment dans ce processus.</li>
+        <li><strong>Un serveur personnalisé</strong>, à une URL HTTPS que vous fournissez — les données sont envoyées vers votre serveur.</li>
+      </ul>
+      <p>Vous pouvez activer le <strong>chiffrement par phrase secrète AES-256</strong> ; les données sont alors chiffrées sur votre appareil avant leur envoi, et la destination ne reçoit que du texte chiffré. La phrase secrète est stockée localement et n'est jamais transmise.</p>
+
+      <h3>Contrôle et suppression</h3>
+      <p>Vous contrôlez l'ensemble des données : exportez-les (JSON/CSV), importez-en, configurez la suppression automatique des anciennes données, ou effacez tout depuis l'écran des Paramètres. La désinstallation de l'extension supprime toutes les données locales.</p>
+
+      <h3>Permissions</h3>
+      <p><code>storage</code>/<code>unlimitedStorage</code> (stockage local), <code>tabs</code> (lecture du domaine de l'onglet actif — sans accès au contenu), <code>idle</code> (mise en pause du comptage en cas d'inactivité), <code>alarms</code> (enregistrement et sauvegarde périodiques), <code>notifications</code> (alertes de limite et résumés). Aucune permission host, aucun script de contenu.</p>
+
+      <h3>Modifications et mineurs</h3>
+      <p>Le produit ne s'adresse pas aux enfants de moins de 13 ans et ne collecte pas sciemment leurs données. Les mises à jour de cette politique seront publiées sur cette page avec une date d'entrée en vigueur révisée.</p>
+    </div>
   </section>
 
   <footer class="site">
@@ -433,7 +580,6 @@
       privacyTitle: 'Privacy policy',
       privacySub: "The short version: nothing leaves your device unless you turn on a backup you control.",
       footerText: 'TimeTrack — a privacy-first, local-first browsing-time tracker.',
-      toggleLabel: 'עברית',
     },
     he: {
       navFeatures: 'תכונות', navPrivacy: 'פרטיות',
@@ -456,27 +602,121 @@
       privacyTitle: 'מדיניות פרטיות',
       privacySub: 'בקצרה: שום דבר לא יוצא מהמכשיר שלך אלא אם תפעילו גיבוי שאתם שולטים בו.',
       footerText: 'TimeTrack — מעקב זמן גלישה שמכבד פרטיות ושומר הכול מקומית.',
-      toggleLabel: 'English',
+    },
+    ar: {
+      navFeatures: 'الميزات', navPrivacy: 'الخصوصية',
+      heroTitle: 'اعرف إلى أين يذهب وقتك فعلًا.',
+      heroSubtitle: 'TimeTrack يقيس زمن التصفح الفعلي لديك، مباشرة داخل المتصفح — تحليلات متعمقة، ووضع تركيز، وگيبوي مشفّر، مع بقاء كل شيء مخزّنًا محليًا افتراضيًا.',
+      ctaGithub: 'عرض على GitHub', ctaRelease: 'تنزيل أحدث إصدار',
+      heroNote: 'مجاني ومفتوح المصدر · لا يتطلب حسابًا · لا شيء يغادر جهازك ما لم تختر ذلك',
+      featuresTitle: 'كل ما تحتاجه، ولا شيء زائد',
+      featuresSub: 'مصمَّم ليكون محليًا أولًا — تحليلات متعمقة دون التنازل عن خصوصيتك.',
+      feat1Title: 'وضع التركيز',
+      feat1Body: 'جلسات عمل بأسلوب بومودورو تحظر المواقع المُشتِّتة — حسب التصنيف أو نطاق محدد — مع استراحات طويلة مدمجة.',
+      feat2Title: 'تحليلات متعمقة',
+      feat2Body: 'خريطة حرارية ليوم الأسبوع × الساعة، وتوزيع حسب التصنيفات، ودرجة تركيز من 0 إلى 100، ورؤى تلقائية بلغة بسيطة.',
+      feat3Title: 'خصوصية محلية أولًا',
+      feat3Body: 'تبقى جميع البيانات على جهازك. بلا تحليلات، بلا تتبع من طرف ثالث، بلا كود عن بُعد — أبدًا.',
+      feat4Title: 'نسخ احتياطي مشفَّر اختياري',
+      feat4Body: 'انسخ احتياطيًا إلى حساب Google الخاص بك أو إلى خادمك الخاص، مع تشفير AES-256 من طرف إلى طرف بعبارة مرور.',
+      langsTitle: 'يتحدث لغتك',
+      langsBody: 'الواجهة بأكملها — لوحة التحكم، النافذة المنبثقة، وضع التركيز — تتبدّل مباشرةً بين ست لغات.',
+      privacyTitle: 'سياسة الخصوصية',
+      privacySub: 'باختصار: لا شيء يغادر جهازك ما لم تُفعّل نسخًا احتياطيًا تتحكم به بنفسك.',
+      footerText: 'TimeTrack — متتبع لوقت التصفح يضع الخصوصية والعمل المحلي أولًا.',
+    },
+    ru: {
+      navFeatures: 'Возможности', navPrivacy: 'Приватность',
+      heroTitle: 'Узнайте, куда на самом деле уходит ваше время.',
+      heroSubtitle: "TimeTrack измеряет ваше активное время в браузере прямо на месте — глубокая аналитика, режим фокусировки и зашифрованное резервное копирование, при этом всё по умолчанию хранится локально.",
+      ctaGithub: 'Смотреть на GitHub', ctaRelease: 'Скачать последний релиз',
+      heroNote: 'Бесплатно и с открытым исходным кодом · Аккаунт не требуется · Ничего не покидает ваше устройство без вашего выбора',
+      featuresTitle: "Всё, что нужно, и ничего лишнего",
+      featuresSub: 'Локально по умолчанию — глубокая аналитика без ущерба для вашей приватности.',
+      feat1Title: 'Режим фокусировки',
+      feat1Body: 'Рабочие сессии в стиле Pomodoro, блокирующие отвлекающие сайты — по категории или конкретному домену — со встроенными длинными перерывами.',
+      feat2Title: 'Глубокая аналитика',
+      feat2Body: 'Тепловая карта «день недели × час», разбивка по категориям, оценка фокусировки от 0 до 100 и автоматические инсайты на понятном языке.',
+      feat3Title: 'Приватность и локальное хранение',
+      feat3Body: 'Все данные остаются на вашем устройстве. Никакой аналитики, никаких трекеров сторонних сервисов, никакого удалённого кода — никогда.',
+      feat4Title: 'Опциональное зашифрованное резервное копирование',
+      feat4Body: 'Резервное копирование в собственный аккаунт Google или на собственный сервер со сквозным шифрованием AES-256 по парольной фразе.',
+      langsTitle: 'Говорит на вашем языке',
+      langsBody: 'Весь интерфейс — панель управления, всплывающее окно, режим фокусировки — мгновенно переключается между шестью языками.',
+      privacyTitle: 'Политика конфиденциальности',
+      privacySub: "Коротко: ничего не покидает ваше устройство, пока вы не включите резервное копирование, которое сами контролируете.",
+      footerText: 'TimeTrack — трекер времени в браузере с приоритетом приватности и локального хранения.',
+    },
+    es: {
+      navFeatures: 'Funciones', navPrivacy: 'Privacidad',
+      heroTitle: 'Sepa realmente en qué se le va el tiempo.',
+      heroSubtitle: 'TimeTrack mide su tiempo de navegación activo, directamente en el navegador: análisis detallados, modo enfoque y copia de seguridad cifrada, con todo almacenado localmente de forma predeterminada.',
+      ctaGithub: 'Ver en GitHub', ctaRelease: 'Descargar la última versión',
+      heroNote: 'Gratis y de código abierto · No requiere cuenta · Nada sale de su dispositivo salvo que usted lo decida',
+      featuresTitle: 'Todo lo que necesita, nada de lo que no',
+      featuresSub: 'Centrado en lo local por diseño: análisis detallados sin renunciar a su privacidad.',
+      feat1Title: 'Modo enfoque',
+      feat1Body: 'Sesiones de trabajo estilo Pomodoro que bloquean los sitios que distraen —por categoría o dominio específico— con descansos largos integrados.',
+      feat2Title: 'Estadísticas detalladas',
+      feat2Body: 'Un mapa de calor de día de la semana × hora, desglose por categorías, una puntuación de enfoque de 0 a 100 y estadísticas automáticas en lenguaje sencillo.',
+      feat3Title: 'Privacidad centrada en lo local',
+      feat3Body: 'Todos los datos permanecen en su dispositivo. Sin análisis externos, sin rastreadores de terceros, sin código remoto. Nunca.',
+      feat4Title: 'Copia de seguridad cifrada opcional',
+      feat4Body: 'Haga copias de seguridad en su propia cuenta de Google o en su propio servidor, con cifrado de extremo a extremo mediante frase de contraseña AES-256.',
+      langsTitle: 'Habla su idioma',
+      langsBody: 'Toda la interfaz —panel de control, ventana emergente, modo enfoque— cambia en tiempo real entre seis idiomas.',
+      privacyTitle: 'Política de privacidad',
+      privacySub: 'La versión resumida: nada sale de su dispositivo a menos que active una copia de seguridad que usted controle.',
+      footerText: 'TimeTrack — un rastreador de tiempo de navegación centrado en la privacidad y en lo local.',
+    },
+    fr: {
+      navFeatures: 'Fonctionnalités', navPrivacy: 'Confidentialité',
+      heroTitle: 'Découvrez où va vraiment votre temps.',
+      heroSubtitle: 'TimeTrack mesure votre temps de navigation actif, directement dans votre navigateur — analyses approfondies, mode concentration et sauvegarde chiffrée, avec tout stocké localement par défaut.',
+      ctaGithub: 'Voir sur GitHub', ctaRelease: 'Télécharger la dernière version',
+      heroNote: 'Gratuit et open source · Aucun compte requis · Rien ne quitte votre appareil, sauf si vous le décidez',
+      featuresTitle: "Tout ce qu'il vous faut, rien de superflu",
+      featuresSub: 'Pensé pour le local dès la conception — des analyses approfondies sans renoncer à votre vie privée.',
+      feat1Title: 'Mode concentration',
+      feat1Body: 'Des sessions de travail façon Pomodoro qui bloquent les sites distrayants — par catégorie ou par domaine spécifique — avec des pauses longues intégrées.',
+      feat2Title: 'Analyses approfondies',
+      feat2Body: 'Une carte de chaleur jour × heure, une répartition par catégorie, un score de concentration de 0 à 100, et des analyses automatiques en langage clair.',
+      feat3Title: 'Confidentialité axée sur le local',
+      feat3Body: 'Toutes les données restent sur votre appareil. Aucune analyse, aucun traceur tiers, aucun code distant — jamais.',
+      feat4Title: 'Sauvegarde chiffrée optionnelle',
+      feat4Body: 'Sauvegardez sur votre propre compte Google ou votre propre serveur, avec un chiffrement de bout en bout par phrase secrète AES-256.',
+      langsTitle: 'Parle votre langue',
+      langsBody: "L'interface complète — tableau de bord, popup, mode concentration — bascule en direct entre six langues.",
+      privacyTitle: 'Politique de confidentialité',
+      privacySub: 'En résumé : rien ne quitte votre appareil, sauf si vous activez une sauvegarde que vous contrôlez.',
+      footerText: 'TimeTrack — un suivi du temps de navigation respectueux de la vie privée, axé sur le local.',
     }
   };
 
+  var LANG_META = {
+    en: { dir: 'ltr' }, he: { dir: 'rtl' }, ar: { dir: 'rtl' },
+    ru: { dir: 'ltr' }, es: { dir: 'ltr' }, fr: { dir: 'ltr' },
+  };
+
   function applyLang(lang) {
-    var dict = STR[lang] || STR.en;
+    if (!STR[lang]) lang = 'en';
+    var dict = STR[lang];
     document.documentElement.lang = lang;
-    document.documentElement.dir = lang === 'he' ? 'rtl' : 'ltr';
+    document.documentElement.dir = (LANG_META[lang] || LANG_META.en).dir;
     document.querySelectorAll('[data-t]').forEach(function (el) {
       var key = el.getAttribute('data-t');
       if (dict[key] != null) el.textContent = dict[key];
     });
-    var btn = document.getElementById('langToggle');
-    btn.textContent = dict.toggleLabel;
-    btn.setAttribute('data-current', lang);
+    document.querySelectorAll('.privacy-card').forEach(function (el) {
+      el.style.display = el.getAttribute('data-lang') === lang ? '' : 'none';
+    });
+    var select = document.getElementById('langSelect');
+    select.value = lang;
     try { localStorage.setItem('tt-site-lang', lang); } catch (e) {}
   }
 
-  document.getElementById('langToggle').addEventListener('click', function () {
-    var current = this.getAttribute('data-current') || 'en';
-    applyLang(current === 'en' ? 'he' : 'en');
+  document.getElementById('langSelect').addEventListener('change', function () {
+    applyLang(this.value);
   });
 
   var saved = 'en';
