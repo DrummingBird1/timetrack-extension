@@ -1,0 +1,34 @@
+<svg viewBox="0 0 1280 320" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="mark" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8b5cf6"/><stop offset="1" stop-color="#6366f1"/>
+    </linearGradient>
+    <radialGradient id="glowA" cx="0.88" cy="0.1" r="0.7">
+      <stop offset="0" stop-color="#8b5cf6" stop-opacity="0.30"/><stop offset="1" stop-color="#8b5cf6" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowB" cx="0.08" cy="0.85" r="0.7">
+      <stop offset="0" stop-color="#6366f1" stop-opacity="0.24"/><stop offset="1" stop-color="#6366f1" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1280" height="320" rx="20" fill="#0c0c14"/>
+  <rect width="1280" height="320" rx="20" fill="url(#glowA)"/>
+  <rect width="1280" height="320" rx="20" fill="url(#glowB)"/>
+  <rect width="1280" height="320" rx="20" fill="none" stroke="#2a2a3a" stroke-width="1.5"/>
+
+  <!-- brand mark, centered composition -->
+  <rect x="536" y="60" width="96" height="96" rx="26" fill="url(#mark)"/>
+  <circle cx="584" cy="108" r="26" fill="none" stroke="#ffffff" stroke-width="5.5" stroke-dasharray="123 42" transform="rotate(45 584 108)"/>
+
+  <text x="640" y="212" text-anchor="middle" font-family="Segoe UI, -apple-system, Helvetica, Arial, sans-serif" font-size="64" font-weight="800" fill="#ececf4" letter-spacing="-1.5">TimeTrack</text>
+  <text x="640" y="250" text-anchor="middle" font-family="Segoe UI, -apple-system, Helvetica, Arial, sans-serif" font-size="22" fill="#9595ad">A privacy-first, local-first browsing-time tracker</text>
+
+  <!-- small feature dots -->
+  <g font-family="Segoe UI, -apple-system, Helvetica, Arial, sans-serif" font-size="15" fill="#65657c">
+    <circle cx="418" cy="284" r="3" fill="#34d399"/>
+    <text x="430" y="289">local-first</text>
+    <circle cx="560" cy="284" r="3" fill="#f472b6"/>
+    <text x="572" y="289">6 languages</text>
+    <circle cx="702" cy="284" r="3" fill="#fbbf24"/>
+    <text x="714" y="289">open source</text>
+  </g>
+</svg>

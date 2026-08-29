@@ -37,15 +37,54 @@ Paths below are relative to `extension/`.
 `store-assets/site/index.html` is the source of truth for the public site at
 `https://drummingbird1.github.io/timetrack-extension/` — a single self-contained
 file (inline CSS/SVG/JS, no external requests, no build step), matching the
-extension's own no-dependency ethos. It has a tiny two-language (en/he) runtime
-toggle (a `STR` dict + `data-t` attributes, `localStorage`-persisted) — this is
-deliberately a separate, much smaller pattern from `extension/src/lib/i18n.js`
-(the site isn't part of the shippable extension bundle, and only needs the two
-languages the maintainer writes copy in). The privacy-policy section's content
-mirrors `store-assets/PRIVACY.md`; keep them in sync when the policy changes.
+extension's own no-dependency ethos. It has a runtime language switcher (a
+`STR` dict + `data-t` attributes, `localStorage`-persisted) covering the same
+six languages as the extension itself (he/en/ar/ru/es/fr) — deliberately a
+separate, much smaller pattern from `extension/src/lib/i18n.js` (the site isn't
+part of the shippable extension bundle, so it has its own compact dictionary,
+~25 keys vs. the extension's ~300). The privacy-policy section shows only the
+currently-selected language's card (translated per language, not just en/he
+shown side-by-side); its content mirrors `store-assets/PRIVACY.md` — keep both
+in sync (across **all six languages**) when the policy changes.
 **Deploying it is a manual step** — copy `store-assets/site/*` (including
 `.nojekyll`) to the `gh-pages` branch root and push; this does not happen
 automatically on a release.
+
+## READMEs and release banners
+
+**READMEs are per-language**: `README.md` (English, primary/canonical — GitHub
+renders this one by default and it's what search engines index) plus
+`README.he.md`/`README.ar.md`/`README.ru.md`/`README.es.md`/`README.fr.md`,
+all cross-linked via the language-switcher row at the top of each file. When
+the feature list or any other shared section changes, **update all six** — the
+English one first (it's the source), then propagate. There's no automated
+parity check for these like `i18n.test.js` has for the extension's own
+dictionary, so this relies on discipline when editing.
+
+**Every GitHub Release gets its own banner image** at the top of its notes —
+this is deliberate, not decorative: it makes the releases page scannable and
+gives each version a distinct identity while keeping one consistent brand (same
+mark, palette, and wordmark across all of them; only the version number and a
+theme icon change). Generate one with:
+
+```bash
+node dist/make-release-banner.mjs <version> <themeKey> "<tagline>"
+```
+
+This writes `store-assets/promo/releases/v<version>.svg`. Pick (or add) a
+`themeKey` in that script that reflects what the release actually shipped —
+e.g. `cloud` for a backup-focused release, `globe` for a languages/i18n
+release, `shield` for a security/hardening release — the same way v1.1.0–v1.4.0
+were themed (see the script's `THEMES` map; add a new icon there for a release
+that doesn't fit the existing ones, rather than reusing a mismatched theme).
+
+**The banner must be committed and pushed to `main` before referencing it in
+release notes** — release notes embed it via the raw-content URL
+(`https://raw.githubusercontent.com/DrummingBird1/timetrack-extension/main/store-assets/promo/releases/v<version>.svg`),
+which only resolves once the file exists on `main`. The order for a new
+release is therefore: commit the banner (usually alongside the rest of that
+release's changes) → push → `gh release create`/`gh release edit` with the
+banner image markdown prepended to the notes body.
 
 ## How to run / load it
 
@@ -146,6 +185,7 @@ of one giant blob, which keeps writes cheap as history grows.
 | `dist/tests/*` | Node `node:test` unit + integration tests. `npm test` (run from `dist`). |
 | `dist/package.json` | Dev-only (test script + `"type":"module"`); the extension has no deps/build. |
 | `dist/build.ps1` | Builds `timetrack-v<version>.zip` from `extension/` (store upload). |
+| `dist/make-release-banner.mjs` | Generates a themed per-version GitHub Release banner SVG — see "READMEs and release banners". |
 | `store-assets/PRIVACY.md` / `STORE_LISTING.md` | Privacy policy + Chrome Web Store submission pack. |
 | `icons/*` | Generated gradient clock icons (16/32/48/128). |
 
