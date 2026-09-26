@@ -86,6 +86,20 @@ release is therefore: commit the banner (usually alongside the rest of that
 release's changes) → push → `gh release create`/`gh release edit` with the
 banner image markdown prepended to the notes body.
 
+## Trello roadmap board
+
+There's a dedicated Trello board mirroring this roadmap:
+**[TimeTrack — Roadmap](https://trello.com/b/xwEI2Qz8/timetrack-roadmap)**
+(workspace "Projects"), with four lists: **✅ Done** (one card per shipped
+version/milestone, e.g. "v1.4.0 — Backup & sites trust"), **🔜 Next up** (mirrors
+this file's "Ideas / not-yet-done" section below, one card per item), **🗄️
+Backlog / later**, and **❌ Cut / won't do** (documents rejected ideas with the
+reasoning, so they aren't re-litigated). Keep the board in sync whenever the
+roadmap changes here: moving a card from "Next up" to "Done" when a feature
+ships (and adding a version-summary card there), adding new cards when new
+ideas come up, and updating "Ideas / not-yet-done" below and the board
+together — they should never drift apart.
+
 ## How to run / load it
 
 There is **no build step** — it's plain ES modules, no bundler, no dependencies.
