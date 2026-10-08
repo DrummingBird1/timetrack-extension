@@ -190,9 +190,19 @@ export async function clearAllData() {
   await saveMeta({ firstDay: null });
 }
 
-/** Full snapshot for export / backup. */
+/**
+ * Credentials stored in settings.backup. They live on this device only: a
+ * snapshot (file export, cloud backup, custom endpoint) must never carry them,
+ * or a plaintext export would hand the passphrase / bearer token to whoever
+ * receives the file.
+ */
+function stripSecrets(settings) {
+  return { ...settings, backup: { ...settings.backup, passphrase: '', endpointToken: '' } };
+}
+
+/** Full snapshot for export / backup (credentials removed — see stripSecrets). */
 export async function exportAll() {
-  const settings = await getSettings();
+  const settings = stripSecrets(await getSettings());
   const idx = await getIndex();
   const days = await getDays(idx);
   const meta = await getMeta();
@@ -219,7 +229,16 @@ export async function importAll(snapshot, { mode = 'merge', includeSettings = tr
     throw new Error('קובץ גיבוי לא תקין');
   }
   if (includeSettings && snapshot.settings) {
-    await chrome.storage.local.set({ [K.SETTINGS]: deepMerge(DEFAULT_SETTINGS, snapshot.settings) });
+    const local = await getSettings();
+    const merged = deepMerge(DEFAULT_SETTINGS, snapshot.settings);
+    // Snapshots carry no credentials, so keep this device's own. (A legacy
+    // snapshot that still has them wins — it is the user's own data.)
+    merged.backup.passphrase = merged.backup.passphrase || local.backup.passphrase;
+    merged.backup.endpointToken = merged.backup.endpointToken || local.backup.endpointToken;
+    // "Encrypt backups" with no passphrase would be silently skipped by
+    // backup.js — turn the flag off so the UI never claims protection it lacks.
+    if (merged.backup.encrypt && !merged.backup.passphrase) merged.backup.encrypt = false;
+    await chrome.storage.local.set({ [K.SETTINGS]: merged });
   }
   if (mode === 'replace') await clearAllData();
 

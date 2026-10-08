@@ -396,3 +396,53 @@ test('a malformed encrypted envelope (bad salt) fails gracefully, not with a raw
   const malformed = { ...env, salt: 'not-valid-base64!!!' };
   await assert.rejects(() => crypto.decryptJSON(malformed, 'pw'), /סיסמת הפענוח שגויה או שהקובץ פגום/);
 });
+
+// ---------- secrets never leave the device inside a snapshot ----------
+test('exportAll never includes the backup passphrase or endpoint token', async () => {
+  await seed(2);
+  await storage.saveSettings({ backup: { encrypt: true, passphrase: 'correct horse battery', endpointToken: 'tok_secret_123', endpointUrl: 'https://example.com/x' } });
+  const snap = await storage.exportAll();
+  const text = JSON.stringify(snap);
+  assert.ok(!text.includes('correct horse battery'), 'passphrase leaked into the export');
+  assert.ok(!text.includes('tok_secret_123'), 'endpoint token leaked into the export');
+  assert.equal(snap.settings.backup.endpointUrl, 'https://example.com/x', 'non-secret backup settings must still be exported');
+});
+
+test('a plaintext cloud backup does not contain the passphrase either', async () => {
+  await seed(2);
+  // encrypt is OFF but a passphrase is still stored — the old code leaked it in the clear.
+  await storage.saveSettings({ backup: { encrypt: false, passphrase: 'leftover-passphrase' } });
+  await backup.backupToSync();
+  const all = await chrome.storage.sync.get(null);
+  assert.ok(!JSON.stringify(all).includes('leftover-passphrase'), 'passphrase leaked into chrome.storage.sync');
+});
+
+test('restoring a snapshot keeps this device\'s local passphrase and endpoint token', async () => {
+  await seed(2);
+  await storage.saveSettings({ backup: { encrypt: true, passphrase: 'local-pass', endpointToken: 'local-token' } });
+  const snap = await storage.exportAll(); // secrets stripped
+  await storage.importAll(snap, { mode: 'replace' });
+  const s = await storage.getSettings();
+  assert.equal(s.backup.passphrase, 'local-pass');
+  assert.equal(s.backup.endpointToken, 'local-token');
+  assert.equal(s.backup.encrypt, true);
+});
+
+test('restoring "encrypt: on" onto a device with no passphrase turns encryption off instead of silently skipping it', async () => {
+  await seed(2);
+  await storage.saveSettings({ backup: { encrypt: true, passphrase: 'p' } });
+  const snap = await storage.exportAll();
+  installChrome(); // a brand-new device: no local passphrase
+  await storage.importAll(snap, { mode: 'replace' });
+  const s = await storage.getSettings();
+  assert.equal(s.backup.passphrase, '');
+  assert.equal(s.backup.encrypt, false, 'encrypt must not stay on without a passphrase — the UI would claim protection that is not applied');
+});
+
+test('an old snapshot that still carries secrets can be restored (backward compatible)', async () => {
+  const legacy = { app: 'TimeTrack', version: 2, days: {}, settings: { backup: { encrypt: true, passphrase: 'old-pass', endpointToken: 'old-token' } } };
+  await storage.importAll(legacy, { mode: 'merge' });
+  const s = await storage.getSettings();
+  assert.equal(s.backup.passphrase, 'old-pass');
+  assert.equal(s.backup.endpointToken, 'old-token');
+});
