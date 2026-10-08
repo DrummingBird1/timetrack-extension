@@ -28,6 +28,17 @@ test('popup: a focus session can be started and ended', async () => {
   await popup.close();
 });
 
+test('service worker: notifications work in a non-default language (dictionary fetched inside the worker)', async () => {
+  for (const language of ['ar', 'ru']) {
+    await ext.saveSettings({ language });
+    const view = await ext.message('startFocus', { minutes: 5 });   // notify(t(...)) runs inside the worker
+    assert.equal(view.error, undefined, `startFocus failed for ${language}: ${view.error}`);
+    assert.equal(view.active, true);
+    await ext.message('stopFocus');
+  }
+  assert.deepEqual(ext.errors, []);
+});
+
 test('popup: the tracking switch pauses and resumes tracking', async () => {
   const popup = await ext.openPage('src/popup/popup.html');
   await popup.waitForSelector('#enabledToggle');

@@ -54,6 +54,7 @@ globalThis.chrome = {
   },
 };
 
+await import('./helpers/node-locales.js');   // i18n loads dictionaries via fetch(); give Node a disk loader
 const storage = await import('../../extension/src/lib/storage.js');
 const send = (msg) => new Promise((res) => messageListener(msg, {}, res));
 const settle = () => new Promise((r) => setTimeout(r, 20));

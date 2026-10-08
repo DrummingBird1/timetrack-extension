@@ -35,7 +35,7 @@ function tick(endsAt) {
 
 async function main() {
   const settings = await getSettings();
-  setLang(settings.language || 'he');
+  await setLang(settings.language || 'he');
   document.documentElement.lang = getLang();
   document.documentElement.dir = dir();
   localizeStatic();

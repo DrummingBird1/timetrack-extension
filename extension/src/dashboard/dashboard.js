@@ -45,8 +45,8 @@ function applyTheme() {
   document.documentElement.setAttribute('data-theme', mode);
 }
 
-function applyLanguage() {
-  setLang(settings.language || 'he');
+async function applyLanguage() {
+  await setLang(settings.language || 'he');
   document.documentElement.lang = getLang();
   document.documentElement.dir = dir();
   localize(document);
@@ -689,7 +689,7 @@ function wireSettings() {
 
   $('#setLanguage').addEventListener('change', async (e) => {
     await persist({ language: e.target.value });
-    applyLanguage(); fillSettingsForm(); rerenderCharts();
+    await applyLanguage(); fillSettingsForm(); rerenderCharts();
   });
   $('#setTheme').addEventListener('change', async (e) => { await persist({ theme: e.target.value }); applyTheme(); rerenderCharts(); });
   $('#setWeekStart').addEventListener('change', (e) => persist({ weekStart: parseInt(e.target.value, 10) }));
@@ -851,7 +851,7 @@ async function doRestore(passphrase, mode = 'replace') {
   const r = await restoreFromSync({ mode, passphrase });
   allCache = null;
   settings = await getSettings();
-  applyLanguage();
+  await applyLanguage();
   applyTheme();
   await refresh();
   fillSettingsForm();
@@ -911,7 +911,7 @@ async function handleImport(e) {
     const r = await importAll(snapshot, { mode, includeSettings: true });
     allCache = null;
     settings = await getSettings();
-    applyLanguage();
+    await applyLanguage();
     applyTheme();
     await refresh();
     fillSettingsForm();
@@ -1090,7 +1090,7 @@ async function init() {
   settings = await getSettings();
   await ensureFaviconPermission();
   applyTheme();
-  applyLanguage();
+  await applyLanguage();
   $('#appVersion').textContent = chrome.runtime.getManifest().version;
 
   $$('.nav-item').forEach((b) => b.addEventListener('click', () => switchTab(b.dataset.tab)));

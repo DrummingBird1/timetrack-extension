@@ -23,8 +23,8 @@ function iconFor(domain) {
   return favicon(domain);
 }
 
-function applyLang() {
-  setLang(settings.language || 'he');
+async function applyLang() {
+  await setLang(settings.language || 'he');
   document.documentElement.lang = getLang();
   document.documentElement.dir = dir();
   if (settings.theme === 'light') document.documentElement.style.colorScheme = 'light';
@@ -177,7 +177,7 @@ async function ensureFaviconPermission() {
 async function init() {
   settings = await getSettings();
   await ensureFaviconPermission();
-  applyLang();
+  await applyLang();
   await render();
   await renderFocus();
 }

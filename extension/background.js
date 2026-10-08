@@ -121,7 +121,7 @@ async function checkFocusExpiry() {
   const focus = await loadFocus();
   if (!focus.active || Date.now() < focus.endsAt) return focus;
   const settings = await getSettings();
-  setLang(settings.language || 'he');
+  await setLang(settings.language || 'he');
 
   if (focus.phase === 'work') {
     const completed = (focus.cycle || 0) + 1;      // work cycles finished so far
@@ -265,7 +265,7 @@ async function setSnoozeKey(key) {
  */
 async function checkLimits(settings, domain) {
   if (!settings.notifyLimits) return;
-  setLang(settings.language || 'he');
+  await setLang(settings.language || 'he');
   const today = dayKey();
   const day = await getDay(today);
   if (!day) return;
@@ -352,7 +352,7 @@ async function maybeStorageWarning(settings) {
   if (Date.now() - (meta.lastStorageWarning || 0) < 7 * 86400000) return;
   const bytes = await storageFootprint();
   if (bytes < STORAGE_WARN_BYTES) return;
-  setLang(settings.language || 'he');
+  await setLang(settings.language || 'he');
   notify(t('notif.storageWarn.title'), t('notif.storageWarn.body', { v: `${(bytes / (1024 * 1024)).toFixed(0)} MB` }));
   await saveMeta({ lastStorageWarning: Date.now() });
 }
@@ -412,7 +412,7 @@ async function maybeWeeklySummary() {
   if (new Date().getDay() !== settings.weekStart) return;
   const meta = await getMeta();
   if (Date.now() - (meta.lastWeeklySummary || 0) < 6 * 86400000) return;
-  setLang(settings.language || 'he');
+  await setLang(settings.language || 'he');
 
   const keys = rangeKeys(7, addDays(new Date(), -1)); // previous 7 days
   const days = await getDays(keys);
@@ -571,7 +571,7 @@ async function startFocusSession(minutesArg) {
   };
   await saveFocus(focus);
   await enforceAllTabs(settings, focus);
-  setLang(settings.language || 'he');
+  await setLang(settings.language || 'he');
   const cyc = focus.totalCycles > 1 ? t('notif.focusStart.cycles', { n: focus.totalCycles }) : '';
   notify(t('notif.focusStart.title'), t('notif.focusStart.body', { m: workMin, cyc }));
   return focusView(focus);
@@ -584,14 +584,14 @@ chrome.commands.onCommand.addListener(async (command) => {
     const next = await saveSettings({ enabled: !settings.enabled });
     await refresh();
     updateBadge(next, false);
-    setLang(next.language || 'he');
+    await setLang(next.language || 'he');
     notify('TimeTrack', next.enabled ? t('notif.trackOn') : t('notif.trackOff'));
   } else if (command === 'start-focus') {
     const focus = await loadFocus();
     if (sessionLive(focus)) {
       focus.active = false;
       await saveFocus(focus);
-      setLang((await getSettings()).language || 'he');
+      await setLang((await getSettings()).language || 'he');
       notify('TimeTrack', t('notif.focusEndedCmd'));
     } else await startFocusSession();
   } else if (command === 'open-dashboard') {

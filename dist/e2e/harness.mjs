@@ -39,6 +39,16 @@ export async function launch() {
   const base = `chrome-extension://${id}/`;
   const errors = [];
 
+  // Surface uncaught errors / console.error from the service worker too (it has no Page).
+  try {
+    const cdp = await swTarget.createCDPSession();
+    await cdp.send('Runtime.enable');
+    cdp.on('Runtime.exceptionThrown', (e) => errors.push(`[service worker] exception: ${e.exceptionDetails?.exception?.description || e.exceptionDetails?.text}`));
+    cdp.on('Runtime.consoleAPICalled', (e) => {
+      if (e.type === 'error') errors.push(`[service worker] console.error: ${e.args.map((a) => a.value ?? a.description).join(' ')}`);
+    });
+  } catch { /* the worker can be torn down mid-attach; page-level checks still apply */ }
+
   /** Open an extension page and record every uncaught error / console.error on it. */
   async function openPage(rel, { viewport = { width: 1400, height: 900 } } = {}) {
     const page = await browser.newPage();
