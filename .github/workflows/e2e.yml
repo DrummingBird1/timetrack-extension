@@ -1,0 +1,39 @@
+name: E2E
+
+# Real-browser tests: Puppeteer drives Chrome for Testing with the unpacked
+# extension loaded. Kept in its own workflow (not test.yml) so the README "Tests"
+# badge keeps reflecting the fast unit/integration suite.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+      - name: Install dev dependencies
+        working-directory: dist
+        run: pnpm install --frozen-lockfile
+      - name: Cache Chrome for Testing
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/puppeteer
+          key: chrome-for-testing-${{ runner.os }}-${{ hashFiles('dist/pnpm-lock.yaml') }}
+      - name: Install Chrome for Testing
+        working-directory: dist
+        run: pnpm exec puppeteer browsers install chrome
+      - name: Run E2E suite
+        working-directory: dist
+        run: pnpm test:e2e

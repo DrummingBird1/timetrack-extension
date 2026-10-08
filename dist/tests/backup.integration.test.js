@@ -446,3 +446,52 @@ test('an old snapshot that still carries secrets can be restored (backward compa
   assert.equal(s.backup.passphrase, 'old-pass');
   assert.equal(s.backup.endpointToken, 'old-token');
 });
+
+// ---------- realistic data: the quota maths must count JSON escaping ----------
+// chrome.storage.sync measures key + JSON.stringify(value). Every `"` in a chunk of
+// serialized JSON becomes `\"`, so a chunk of N characters can cost far more than N
+// bytes. Hand-rolled test data had too few quotes to notice; real histories (lots of
+// quoted domain / hour keys) blow the 8 KB per-item limit in a real browser.
+const { buildSnapshot } = await import('../tools/fixture.mjs');
+
+for (const encrypt of [false, true]) {
+  test(`cloud backup of a realistic 1-year history fits the sync quotas (${encrypt ? 'encrypted' : 'plaintext'})`, async () => {
+    await storage.importAll(buildSnapshot({ days: 365, seed: 11, endDate: new Date(2026, 5, 1) }), { mode: 'replace', includeSettings: false });
+    if (encrypt) await storage.saveSettings({ backup: { encrypt: true, passphrase: 'a-reasonably-long-passphrase' } });
+    const localBefore = (await storage.getIndex()).length;
+
+    const r = await backup.backupToSync();           // must not throw a per-item / total quota error
+    assert.ok(r.chunks >= 1);
+    assert.equal((await storage.getIndex()).length, localBefore, 'local history untouched');
+
+    const all = await chrome.storage.sync.get(null);
+    let total = 0;
+    for (const [k, v] of Object.entries(all)) {
+      const size = k.length + JSON.stringify(v).length;
+      assert.ok(size <= QUOTA_BYTES_PER_ITEM, `item ${k} is ${size}B, over the ${QUOTA_BYTES_PER_ITEM}B per-item quota`);
+      total += size;
+    }
+    assert.ok(total <= QUOTA_BYTES_SYNC, `sync total ${total}B over the ${QUOTA_BYTES_SYNC}B quota`);
+
+    // and it must restore: the newest days survive, nothing is corrupted by the chunking
+    const peek = await backup.peekSync();
+    assert.ok(peek.dayCount > 30, `only ${peek.dayCount} days survived`);
+    assert.equal(peek.lastDay, '2026-06-01');
+  });
+}
+
+test('a non-ASCII history chunks by UTF-8 bytes, not characters', async () => {
+  const days = {};
+  for (let d = 1; d <= 28; d++) {
+    const key = `2026-02-${String(d).padStart(2, '0')}`;
+    const domains = {};
+    for (let i = 0; i < 40; i++) domains[`אתר-מספר-${i}.example.co.il`] = { t: 100 + i, v: 1, dh: { 9: 100 + i } };
+    days[key] = { domains, hours: new Array(24).fill(0) };
+  }
+  await storage.importAll({ app: 'TimeTrack', version: 2, days }, { mode: 'replace', includeSettings: false });
+  await backup.backupToSync();
+  for (const [k, v] of Object.entries(await chrome.storage.sync.get(null))) {
+    const bytes = new TextEncoder().encode(k + JSON.stringify(v)).length;
+    assert.ok(bytes <= QUOTA_BYTES_PER_ITEM, `${k} is ${bytes} UTF-8 bytes`);
+  }
+});
