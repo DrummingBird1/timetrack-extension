@@ -28,12 +28,21 @@ site actions, and an accessibility pass. No new permissions.
   width/height).
 - **IP addresses were "grouped"**: `192.168.1.5` collapsed to `1.5`. IPv4/IPv6 and dev
   hosts now stay whole.
+- **A failed cloud backup could delete the previous one**: the old copy was removed before the
+  new one was written. The new copy is now written in one all-or-nothing step first and leftover
+  chunks are cleaned up afterwards; a restore also verifies a checksum, so catching another
+  device's half-synced backup gives a clear "try again in a minute" instead of garbage.
 - **Two quick settings changes could overwrite each other** (read-modify-write with no
   lock). Settings writes are serialized.
 - The site's Hebrew privacy card was shorter than the other five languages (no "changes
   & children" section, backup targets as prose). Now at parity.
 
 ### Added
+- **Cloud backup keeps ~4-6x more history.** The snapshot is gzip-compressed before it is
+  chunked (and, if encryption is on, compressed *before* encrypting — ciphertext doesn't
+  compress). Measured in real Chrome on 3 years of synthetic browsing: 365 days now fit the
+  100 KB Google Sync quota where the old format kept 83 (plaintext) / 59 (encrypted).
+  Older backups still restore.
 - **Weekly category budgets** with progress bars on the Overview and 80% / 100%
   notifications (snoozable like the other limits).
 - **Analytics:** weekly focus-score trend with your best week, a goal-met streak, and a

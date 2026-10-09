@@ -149,7 +149,7 @@ Upload `screenshots/he/*` to the Hebrew listing and `screenshots/en/*` to the En
       release banner are in place.
 - [ ] Merge `v2-foundations` into `main` (this also redeploys the site so the live
       privacy policy matches 2.0.0).
-- [ ] Register a Chrome Web Store developer account ($5 one-time).
+- [x] Chrome Web Store developer account — the owner already has one.
 - [ ] Fill single-purpose, permission justifications, and data disclosures
       (sections 2–4).
 - [ ] Build the upload zip: `pwsh dist/build.ps1` (zips `extension/`),

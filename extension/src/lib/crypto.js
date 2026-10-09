@@ -3,25 +3,14 @@
 // Works in both the service worker and extension pages (globalThis.crypto).
 // The passphrase never leaves the device; the server/sync only sees ciphertext.
 
+import { toB64, fromB64, gzip, gunzip } from './compress.js';
+
 const enc = new TextEncoder();
 const dec = new TextDecoder();
 // OWASP's current PBKDF2-HMAC-SHA256 minimum. Old backups carry their own lower
 // `iterations` value in the envelope (see decryptJSON) so they keep decrypting.
 const PBKDF2_ITERATIONS = 600000;
 const LEGACY_ITERATIONS = 150000; // fallback for envelopes written before the bump
-
-function toB64(bytes) {
-  let s = '';
-  for (const b of bytes) s += String.fromCharCode(b);
-  return btoa(s);
-}
-
-function fromB64(str) {
-  const bin = atob(str);
-  const u = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
-  return u;
-}
 
 async function deriveKey(passphrase, salt, iterations = PBKDF2_ITERATIONS) {
   const base = await crypto.subtle.importKey(
@@ -34,18 +23,27 @@ async function deriveKey(passphrase, salt, iterations = PBKDF2_ITERATIONS) {
     ['encrypt', 'decrypt']);
 }
 
-/** Encrypt any JSON-serializable object into a self-describing envelope. */
-export async function encryptJSON(obj, passphrase) {
+/**
+ * Encrypt any JSON-serializable object into a self-describing envelope. With `gzip`, the JSON is
+ * compressed first (the envelope records it as `zip: 'gzip'`; decryptJSON undoes it) — compression
+ * after encryption would be useless.
+ * @param {unknown} obj
+ * @param {string} passphrase
+ * @param {{ gzip?: boolean }} [opts]
+ */
+export async function encryptJSON(obj, passphrase, { gzip: compress = false } = {}) {
   const salt = crypto.getRandomValues(new Uint8Array(16));
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const key = await deriveKey(passphrase, salt);
+  const plain = enc.encode(JSON.stringify(obj));
   const ct = await crypto.subtle.encrypt(
-    { name: 'AES-GCM', iv }, key, enc.encode(JSON.stringify(obj)));
+    { name: 'AES-GCM', iv }, key, compress ? await gzip(plain) : plain);
   return {
     app: 'TimeTrack',
     enc: 'aes-256-gcm',
     kdf: 'pbkdf2-sha256',
     iterations: PBKDF2_ITERATIONS,
+    ...(compress ? { zip: 'gzip' } : {}),
     salt: toB64(salt),
     iv: toB64(iv),
     ct: toB64(new Uint8Array(ct)),
@@ -68,9 +66,9 @@ export async function decryptJSON(envelope, passphrase) {
   if (!isEncrypted(envelope)) throw new Error('הקובץ אינו מוצפן');
   try {
     const key = await deriveKey(passphrase, fromB64(envelope.salt), envelope.iterations || LEGACY_ITERATIONS);
-    const pt = await crypto.subtle.decrypt(
-      { name: 'AES-GCM', iv: fromB64(envelope.iv) }, key, fromB64(envelope.ct));
-    return JSON.parse(dec.decode(pt));
+    const pt = new Uint8Array(await crypto.subtle.decrypt(
+      { name: 'AES-GCM', iv: fromB64(envelope.iv) }, key, fromB64(envelope.ct)));
+    return JSON.parse(dec.decode(envelope.zip === 'gzip' ? await gunzip(pt) : pt));
   } catch {
     throw new Error('סיסמת הפענוח שגויה או שהקובץ פגום');
   }

@@ -1,12 +1,14 @@
 // Cloud backup strategies:
-//   1. chrome.storage.sync  — zero-config, rides Google account sync, chunked
-//      to respect the ~8KB-per-item / ~100KB-total quota (oldest days trimmed).
+//   1. chrome.storage.sync  — zero-config, rides Google account sync. The snapshot is gzip-compressed
+//      (then optionally encrypted) and chunked to respect the ~8KB-per-item / ~100KB-total quota;
+//      if even compressed it doesn't fit, the oldest days are left out of the sync copy.
 //   2. Custom REST endpoint — POST the snapshot to an HTTPS URL the user controls.
 // Either target can be end-to-end encrypted with a passphrase (see crypto.js):
-// the server / sync store only ciphertext. File export/import lives in storage.js.
+// the server / sync only store ciphertext. File export/import lives in storage.js.
 
 import { exportAll, importAll, getSettings, saveSettings, summarizeSnapshot } from './storage.js';
 import { encryptJSON, decryptJSON, isEncrypted } from './crypto.js';
+import { gzip, packJSON, unpackJSON, isPacked } from './compress.js';
 
 const SYNC_PREFIX = 'ttt_sync_';
 const SYNC_META = 'ttt_sync_meta';
@@ -16,15 +18,23 @@ const SYNC_META = 'ttt_sync_meta';
 // overflowed the per-item quota on any realistic history.
 const SYNC_ITEM_BYTES = 8000;          // per-item budget (quota: 8192)
 const SYNC_TOTAL_BYTES = 96000;        // all chunks together (quota: 102400; leaves room for the meta item)
-// First guess for how much raw snapshot JSON fits; backupToSync() verifies the real
-// stored size and tightens this when escaping inflated it more than expected.
-const SYNC_PLAINTEXT_BUDGET = 72000;   // characters of serialized snapshot (unencrypted)
-const SYNC_ENCRYPTED_BUDGET = 50000;   // pre-encryption budget (base64 inflates ~1.34x, but has no quotes)
 const SYNC_MAX_ATTEMPTS = 8;
+// Estimating the packed size without encrypting every time (PBKDF2 is slow): the JSON around the
+// base64 payload, and the per-item key/quote overhead. Deliberately generous — the real size is
+// measured after packing and the fit is tightened if the estimate was optimistic.
+const PLAIN_WRAPPER_BYTES = 120;
+const ENCRYPTED_WRAPPER_BYTES = 420;
+const CHUNK_OVERHEAD_BYTES = 24;
 
 const utf8 = new TextEncoder();
 const storedSize = (key, value) => utf8.encode(key).length + utf8.encode(JSON.stringify(value)).length;
 const isHighSurrogate = (code) => code >= 0xD800 && code <= 0xDBFF;
+const base64Length = (bytes) => Math.ceil(bytes / 3) * 4;
+
+async function sha256Hex(str) {
+  const digest = await crypto.subtle.digest('SHA-256', utf8.encode(str));
+  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
 
 /** Split `str` into pieces whose stored size (see above) fits one sync item. */
 function chunkForSync(str) {
@@ -51,63 +61,101 @@ function chunksStoredSize(chunks) {
   return chunks.reduce((sum, c, i) => sum + storedSize(`${SYNC_PREFIX}${i}`, c), 0);
 }
 
-/** Drop the oldest days until the serialized snapshot fits `maxChars` — one pass, no re-stringifying. */
-function trimDays(snapshot, maxChars) {
-  const keys = Object.keys(snapshot.days).sort();
-  const sizes = keys.map((k) => k.length + JSON.stringify(snapshot.days[k]).length + 4);
-  let total = JSON.stringify({ ...snapshot, days: {} }).length + sizes.reduce((a, b) => a + b, 0);
-  let drop = 0;
-  while (total > maxChars && drop < keys.length - 1) total -= sizes[drop++];
-  if (!drop) return { snapshot, trimmed: 0 };
-  const days = {};
-  for (const k of keys.slice(drop)) days[k] = snapshot.days[k];
-  return { snapshot: { ...snapshot, days }, trimmed: drop };
-}
-
 function encryptionOn(settings) {
   return !!(settings.backup.encrypt && settings.backup.passphrase);
 }
 
-/** Serialize (and optionally encrypt) a snapshot into the payload to transmit. */
+/** Serialize (and optionally encrypt) a snapshot into the payload to transmit to a custom endpoint. */
 async function buildPayload(settings, snapshot) {
   const encrypted = encryptionOn(settings);
   const payload = encrypted ? await encryptJSON(snapshot, settings.backup.passphrase) : snapshot;
   return { json: JSON.stringify(payload), encrypted };
 }
 
+/** The sync payload: compressed, then (optionally) encrypted. Compressing ciphertext would do nothing. */
+async function buildSyncPayload(settings, snapshot) {
+  const encrypted = encryptionOn(settings);
+  const payload = encrypted
+    ? await encryptJSON(snapshot, settings.backup.passphrase, { gzip: true })
+    : await packJSON(snapshot);
+  return { json: JSON.stringify(payload), encrypted };
+}
+
+/** The snapshot restricted to its newest `n` days. */
+function newestDays(snapshot, n) {
+  const keys = Object.keys(snapshot.days).sort();
+  const days = {};
+  for (const k of keys.slice(Math.max(0, keys.length - n))) days[k] = snapshot.days[k];
+  return { ...snapshot, days };
+}
+
+/** Estimated stored size of a snapshot once compressed (and encrypted) for sync. */
+async function estimateSyncSize(snapshot, encrypted) {
+  const gz = await gzip(utf8.encode(JSON.stringify(snapshot)));
+  const payload = encrypted
+    ? ENCRYPTED_WRAPPER_BYTES + base64Length(gz.length + 16)    // + AES-GCM tag
+    : PLAIN_WRAPPER_BYTES + base64Length(gz.length);
+  return payload + Math.ceil(payload / SYNC_ITEM_BYTES) * CHUNK_OVERHEAD_BYTES;
+}
+
+/** How many of the newest days fit the quota (estimate; backupToSync verifies the real size). */
+async function daysThatFit(snapshot, encrypted) {
+  const total = Object.keys(snapshot.days).length;
+  if (await estimateSyncSize(snapshot, encrypted) <= SYNC_TOTAL_BYTES) return total;
+  let lo = Math.min(1, total);
+  let hi = total;
+  while (lo < hi) {
+    const mid = (lo + hi + 1) >> 1;
+    if (await estimateSyncSize(newestDays(snapshot, mid), encrypted) <= SYNC_TOTAL_BYTES) lo = mid; else hi = mid - 1;
+  }
+  return lo;
+}
+
 export async function backupToSync() {
   const settings = await getSettings();
   const full = await exportAll({ sessions: false });   // session logs would not fit the 100 KB quota
-  let budget = encryptionOn(settings) ? SYNC_ENCRYPTED_BUDGET : SYNC_PLAINTEXT_BUDGET;
+  const totalDays = Object.keys(full.days).length;
 
-  // Trim by raw size, then check the REAL stored size (escaping inflates it) and
-  // tighten the budget until it fits the quota.
+  // Pick how many days fit (estimated), then pack for real and check the actual stored size;
+  // if the estimate was optimistic, keep fewer days and try again.
+  let keep = await daysThatFit(full, encryptionOn(settings));
   let result = null;
   for (let attempt = 0; attempt < SYNC_MAX_ATTEMPTS && !result; attempt++) {
-    const { snapshot, trimmed } = trimDays(full, budget);
-    const { json, encrypted } = await buildPayload(settings, snapshot);
+    const snapshot = newestDays(full, keep);
+    const { json, encrypted } = await buildSyncPayload(settings, snapshot);
     const chunks = chunkForSync(json);
     const stored = chunksStoredSize(chunks);
-    if (stored <= SYNC_TOTAL_BYTES) result = { chunks, trimmed, encrypted, bytes: json.length };
-    else if (Object.keys(snapshot.days).length <= 1) break;
-    else budget = Math.floor(budget * (SYNC_TOTAL_BYTES / stored) * 0.97);
+    if (stored <= SYNC_TOTAL_BYTES) result = { chunks, json, encrypted, days: keep, rawBytes: JSON.stringify(snapshot).length };
+    else if (keep <= 1) break;
+    else keep = Math.max(1, Math.min(keep - 1, Math.floor(keep * (SYNC_TOTAL_BYTES / stored) * 0.97)));
   }
   if (!result) throw new Error('הגיבוי גדול מדי לסנכרון Google');
-  const { chunks, trimmed, encrypted, bytes } = result;
+  const { chunks, json, encrypted, days, rawBytes } = result;
+  const trimmed = totalDays - days;
 
-  const old = await chrome.storage.sync.get(null);
-  const oldKeys = Object.keys(old).filter((k) => k.startsWith(SYNC_PREFIX));
-  if (oldKeys.length) await chrome.storage.sync.remove(oldKeys);
-
+  // Write the new copy over the old one in a single set() (it is all-or-nothing), THEN drop leftover
+  // chunks — a failed backup must never cost the user the previous one. Only when the old and new
+  // copies don't fit the quota together do we free the old copy first.
   const writes = {};
   chunks.forEach((c, i) => { writes[`${SYNC_PREFIX}${i}`] = c; });
-  writes[SYNC_META] = { chunks: chunks.length, ts: Date.now(), trimmed, encrypted };
-  await chrome.storage.sync.set(writes);
-  return { chunks: chunks.length, trimmed, bytes, encrypted };
+  writes[SYNC_META] = { chunks: chunks.length, ts: Date.now(), trimmed, days, encrypted, gzip: true, sha: await sha256Hex(json) };
+  const oldKeys = Object.keys(await chrome.storage.sync.get(null)).filter((k) => k.startsWith(SYNC_PREFIX));
+  try {
+    await chrome.storage.sync.set(writes);
+  } catch (e) {
+    if (!/quota/i.test(String(e && e.message))) throw e;
+    if (oldKeys.length) await chrome.storage.sync.remove(oldKeys);
+    await chrome.storage.sync.set(writes);
+  }
+  const stale = oldKeys.filter((k) => !(k in writes));
+  if (stale.length) await chrome.storage.sync.remove(stale);
+  return { chunks: chunks.length, trimmed, days, bytes: json.length, rawBytes, encrypted };
 }
 
 /**
- * Fetch, reassemble, and (if needed) decrypt the sync backup — no import side effect.
+ * Fetch, reassemble, and (if needed) decrypt/decompress the sync backup — no import side effect.
+ * Understands every format this extension ever wrote: plain snapshot, encrypted envelope,
+ * compressed wrapper, compressed + encrypted envelope.
  * @param {string} [passphrase]
  */
 async function fetchSyncSnapshot(passphrase) {
@@ -122,6 +170,10 @@ async function fetchSyncSnapshot(passphrase) {
     if (piece == null) throw new Error('הגיבוי בענן פגום (חלק חסר)');
     json += piece;
   }
+  // Another device's write reaches this one item by item, so a restore can catch a mix of two backups.
+  if (meta.sha && (await sha256Hex(json)) !== meta.sha) {
+    throw new Error('הגיבוי בענן פגום או שהסנכרון עדיין לא הסתיים — נסה שוב בעוד דקה');
+  }
   let snapshot;
   try {
     snapshot = JSON.parse(json);
@@ -132,7 +184,13 @@ async function fetchSyncSnapshot(passphrase) {
   if (wasEncrypted) {
     const pass = passphrase || (await getSettings()).backup.passphrase;
     if (!pass) { const e = /** @type {Error & { code?: string }} */ (new Error('הגיבוי מוצפן — נדרשת סיסמה')); e.code = 'ENCRYPTED'; throw e; }
-    snapshot = await decryptJSON(snapshot, pass);
+    snapshot = await decryptJSON(snapshot, pass);       // also inflates when the envelope says zip: 'gzip'
+  } else if (isPacked(snapshot)) {
+    try {
+      snapshot = await unpackJSON(snapshot);
+    } catch {
+      throw new Error('הגיבוי בענן פגום (תוכן לא תקין)');
+    }
   }
   return { snapshot, meta, wasEncrypted };
 }

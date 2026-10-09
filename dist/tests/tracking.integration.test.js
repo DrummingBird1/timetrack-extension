@@ -6,7 +6,12 @@
 import { test, before } from 'node:test';
 import assert from 'node:assert/strict';
 
-let clock = Date.now();
+// The fake clock starts at today's local noon, not "now": tests advance it by tens of minutes, and
+// starting at 23:40 would push a visit across midnight and split it between two day records (the
+// suite used to fail when run in the last hour of the day).
+const noon = new Date();
+noon.setHours(12, 0, 0, 0);
+let clock = noon.getTime();
 const realNow = Date.now;
 Date.now = () => clock;
 

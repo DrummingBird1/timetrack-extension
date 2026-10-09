@@ -258,7 +258,8 @@ IPv4/IPv6 addresses and single-label hosts (`localhost`) are never grouped.
 | `src/lib/stats.js` | **Pure** analytics over day records (aggregation, categories, focus score + weekly trend, heatmap, streaks, trends, budgets, session stats, any-range comparison). |
 | `src/lib/charts.js` | Dependency-free SVG charts (bar, donut, heatmap, sparkline). CSP-safe; gradient ids are unique per chart. |
 | `src/lib/backup.js` | Cloud backup: `storage.sync` chunked by *stored* size, custom REST endpoint, `runAutoBackup`. |
-| `src/lib/crypto.js` | Optional AES-256-GCM backup encryption (PBKDF2 key from passphrase). |
+| `src/lib/crypto.js` | Optional AES-256-GCM backup encryption (PBKDF2 key from passphrase), optionally gzipping first. |
+| `src/lib/compress.js` | gzip/gunzip via the platform's CompressionStream (size-capped on read), base64 helpers, the plaintext compressed wrapper. |
 | `src/lib/i18n.js` | Small core: `t()`, `localize()`, direction/locale tables, lazy per-language loading. |
 | `src/lib/locales/{he,en,ar,ru,es,fr}.json` | The UI strings (~380 keys each), `fetch()`ed on demand. Add keys with `dist/tools/add-strings.mjs`. |
 | `src/lib/messages.js` | The typed UI ⇄ worker protocol (`MessageMap`, `sendMessage`, `parseMessage`). |
@@ -367,15 +368,28 @@ lost updates when two changes landed together (`backup.integration.test.js`:
 Two zero-infra targets plus manual file I/O:
 
 1. **`chrome.storage.sync`** (`backupToSync`/`restoreFromSync`): serializes the
-   snapshot (without session logs) and splits it into chunks (`ttt_sync_<n>` +
-   `ttt_sync_meta`) to respect the 8,192-byte/item, 102,400-byte/total sync quota.
+   snapshot (without session logs), **gzips it** (`compress.js`; encrypted backups gzip
+   *before* encrypting — `encryptJSON(obj, pass, { gzip: true })` sets `zip: 'gzip'` on the
+   envelope), and splits the result into chunks (`ttt_sync_<n>` + `ttt_sync_meta`) to
+   respect the 8,192-byte/item, 102,400-byte/total sync quota.
    **The quota counts key + `JSON.stringify(value)` in UTF-8 bytes** — a JSON string
    full of `"` roughly doubles in size once escaped, which is why chunks are sized by
    their real *stored* size (`chunkForSync`, `SYNC_ITEM_BYTES`/`SYNC_TOTAL_BYTES`),
-   the total is verified, and a retry loop shrinks the plaintext budget if it still
-   doesn't fit. If history exceeds the quota, **oldest days are trimmed** from the sync
-   copy (local data is untouched) — in practice a few months survive (~80 of 1,031
-   days in the scale test); gzip-before-encrypt would stretch that and is not done.
+   the total is verified. `daysThatFit` picks how many of the newest days fit (binary
+   search on the *compressed* size, estimated without encrypting since PBKDF2 is slow),
+   then the real packed size is checked and the day count tightened if the estimate was
+   optimistic. If history still exceeds the quota, **oldest days are left out** of the
+   sync copy (local data is untouched): ~365 days survive on the synthetic 3-year fixture,
+   up from 83 (plaintext) / 59 (encrypted) before compression. gzip only gets ~4.6× on
+   this data, so it is a year of history, not a decade.
+   The write is **all-or-nothing and non-destructive**: one `set()` overwrites the old
+   chunks and the meta, *then* leftover chunks are removed (only a quota error falls back
+   to freeing the old copy first). `meta.sha` (SHA-256 of the payload) is verified on
+   restore, because another device receives the items one by one and could otherwise read
+   a mix of two backups. Restore understands every format ever written (plain, encrypted,
+   compressed, compressed + encrypted). `sync.e2e.mjs` checks all of this against real
+   Chrome's quotas; what no local test can show is Google actually delivering the items
+   to a second signed-in device.
    The old character-count chunking passed the mock and failed in real Chrome with
    `kQuotaBytesPerItem` — keep the sync mock in `backup.integration.test.js` (`measure`) byte-accurate.
 2. **Custom REST endpoint** (`backupToEndpoint`): `POST` the snapshot to an
@@ -529,7 +543,7 @@ Four layers, all from `dist/` (pnpm — see "How to run"):
   (loads, popup, every tab), `dashboard` (every tab and feature: charts, sites,
   bulk actions, settings, backup→restore, export/import, budgets, compare, demo
   data…), `focus` (popup session, block/allow redirects, tracking, strict/snooze),
-  `scale` (3 years of synthetic history stays within time budgets), `a11y` (axe-core
+  `scale` (3 years of synthetic history stays within time budgets), `sync` (cloud backup against real Chrome's storage.sync quotas), `a11y` (axe-core
   on every screen in both themes and RTL, plus keyboard behaviour). When you fix a bug
   here, add the regression test and run it against the old code to see it fail first
   (the unique-gradient-id test was checked that way). `pnpm typecheck` is the fifth check.
@@ -552,8 +566,6 @@ Kept in sync with the Trello board's **🔜 Next up** and **🗄️ Backlog** li
 - **First real GitHub runs** of `e2e.yml`, `release.yml` and `pages.yml` (merge
   `v2-foundations` to `main`, tag `v2.0.0`), then the Chrome Web Store submission
   (needs a developer account, $5) — pack in `store-assets/STORE_LISTING.md`.
-- **gzip before encrypt for the Google-Sync backup** — it keeps only ~80 of 1,031 days
-  today; compressing the snapshot would stretch that several-fold.
 - **Multi-device merge** — needs a design decision first (which device wins, how to
   merge day records, whether `storage.sync` is the transport).
 - **A dedicated Webtime Tracker importer** — needs a real sample of their export (the
