@@ -3,3 +3,8 @@ node_modules/
 .DS_Store
 *.zip
 .claude/
+
+# Store screenshots: only he/en are committed; the other languages are generated on demand
+store-assets/screenshots/*/
+!store-assets/screenshots/he/
+!store-assets/screenshots/en/

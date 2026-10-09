@@ -1,31 +1,36 @@
-# Screenshots — how to capture (the one thing that needs the running extension)
+# Store screenshots
 
-The Chrome Web Store **requires at least one screenshot** (up to 5). They must show
-the extension's *actual* UI — generated/fake mockups are against policy. Capture
-these after loading the extension (see below).
+The Chrome Web Store needs 1–5 screenshots (1280×800, JPEG or 24-bit PNG) that show
+the extension's **actual** UI. These are captured from the real, loaded extension in a
+browser with deterministic synthetic browsing data — nothing is mocked up by hand.
 
-## Spec
-- Size: **1280×800** (preferred) or **640×400**, PNG or JPEG (24-bit, no alpha).
-- 1–5 images. Put the strongest first — it's the listing's hero image.
+| File | Shows |
+|------|-------|
+| `01-overview.jpg` | Dashboard → Overview: summary cards, insights, trend chart, categories, budget |
+| `02-site-detail.jpg` | Dashboard → Sites: a site's drill-down with the visit-length distribution |
+| `03-insights.jpg` | Dashboard → Insights: heatmap, focus-score trend, focus history |
+| `04-popup.jpg` | The toolbar popup (live counter, focus mode, top sites) |
+| `05-focus-mode.jpg` | The focus-mode block page |
 
-## Load the extension first
-1. `chrome://extensions` → enable **Developer mode**.
-2. **Load unpacked** → select the **`extension/`** folder.
-3. Browse a few sites for a minute so there's sample data, or import a demo backup.
+`he/` and `en/` are committed (the default listing locales); upload `he/*` to the
+Hebrew listing and `en/*` to the English one. Folders for the other four languages are
+git-ignored and generated on demand.
 
-## Recommended shots (4 strong ones)
-1. **Dashboard → Overview** — summary cards, trend chart, category donut, top sites.
-2. **Dashboard → Insights** — the weekday × hour heatmap + category breakdown.
-3. **Dashboard → Sites** — the searchable table + a site drill-down modal open.
-4. **Popup** — live counter, today's top sites, and the focus-mode section.
-   (Capture the 360-px popup on a clean background, or use the dashboard shots.)
+## Regenerate
 
-## Tips
-- Use the **dark theme** for a premium look consistent with the promo art.
-- Set the language to match the listing locale (Hebrew listing → Hebrew UI).
-- Crop/pad each shot to exactly 1280×800 so nothing is auto-scaled by the store.
+After any UI change, or a version bump (the sidebar shows the version):
 
-## Sibling assets (already prepared)
-- `../promo/promo-tile-440x280.png` — small promo tile.
-- `../promo/promo-marquee-1400x560.png` — marquee promo tile.
-- Store icon 128×128: `../../extension/icons/icon128.png`.
+```bash
+cd dist
+pnpm install
+pnpm exec puppeteer browsers install chrome     # once; Chrome for Testing
+node tools/screenshots.mjs                      # he + en
+node tools/screenshots.mjs --langs all          # all six (ar/ru/es/fr are git-ignored)
+node tools/promo-tiles.mjs                      # promo tile + marquee, from en/01-overview.jpg
+```
+
+Dashboard shots use a 1600×1000 layout rendered at 0.8× so a 1280×800 frame holds the
+charts below the summary cards. The popup (380 px wide) is centred on a 1280×800 canvas.
+
+Look at the output before uploading — the generator can't tell you a screenshot looks
+wrong, only that it rendered.
