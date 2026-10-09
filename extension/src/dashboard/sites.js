@@ -1,5 +1,5 @@
 // Sites tab: searchable / sortable table, pinning, per-site daily limits.
-import { saveSettings, saveSettingsKey } from '../lib/storage.js';
+import { saveSettings, setSettingsMapEntry, removeSettingsMapEntry } from '../lib/storage.js';
 import { formatDuration } from '../lib/utils.js';
 import { categorize, categoryDef } from '../lib/categories.js';
 import { t, categoryLabel } from '../lib/i18n.js';
@@ -49,9 +49,9 @@ export async function renderSites() {
     inp.addEventListener('change', async () => {
       const dom = inp.dataset.domain;
       const val = parseInt(inp.value, 10);
-      const siteLimits = { ...settings.siteLimits };
-      if (val > 0) siteLimits[dom] = val; else delete siteLimits[dom];
-      setSettings(await saveSettingsKey('siteLimits', siteLimits));
+      setSettings(val > 0
+        ? await setSettingsMapEntry('siteLimits', dom, val)
+        : await removeSettingsMapEntry('siteLimits', dom));
       send('settingsChanged');
       toast(val > 0 ? t('toast.limitSaved', { d: dom }) : t('toast.limitRemoved', { d: dom }), 'success');
     });

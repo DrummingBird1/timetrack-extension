@@ -1,5 +1,5 @@
 // Settings-tab list editors: focus categories/domains, never-track list, category mappings.
-import { saveSettings, saveSettingsKey } from '../lib/storage.js';
+import { saveSettings, setSettingsMapEntry, removeSettingsMapEntry } from '../lib/storage.js';
 import { CATEGORY_DEFS, CATEGORY_ORDER, categoryDef } from '../lib/categories.js';
 import { t, categoryLabel } from '../lib/i18n.js';
 import { $, settings, setSettings, toast, send, cleanDomain, actions } from './core.js';
@@ -119,9 +119,7 @@ export function renderCategoryEditor() {
       <span>${domain} → ${categoryLabel(cat)}</span>
       <span class="x" data-domain="${domain}">✕</span>`;
     chip.querySelector('.x').addEventListener('click', async () => {
-      const map = { ...settings.categoryMap };
-      delete map[domain];
-      setSettings(await saveSettingsKey('categoryMap', map));
+      setSettings(await removeSettingsMapEntry('categoryMap', domain));
       renderCategoryEditor();
       actions.rerenderCharts();
     });
@@ -134,8 +132,7 @@ export async function addCategoryMapping() {
   const cat = $('#catSelect').value;
   if (!domain) return;
   if (!/^[a-z0-9.-]+\.[a-z]{2,}$/.test(domain)) { toast(t('toast.badDomain'), 'error'); return; }
-  const map = { ...settings.categoryMap, [domain]: cat };
-  setSettings(await saveSettings({ categoryMap: map }));
+  setSettings(await setSettingsMapEntry('categoryMap', domain, cat));
   $('#catDomain').value = '';
   renderCategoryEditor();
   actions.rerenderCharts();

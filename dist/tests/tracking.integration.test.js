@@ -176,7 +176,7 @@ test('daily limit fires an 80% warning then a 100%-reached notification, each on
 });
 
 test('snoozing a limit notification suppresses it for the snooze window', async () => {
-  await storage.saveSettings({ siteLimits: { 'youtube.com': 5 } }); // 300s
+  await storage.setSettingsMapEntry('siteLimits', 'youtube.com', 5); // 300s
   const today = dayKey();
   await chrome.storage.local.remove([`ttt_day_${today}`, 'ttt_index']);
   await send({ type: 'settingsChanged' });
@@ -199,7 +199,7 @@ test('snoozing a limit notification suppresses it for the snooze window', async 
   await settle();
   assert.equal(createdNotifications.filter((n) => n.id.startsWith('site:')).length, 0, 'snoozed limit should not fire');
 
-  await storage.saveSettings({ siteLimits: {} }); // restore for later tests
+  await storage.removeSettingsMapEntry('siteLimits', 'youtube.com'); // restore for later tests (the old saveSettings({siteLimits:{}}) was a silent no-op)
 });
 
 test('a storage-quota warning fires once when local storage crosses the threshold', async () => {

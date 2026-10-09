@@ -162,21 +162,48 @@ test('summarizeSnapshot reports day range, total time, and site count', () => {
   assert.deepEqual(storage.summarizeSnapshot({ days: {} }), { dayCount: 0, firstDay: null, lastDay: null, totalSeconds: 0, siteCount: 0 });
 });
 
-// ---------- settings key deletion (real bug: deepMerge can't delete nested keys) ----------
-test('saveSettingsKey actually deletes a key from a nested object (saveSettings cannot)', async () => {
-  await storage.saveSettings({ categoryMap: { 'a.com': 'social', 'b.com': 'news' } });
-  // Reproduce the bug: building a patch with the key already removed locally and
-  // passing it through saveSettings (deepMerge) leaves the old key untouched,
-  // because deepMerge only ever adds/overwrites keys it sees in the patch.
-  const afterBrokenPattern = { ...(await storage.getSettings()).categoryMap };
-  delete afterBrokenPattern['a.com'];
-  const viaSaveSettings = await storage.saveSettings({ categoryMap: afterBrokenPattern });
-  assert.ok('a.com' in viaSaveSettings.categoryMap, 'documents the deepMerge limitation this test guards against');
+// ---------- map settings (deepMerge can add/overwrite keys but never delete them) ----------
+test('map settings are edited with set/removeSettingsMapEntry, and removal really deletes', async () => {
+  await storage.setSettingsMapEntry('categoryMap', 'a.com', 'social');
+  await storage.setSettingsMapEntry('categoryMap', 'b.com', 'news');
+  let s = await storage.getSettings();
+  assert.deepEqual(s.categoryMap, { 'a.com': 'social', 'b.com': 'news' });
 
-  // saveSettingsKey does a full top-level replace, so deletion actually works.
-  const viaSaveSettingsKey = await storage.saveSettingsKey('categoryMap', afterBrokenPattern);
-  assert.ok(!('a.com' in viaSaveSettingsKey.categoryMap), 'a.com should be gone');
-  assert.equal(viaSaveSettingsKey.categoryMap['b.com'], 'news', 'other keys are preserved');
+  s = await storage.removeSettingsMapEntry('categoryMap', 'a.com');
+  assert.ok(!('a.com' in s.categoryMap), 'a.com should be gone from storage, not just from the returned object');
+  assert.equal(s.categoryMap['b.com'], 'news', 'other keys are preserved');
+  assert.ok(!('a.com' in (await storage.getSettings()).categoryMap), 'and it stays gone after a fresh read');
+
+  await storage.setSettingsMapEntry('siteLimits', 'x.com', 30);
+  assert.equal((await storage.removeSettingsMapEntry('siteLimits', 'x.com')).siteLimits['x.com'], undefined);
+  assert.equal((await storage.removeSettingsMapEntry('siteLimits', 'never-set.com')).siteLimits['never-set.com'], undefined, 'removing a missing key is a no-op');
+});
+
+test('saveSettings refuses map settings, so the deepMerge deletion bug cannot be reintroduced', async () => {
+  await assert.rejects(() => storage.saveSettings({ categoryMap: { 'a.com': 'news' } }), /categoryMap.*removeSettingsMapEntry/s);
+  await assert.rejects(() => storage.saveSettings({ siteLimits: {} }), /siteLimits/);
+  await assert.rejects(() => storage.setSettingsMapEntry('notAMap', 'k', 1), /not a map setting/);
+  await storage.saveSettings({ blacklist: ['ok.com'] });   // other keys are unaffected
+});
+
+test('concurrent settings writes do not overwrite each other (read-modify-write is serialized)', async () => {
+  await Promise.all([
+    storage.saveSettings({ theme: 'dark' }),
+    storage.saveSettings({ idleSeconds: 90 }),
+    storage.saveSettings({ focus: { cycles: 3 } }),
+    storage.saveSettings({ backup: { autoIntervalHours: 6 } }),
+    storage.setSettingsMapEntry('categoryMap', 'p.com', 'news'),
+    storage.setSettingsMapEntry('siteLimits', 'q.com', 15),
+    storage.saveSettings({ weekStart: 1 }),
+  ]);
+  const s = await storage.getSettings();
+  assert.equal(s.theme, 'dark');
+  assert.equal(s.idleSeconds, 90);
+  assert.equal(s.focus.cycles, 3);
+  assert.equal(s.backup.autoIntervalHours, 6);
+  assert.equal(s.categoryMap['p.com'], 'news');
+  assert.equal(s.siteLimits['q.com'], 15);
+  assert.equal(s.weekStart, 1);
 });
 
 // ---------- domain alias-merge ----------
@@ -186,11 +213,9 @@ test('mergeDomainAlias sums (not max-merges) two distinct domains across the ful
   await storage.addTime({ dateKey: '2025-06-01', domain: 'new-brand.com', seconds: 100, hour: 10 });
   await storage.addVisit('2025-06-01', 'new-brand.com');
   await storage.addTime({ dateKey: '2025-06-02', domain: 'old-brand.com', seconds: 50, hour: 8 });
-  await storage.saveSettings({
-    categoryMap: { 'old-brand.com': 'productivity' },
-    siteLimits: { 'old-brand.com': 30 },
-    blacklist: ['unrelated.com'],
-  });
+  await storage.setSettingsMapEntry('categoryMap', 'old-brand.com', 'productivity');
+  await storage.setSettingsMapEntry('siteLimits', 'old-brand.com', 30);
+  await storage.saveSettings({ blacklist: ['unrelated.com'] });
 
   const touched = await storage.mergeDomainAlias('old-brand.com', 'new-brand.com');
   assert.equal(touched, 2); // 06-01 and 06-02 both had old-brand.com

@@ -71,26 +71,66 @@ export async function getSettings() {
   return deepMerge(DEFAULT_SETTINGS, r[K.SETTINGS] || {});
 }
 
-export async function saveSettings(patch) {
-  const current = await getSettings();
-  const next = deepMerge(current, patch);
+// Every settings write is read-modify-write. Serializing them stops two quick edits
+// (a toggle and a number field, say) from overwriting each other with a stale copy.
+// Code that already holds the lock must use the *Unlocked helpers — re-entering would deadlock.
+let settingsChain = Promise.resolve();
+function withSettingsLock(fn) {
+  const run = settingsChain.then(fn);
+  settingsChain = run.catch(() => {});
+  return run;
+}
+
+async function writeSettingsUnlocked(next) {
   await chrome.storage.local.set({ [K.SETTINGS]: next });
   return next;
 }
 
 /**
+ * Settings whose value is a plain object used as a map (domain -> value). deepMerge
+ * can only ADD or OVERWRITE keys it sees in a patch — a patch built by deleting a key
+ * locally leaves the old key untouched in storage (arrays don't have this problem:
+ * deepMerge replaces them wholesale). That bit category-mapping removal and
+ * site-limit clearing before it was caught, so these two can no longer go through
+ * saveSettings() at all: use setSettingsMapEntry / removeSettingsMapEntry.
+ */
+export const MAP_SETTINGS = ['categoryMap', 'siteLimits'];
+
+export async function saveSettings(patch) {
+  const mapKey = MAP_SETTINGS.find((k) => patch && k in patch);
+  if (mapKey) {
+    throw new Error(`saveSettings() cannot edit the map setting "${mapKey}" (deepMerge can't delete keys) — use setSettingsMapEntry() / removeSettingsMapEntry()`);
+  }
+  return withSettingsLock(async () => writeSettingsUnlocked(deepMerge(await getSettings(), patch)));
+}
+
+/**
  * Replace one top-level settings key with an exact value, bypassing deepMerge's
- * add/update-only recursion for that key. Needed whenever a caller must DELETE a
- * property from a nested object (categoryMap, siteLimits) — deepMerge can only
- * ever add or overwrite keys it sees in the patch, so a patch built by locally
- * deleting a key and passing the smaller object leaves the old key untouched in
- * storage (arrays don't have this problem: deepMerge replaces them wholesale).
+ * add/update-only recursion for that key. For map settings prefer the entry helpers
+ * below; this is the escape hatch for replacing a whole value.
  */
 export async function saveSettingsKey(key, value) {
-  const current = await getSettings();
-  const next = { ...current, [key]: value };
-  await chrome.storage.local.set({ [K.SETTINGS]: next });
-  return next;
+  return withSettingsLock(async () => writeSettingsUnlocked({ ...(await getSettings()), [key]: value }));
+}
+
+async function editMapSetting(key, edit) {
+  if (!MAP_SETTINGS.includes(key)) throw new Error(`"${key}" is not a map setting (${MAP_SETTINGS.join(', ')})`);
+  return withSettingsLock(async () => {
+    const current = await getSettings();
+    const map = { ...current[key] };
+    edit(map);
+    return writeSettingsUnlocked({ ...current, [key]: map });
+  });
+}
+
+/** Add or replace one entry of a map setting (categoryMap / siteLimits). */
+export function setSettingsMapEntry(key, entryKey, value) {
+  return editMapSetting(key, (map) => { map[entryKey] = value; });
+}
+
+/** Delete one entry of a map setting. Deleting a missing entry is a no-op. */
+export function removeSettingsMapEntry(key, entryKey) {
+  return editMapSetting(key, (map) => { delete map[entryKey]; });
 }
 
 export async function getIndex() {
@@ -229,16 +269,18 @@ export async function importAll(snapshot, { mode = 'merge', includeSettings = tr
     throw new Error('קובץ גיבוי לא תקין');
   }
   if (includeSettings && snapshot.settings) {
-    const local = await getSettings();
-    const merged = deepMerge(DEFAULT_SETTINGS, snapshot.settings);
-    // Snapshots carry no credentials, so keep this device's own. (A legacy
-    // snapshot that still has them wins — it is the user's own data.)
-    merged.backup.passphrase = merged.backup.passphrase || local.backup.passphrase;
-    merged.backup.endpointToken = merged.backup.endpointToken || local.backup.endpointToken;
-    // "Encrypt backups" with no passphrase would be silently skipped by
-    // backup.js — turn the flag off so the UI never claims protection it lacks.
-    if (merged.backup.encrypt && !merged.backup.passphrase) merged.backup.encrypt = false;
-    await chrome.storage.local.set({ [K.SETTINGS]: merged });
+    await withSettingsLock(async () => {
+      const local = await getSettings();
+      const merged = deepMerge(DEFAULT_SETTINGS, snapshot.settings);
+      // Snapshots carry no credentials, so keep this device's own. (A legacy
+      // snapshot that still has them wins — it is the user's own data.)
+      merged.backup.passphrase = merged.backup.passphrase || local.backup.passphrase;
+      merged.backup.endpointToken = merged.backup.endpointToken || local.backup.endpointToken;
+      // "Encrypt backups" with no passphrase would be silently skipped by
+      // backup.js — turn the flag off so the UI never claims protection it lacks.
+      if (merged.backup.encrypt && !merged.backup.passphrase) merged.backup.encrypt = false;
+      await writeSettingsUnlocked(merged);
+    });
   }
   if (mode === 'replace') await clearAllData();
 
@@ -337,43 +379,21 @@ export async function mergeDomainAlias(oldDomain, newDomain) {
   }
   if (touched) await chrome.storage.local.set(writes);
 
+  // Re-point every per-domain setting. An existing entry for the new domain wins.
   const settings = await getSettings();
-  if (settings.categoryMap[oldDomain] != null) {
-    const map = { ...settings.categoryMap };
-    if (map[newDomain] == null) map[newDomain] = map[oldDomain];
-    delete map[oldDomain];
-    await saveSettingsKey('categoryMap', map);
+  for (const mapKey of MAP_SETTINGS) {
+    if (settings[mapKey][oldDomain] == null) continue;
+    if (settings[mapKey][newDomain] == null) await setSettingsMapEntry(mapKey, newDomain, settings[mapKey][oldDomain]);
+    await removeSettingsMapEntry(mapKey, oldDomain);
   }
-  const freshAfterCat = await getSettings();
-  if (freshAfterCat.siteLimits[oldDomain] != null) {
-    const limits = { ...freshAfterCat.siteLimits };
-    if (limits[newDomain] == null) limits[newDomain] = limits[oldDomain];
-    delete limits[oldDomain];
-    await saveSettingsKey('siteLimits', limits);
-  }
-  const freshAfterLimits = await getSettings();
-  if (freshAfterLimits.blacklist.includes(oldDomain)) {
-    const set = new Set(freshAfterLimits.blacklist);
-    set.delete(oldDomain);
-    set.add(newDomain);
-    await saveSettings({ blacklist: [...set] });
-  }
-  const freshAfterBlacklist = await getSettings();
+  const rename = (list) => [...new Set(list.map((d) => (d === oldDomain ? newDomain : d)))];
+  const patch = {};
+  if (settings.blacklist.includes(oldDomain)) patch.blacklist = rename(settings.blacklist);
+  if ((settings.pinnedSites || []).includes(oldDomain)) patch.pinnedSites = rename(settings.pinnedSites);
   for (const listKey of ['blockDomains', 'allowDomains']) {
-    const list = freshAfterBlacklist.focus[listKey] || [];
-    if (list.includes(oldDomain)) {
-      const set = new Set(list);
-      set.delete(oldDomain);
-      set.add(newDomain);
-      await saveSettings({ focus: { [listKey]: [...set] } });
-    }
+    if ((settings.focus[listKey] || []).includes(oldDomain)) (patch.focus ||= {})[listKey] = rename(settings.focus[listKey]);
   }
-  if (freshAfterBlacklist.pinnedSites && freshAfterBlacklist.pinnedSites.includes(oldDomain)) {
-    const set = new Set(freshAfterBlacklist.pinnedSites);
-    set.delete(oldDomain);
-    set.add(newDomain);
-    await saveSettings({ pinnedSites: [...set] });
-  }
+  if (Object.keys(patch).length) await saveSettings(patch);
 
   return touched;
 }
