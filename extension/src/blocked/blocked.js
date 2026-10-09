@@ -1,13 +1,11 @@
 import { getSettings } from '../lib/storage.js';
 import { setLang, getLang, t, dir } from '../lib/i18n.js';
 import { formatClock } from '../lib/utils.js';
+import { sendMessage as msg } from '../lib/messages.js';
 
 const $ = (id) => document.getElementById(id);
 let timer = null;
 
-function msg(type, extra = {}) {
-  return chrome.runtime.sendMessage({ type, ...extra }).catch(() => ({}));
-}
 
 function localizeStatic() {
   $('title').textContent = t('blocked.title');

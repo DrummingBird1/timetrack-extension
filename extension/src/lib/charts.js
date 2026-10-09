@@ -174,8 +174,11 @@ function formatSecShort(s) {
   return `${s} שנ׳`;
 }
 
-/** Thin sparkline of values for trend cards. */
-export function sparkline(container, values, { height = 40, color } = {}) {
+/**
+ * Thin sparkline of values for trend cards.
+ */
+export function sparkline(container, values, opts = {}) {
+  const { height = 40, color } = /** @type {{ height?: number, color?: string }} */ (opts);
   clear(container);
   const W = container.clientWidth || 120;
   const H = height;

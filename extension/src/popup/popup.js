@@ -4,17 +4,16 @@ import {
 } from '../lib/utils.js';
 import { aggregateDomains, topSites, dailyTotals } from '../lib/stats.js';
 import { barChart } from '../lib/charts.js';
+import { sendMessage as msg } from '../lib/messages.js';
 import { setLang, getLang, t, dir, locale, localize } from '../lib/i18n.js';
 
+/** @type {(id: string) => any} */
 const $ = (id) => document.getElementById(id);
 let live = null;
 let liveTimer = null;
 let focusTimer = null;
 let settings = null;
 
-function msg(type, extra = {}) {
-  return chrome.runtime.sendMessage({ type, ...extra }).catch(() => ({}));
-}
 
 function iconFor(domain) {
   if (settings && settings.realFavicons) {

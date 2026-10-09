@@ -79,7 +79,12 @@ export async function getSettings() {
 // Every settings write is read-modify-write. Serializing them stops two quick edits
 // (a toggle and a number field, say) from overwriting each other with a stale copy.
 // Code that already holds the lock must use the *Unlocked helpers — re-entering would deadlock.
-let settingsChain = Promise.resolve();
+let settingsChain = /** @type {Promise<any>} */ (Promise.resolve());
+/**
+ * @template T
+ * @param {() => Promise<T>} fn
+ * @returns {Promise<T>}
+ */
 function withSettingsLock(fn) {
   const run = settingsChain.then(fn);
   settingsChain = run.catch(() => {});

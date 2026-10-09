@@ -92,7 +92,8 @@ export function t(key, vars) {
 
 /** Fill all [data-i18n] text and [data-i18n-ph]/[data-i18n-title] attributes. */
 export function localize(root = document) {
-  root.querySelectorAll('[data-i18n]').forEach((el) => { el.textContent = t(el.dataset.i18n); });
-  root.querySelectorAll('[data-i18n-ph]').forEach((el) => { el.placeholder = t(el.dataset.i18nPh); });
-  root.querySelectorAll('[data-i18n-title]').forEach((el) => { el.title = t(el.dataset.i18nTitle); });
+  const all = (selector) => /** @type {NodeListOf<HTMLElement>} */ (root.querySelectorAll(selector));
+  all('[data-i18n]').forEach((el) => { el.textContent = t(el.dataset.i18n); });
+  all('[data-i18n-ph]').forEach((el) => { /** @type {HTMLInputElement} */ (el).placeholder = t(el.dataset.i18nPh); });
+  all('[data-i18n-title]').forEach((el) => { el.title = t(el.dataset.i18nTitle); });
 }

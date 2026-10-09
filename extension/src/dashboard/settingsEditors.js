@@ -23,9 +23,10 @@ export function renderFocusCats(hostSel, settingKey) {
       <span class="dot" style="background:${def.color}"></span>${categoryLabel(key)}`;
     label.querySelector('input').addEventListener('change', async (e) => {
       const set = new Set(settings.focus[settingKey]);
-      if (e.target.checked) set.add(key); else set.delete(key);
+      const checked = /** @type {HTMLInputElement} */ (e.target).checked;
+      if (checked) set.add(key); else set.delete(key);
       setSettings(await saveSettings({ focus: { [settingKey]: [...set] } }));
-      label.classList.toggle('on', e.target.checked);
+      label.classList.toggle('on', checked);
     });
     host.appendChild(label);
   }

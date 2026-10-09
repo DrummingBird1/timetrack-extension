@@ -4,13 +4,17 @@ import { aggregateDomains } from '../lib/stats.js';
 import { dayKey, rangeKeys, keysBetween, favicon } from '../lib/utils.js';
 import { CATEGORY_DEFS } from '../lib/categories.js';
 import { t, locale } from '../lib/i18n.js';
+import { sendMessage } from '../lib/messages.js';
 
+/** @type {(selector: string) => any} */
 export const $ = (s) => document.querySelector(s);
+/** @type {(selector: string) => NodeListOf<any>} */
 export const $$ = (s) => document.querySelectorAll(s);
 
 // ---- shared state (live bindings: importers see updates; only this module assigns) ----
 export let settings = null;
-export let currentRange = 7;             // number | 'all' | { from: Date, to: Date }
+/** @type {number | 'all' | { from: Date, to: Date }} */
+export let currentRange = 7;
 export let currentTab = 'overview';
 export let cache = { keys: [], days: {}, agg: {} };
 export let siteAllHistory = false;       // Sites tab: aggregate the whole index, not just the range
@@ -25,9 +29,7 @@ export const setAllCache = (v) => { allCache = v; };
 // feature modules can call them without importing it back (which would be circular).
 export const actions = {};
 
-export function send(type, extra = {}) {
-  return chrome.runtime.sendMessage({ type, ...extra }).catch(() => ({}));
-}
+export const send = sendMessage;
 
 export function toast(message, kind = '') {
   const el = $('#toast');
@@ -91,6 +93,7 @@ export async function loadRange() {
 export function rangeLabel() {
   if (currentRange === 'all') return t('range.all');
   if (typeof currentRange === 'object') {
+    /** @type {Intl.DateTimeFormatOptions} */
     const o = { day: 'numeric', month: 'short' };
     return `${currentRange.from.toLocaleDateString(locale(), o)} – ${currentRange.to.toLocaleDateString(locale(), o)}`;
   }
@@ -98,6 +101,7 @@ export function rangeLabel() {
   return t(`range.${currentRange}`);
 }
 
+/** @param {{ icon: string, val: string | number, lbl: string, delta?: number | null }} card */
 export function statCard({ icon, val, lbl, delta }) {
   const deltaHtml = delta == null ? '' :
     `<div class="delta ${delta > 0 ? 'up' : delta < 0 ? 'down' : 'flat'}">

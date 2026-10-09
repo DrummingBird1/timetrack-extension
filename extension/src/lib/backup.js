@@ -106,7 +106,10 @@ export async function backupToSync() {
   return { chunks: chunks.length, trimmed, bytes, encrypted };
 }
 
-/** Fetch, reassemble, and (if needed) decrypt the sync backup — no import side effect. */
+/**
+ * Fetch, reassemble, and (if needed) decrypt the sync backup — no import side effect.
+ * @param {string} [passphrase]
+ */
 async function fetchSyncSnapshot(passphrase) {
   const meta = (await chrome.storage.sync.get(SYNC_META))[SYNC_META];
   if (!meta || !meta.chunks) throw new Error('לא נמצא גיבוי בענן');
@@ -128,7 +131,7 @@ async function fetchSyncSnapshot(passphrase) {
   const wasEncrypted = isEncrypted(snapshot);
   if (wasEncrypted) {
     const pass = passphrase || (await getSettings()).backup.passphrase;
-    if (!pass) { const e = new Error('הגיבוי מוצפן — נדרשת סיסמה'); e.code = 'ENCRYPTED'; throw e; }
+    if (!pass) { const e = /** @type {Error & { code?: string }} */ (new Error('הגיבוי מוצפן — נדרשת סיסמה')); e.code = 'ENCRYPTED'; throw e; }
     snapshot = await decryptJSON(snapshot, pass);
   }
   return { snapshot, meta, wasEncrypted };
@@ -138,12 +141,14 @@ async function fetchSyncSnapshot(passphrase) {
  * Fetch + decrypt the cloud backup and summarize it, WITHOUT importing —
  * lets the UI show what a restore would do (day range, total time, site count,
  * encrypted y/n) before the user commits to replace/merge.
+ * @param {{ passphrase?: string }} [opts]
  */
 export async function peekSync({ passphrase } = {}) {
   const { snapshot, meta, wasEncrypted } = await fetchSyncSnapshot(passphrase);
   return { ...summarizeSnapshot(snapshot), encrypted: wasEncrypted, ts: meta.ts };
 }
 
+/** @param {{ mode?: string, passphrase?: string }} [opts] */
 export async function restoreFromSync({ mode = 'replace', passphrase } = {}) {
   const { snapshot, meta } = await fetchSyncSnapshot(passphrase);
   const { days, domainsChanged } = await importAll(snapshot, { mode, includeSettings: true });

@@ -15,6 +15,7 @@ import { runAutoBackup } from './src/lib/backup.js';
 import { categorize } from './src/lib/categories.js';
 import { aggregateDomains, totalTime, topSites, byCategory, focusScore } from './src/lib/stats.js';
 import { setLang, t } from './src/lib/i18n.js';
+import { parseMessage } from './src/lib/messages.js';
 
 const SESSION_STATE = 'ttt_state';
 const FOCUS_STATE = 'ttt_focus';
@@ -485,11 +486,14 @@ chrome.runtime.onInstalled.addListener(async (details) => {
 
 // ---- messaging (popup + dashboard) ----
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  if (sender && sender.id !== chrome.runtime.id) return false;   // only this extension's own pages
   handleMessage(msg).then(sendResponse).catch((e) => sendResponse({ error: e.message }));
   return true; // async
 });
 
-async function handleMessage(msg) {
+async function handleMessage(raw) {
+  const msg = parseMessage(raw);
+  if (!msg) return { ok: false, unknown: true };
   switch (msg.type) {
     case 'getLive': {
       // Read-only: report the current segment without committing. Time is

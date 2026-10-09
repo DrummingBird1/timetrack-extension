@@ -1,7 +1,6 @@
-name: E2E
+name: Checks
 
-# Real-browser tests: Puppeteer drives Chrome for Testing with the unpacked
-# extension loaded. Kept in its own workflow (not test.yml) so the README "Tests"
+# Type-check and real-browser tests. Kept apart from test.yml so the README "Tests"
 # badge keeps reflecting the fast unit/integration suite.
 
 on:
@@ -12,6 +11,24 @@ on:
   workflow_dispatch:
 
 jobs:
+  typecheck:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+      - name: Install dev dependencies
+        working-directory: dist
+        run: pnpm install --frozen-lockfile
+      - name: Type-check (tsc --checkJs)
+        working-directory: dist
+        run: pnpm typecheck
+
   e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 20

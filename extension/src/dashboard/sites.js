@@ -40,7 +40,10 @@ export async function renderSites() {
       <td>${s.v}</td>
       <td><div class="share-mini"><div class="bar"><div class="fill" style="width:${pct}%"></div></div><span>${pct}%</span></div></td>
       <td><input type="number" class="limit-input" min="0" placeholder="—" value="${limit}" data-domain="${s.domain}"></td>`;
-    tr.addEventListener('click', (e) => { if (!e.target.closest('.limit-input') && !e.target.closest('.pin-btn')) openSiteDetail(s.domain, src); });
+    tr.addEventListener('click', (e) => {
+      const target = /** @type {HTMLElement} */ (e.target);
+      if (!target.closest('.limit-input') && !target.closest('.pin-btn')) openSiteDetail(s.domain, src);
+    });
     body.appendChild(tr);
   }
 

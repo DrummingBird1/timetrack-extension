@@ -183,7 +183,7 @@ export function wireSettings() {
   $('#restoreSync').addEventListener('click', startRestoreFlow);
 
   // Export / import
-  $('#exportJson').addEventListener('click', () => exportData(false));
+  $('#exportJson').addEventListener('click', () => exportData());
   $('#exportCsv').addEventListener('click', () => exportCsv(false));
   $('#exportView').addEventListener('click', () => exportCsv(true));
   $('#importBtn').addEventListener('click', () => $('#importFile').click());
