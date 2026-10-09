@@ -202,6 +202,40 @@ test('snoozing a limit notification suppresses it for the snooze window', async 
   await storage.removeSettingsMapEntry('siteLimits', 'youtube.com'); // restore for later tests (the old saveSettings({siteLimits:{}}) was a silent no-op)
 });
 
+test('the session log records visits only when enabled, and one visit survives the 1-minute tick', async () => {
+  await send({ type: 'setEnabled', value: true });
+  await storage.saveSettings({ blacklist: [], notifyLimits: false, sessionLog: false });
+  await send({ type: 'settingsChanged' });
+  const today = dayKey();
+  const sessionKeys = () => [...chrome.storage.local._store.keys()].filter((k) => k.startsWith('ttt_sess_'));
+  for (const k of sessionKeys()) await chrome.storage.local.remove(k);
+
+  await send({ type: 'flush' });
+  clock += 60_000;
+  await send({ type: 'flush' });
+  assert.deepEqual(sessionKeys(), [], 'off by default: nothing is recorded');
+
+  await storage.saveSettings({ sessionLog: true });
+  await send({ type: 'settingsChanged' });
+  await send({ type: 'flush' });          // open a fresh segment under the new setting
+  for (let i = 0; i < 3; i++) { clock += 60_000; await send({ type: 'flush' }); }   // three ticks on the same site
+  const logs = (await storage.getSessions([today]))[today];
+  assert.equal(logs.length, 1, 'three contiguous ticks are one visit');
+  assert.equal(logs[0][0], 'youtube.com');
+  assert.ok(logs[0][2] >= 175 && logs[0][2] <= 181, `expected ~180s, got ${logs[0][2]}`);
+
+  activeTab.url = 'https://github.com/x';                      // switch site, then back
+  await listeners.idle._fire('active');
+  await send({ type: 'flush' });
+  clock += 30_000; await send({ type: 'flush' });
+  activeTab.url = 'https://youtube.com/watch?v=1';
+  await send({ type: 'flush' });
+  clock += 30_000; await send({ type: 'flush' });
+  const after = (await storage.getSessions([today]))[today].map((e) => e[0]);
+  assert.deepEqual(after, ['youtube.com', 'github.com', 'youtube.com'], 'each switch starts a new visit');
+  await storage.saveSettings({ sessionLog: false });
+});
+
 test('a storage-quota warning fires once when local storage crosses the threshold', async () => {
   // Storage warnings use notify()'s default '' id (not snoozable/deduped-by-id
   // like limit notifications), so detect them by their message content instead

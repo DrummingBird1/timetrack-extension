@@ -302,5 +302,16 @@
   "restore.confirmBtn": "Restore",
   "restore.cancelBtn": "Cancel",
   "detail.firstVisit": "First visit",
-  "detail.lastVisit": "Last visit"
+  "detail.lastVisit": "Last visit",
+  "set.sessionLog": "Session log",
+  "set.sessionLogDesc": "Also record the start time and length of every visit (stays on this device). Enables per-site visit-length stats",
+  "btn.clearSessions": "Delete session log",
+  "confirm.clearSessions": "Delete the session log? Your tracked time totals are not affected.",
+  "toast.sessionsCleared": "Session log deleted ({n} days)",
+  "detail.sessions": "Visit lengths (minutes)",
+  "detail.sessionCount": "Recorded visits",
+  "detail.sessionAvg": "Average length",
+  "detail.sessionMax": "Longest",
+  "detail.sessionsOff": "Turn on the session log in Settings to see how long your visits to this site last.",
+  "detail.sessionsNone": "No visits recorded for this site in this range yet."
 }

@@ -302,5 +302,16 @@
   "restore.confirmBtn": "استعادة",
   "restore.cancelBtn": "إلغاء",
   "detail.firstVisit": "أول زيارة",
-  "detail.lastVisit": "آخر زيارة"
+  "detail.lastVisit": "آخر زيارة",
+  "set.sessionLog": "سجل الزيارات",
+  "set.sessionLogDesc": "سجّل أيضًا وقت بدء كل زيارة ومدتها (يبقى على هذا الجهاز فقط). يتيح إحصاءات مدة الزيارات لكل موقع",
+  "btn.clearSessions": "حذف سجل الزيارات",
+  "confirm.clearSessions": "هل تريد حذف سجل الزيارات؟ لن تتأثر إجماليات الوقت المتتبَّع.",
+  "toast.sessionsCleared": "تم حذف سجل الزيارات ({n} يومًا)",
+  "detail.sessions": "مدة الزيارات (بالدقائق)",
+  "detail.sessionCount": "الزيارات المسجَّلة",
+  "detail.sessionAvg": "متوسط المدة",
+  "detail.sessionMax": "الأطول",
+  "detail.sessionsOff": "فعّل سجل الزيارات من الإعدادات لترى مدة زياراتك لهذا الموقع.",
+  "detail.sessionsNone": "لا توجد زيارات مسجَّلة لهذا الموقع في هذا النطاق بعد."
 }

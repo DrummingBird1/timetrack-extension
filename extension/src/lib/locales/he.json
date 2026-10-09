@@ -302,5 +302,16 @@
   "restore.confirmBtn": "שחזר",
   "restore.cancelBtn": "ביטול",
   "detail.firstVisit": "ביקור ראשון",
-  "detail.lastVisit": "ביקור אחרון"
+  "detail.lastVisit": "ביקור אחרון",
+  "set.sessionLog": "יומן ביקורים",
+  "set.sessionLogDesc": "שמור גם את שעת ההתחלה ואת אורך כל ביקור (נשאר במכשיר בלבד). מאפשר סטטיסטיקת אורך ביקור לכל אתר",
+  "btn.clearSessions": "מחק יומן ביקורים",
+  "confirm.clearSessions": "למחוק את יומן הביקורים? סך הזמן שנמדד לא ייפגע.",
+  "toast.sessionsCleared": "יומן הביקורים נמחק ({n} ימים)",
+  "detail.sessions": "אורכי ביקור (בדקות)",
+  "detail.sessionCount": "ביקורים מתועדים",
+  "detail.sessionAvg": "אורך ממוצע",
+  "detail.sessionMax": "הארוך ביותר",
+  "detail.sessionsOff": "הפעל את יומן הביקורים בהגדרות כדי לראות כמה זמן נמשכים הביקורים שלך באתר הזה.",
+  "detail.sessionsNone": "עדיין אין ביקורים מתועדים לאתר הזה בטווח הנבחר."
 }

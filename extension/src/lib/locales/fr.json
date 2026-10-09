@@ -302,5 +302,16 @@
   "restore.confirmBtn": "Restaurer",
   "restore.cancelBtn": "Annuler",
   "detail.firstVisit": "Première visite",
-  "detail.lastVisit": "Dernière visite"
+  "detail.lastVisit": "Dernière visite",
+  "set.sessionLog": "Journal des visites",
+  "set.sessionLogDesc": "Enregistre aussi l’heure de début et la durée de chaque visite (reste sur cet appareil). Active les statistiques de durée des visites par site",
+  "btn.clearSessions": "Supprimer le journal des visites",
+  "confirm.clearSessions": "Supprimer le journal des visites ? Les totaux de temps mesuré ne sont pas affectés.",
+  "toast.sessionsCleared": "Journal des visites supprimé ({n} jours)",
+  "detail.sessions": "Durée des visites (en minutes)",
+  "detail.sessionCount": "Visites enregistrées",
+  "detail.sessionAvg": "Durée moyenne",
+  "detail.sessionMax": "La plus longue",
+  "detail.sessionsOff": "Activez le journal des visites dans les Paramètres pour voir la durée de vos visites sur ce site.",
+  "detail.sessionsNone": "Aucune visite enregistrée pour ce site sur cette période pour l’instant."
 }

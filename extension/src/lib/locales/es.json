@@ -302,5 +302,16 @@
   "restore.confirmBtn": "Restaurar",
   "restore.cancelBtn": "Cancelar",
   "detail.firstVisit": "Primera visita",
-  "detail.lastVisit": "Última visita"
+  "detail.lastVisit": "Última visita",
+  "set.sessionLog": "Registro de visitas",
+  "set.sessionLogDesc": "Registra también la hora de inicio y la duración de cada visita (se queda en este dispositivo). Activa las estadísticas de duración de visitas por sitio",
+  "btn.clearSessions": "Eliminar el registro de visitas",
+  "confirm.clearSessions": "¿Eliminar el registro de visitas? Los totales de tiempo medido no se verán afectados.",
+  "toast.sessionsCleared": "Registro de visitas eliminado ({n} días)",
+  "detail.sessions": "Duración de las visitas (en minutos)",
+  "detail.sessionCount": "Visitas registradas",
+  "detail.sessionAvg": "Duración media",
+  "detail.sessionMax": "La más larga",
+  "detail.sessionsOff": "Active el registro de visitas en Configuración para ver cuánto duran sus visitas a este sitio.",
+  "detail.sessionsNone": "Aún no hay visitas registradas para este sitio en este rango."
 }

@@ -1,5 +1,5 @@
 // Settings tab: form binding, change handlers, search filter, passphrase meter, backup status.
-import { saveSettings, getSettings, getIndex, storageFootprint, clearAllData } from '../lib/storage.js';
+import { saveSettings, getSettings, getIndex, storageFootprint, clearAllData, clearSessions } from '../lib/storage.js';
 import { clamp, passphraseStrength } from '../lib/utils.js';
 import { t, locale } from '../lib/i18n.js';
 import { $, $$, settings, setSettings, setAllCache, toast, send, actions } from './core.js';
@@ -38,6 +38,7 @@ export function fillSettingsForm() {
   $('#setPassphrase').value = settings.backup.passphrase;
   updatePassStrength(settings.backup.passphrase);
   $('#setRetention').value = settings.retentionDays;
+  $('#setSessionLog').checked = settings.sessionLog;
   renderFocusCats('#focusCats', 'blockCategories');
   renderFocusCats('#focusAllowCats', 'allowCategories');
   renderFocusDomains('#focusBlockDomains', 'blockDomains');
@@ -105,6 +106,12 @@ export function wireSettings() {
   bindSwitch('#setGroup', 'groupSubdomains', async () => { await actions.refresh(); });
   bindSwitch('#setNotify', 'notifyLimits');
   bindSwitch('#setWeeklySummary', 'weeklySummary');
+  bindSwitch('#setSessionLog', 'sessionLog');
+  $('#clearSessions').addEventListener('click', async () => {
+    if (!confirm(t('confirm.clearSessions'))) return;
+    toast(t('toast.sessionsCleared', { n: await clearSessions() }), 'success');
+    renderStorageInfo();
+  });
 
   $('#setLanguage').addEventListener('change', async (e) => {
     await persist({ language: e.target.value });

@@ -356,6 +356,13 @@
                 <select id="importMode"><option value="merge" data-i18n="import.merge">מיזוג</option><option value="replace" data-i18n="import.replace">החלפה</option></select>
               </div>
             </div>
+            <div class="setting-row">
+              <div><div class="set-label" data-i18n="set.sessionLog">יומן ביקורים</div><div class="set-desc" data-i18n="set.sessionLogDesc">שמור גם את שעת ההתחלה ואת אורך כל ביקור (נשאר במכשיר בלבד). מאפשר סטטיסטיקת אורך ביקור לכל אתר</div></div>
+              <label class="switch"><input type="checkbox" id="setSessionLog" /><span class="switch-track"><span class="switch-thumb"></span></span></label>
+            </div>
+            <div class="field-block">
+              <button class="btn ghost" id="clearSessions" data-i18n="btn.clearSessions">מחק יומן ביקורים</button>
+            </div>
             <div class="storage-info" id="storageInfo"></div>
             <button class="btn danger" id="clearData" data-i18n="btn.clear">מחק את כל הנתונים</button>
           </div>

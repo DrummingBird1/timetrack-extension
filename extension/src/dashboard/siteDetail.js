@@ -1,7 +1,7 @@
 // Site detail modal: per-site stats and charts, alias merge, never-track toggle.
-import { getSettings, saveSettings, mergeDomainAlias } from '../lib/storage.js';
+import { getSettings, saveSettings, mergeDomainAlias, getSessions } from '../lib/storage.js';
 import { parseDayKey, formatDuration, sum } from '../lib/utils.js';
-import { domainPeakHour, domainHourly, firstLastVisit } from '../lib/stats.js';
+import { domainPeakHour, domainHourly, firstLastVisit, sessionStats, SESSION_BUCKET_LABELS } from '../lib/stats.js';
 import { categorize, categoryDef } from '../lib/categories.js';
 import { barChart } from '../lib/charts.js';
 import { t, locale, categoryLabel } from '../lib/i18n.js';
@@ -45,6 +45,7 @@ export function openSiteDetail(domain, source = cache) {
     <div class="detail-section-title">${t('detail.timeline')}</div>
     <div id="detailChart" class="chart-box"></div>
     ${hourly ? `<div class="detail-section-title">${t('detail.hourly')}</div><div id="detailHourly" class="chart-box"></div>` : ''}
+    <div id="detailSessions"></div>
     <div class="detail-section-title">${t('detail.mergeInto')}</div>
     <div class="set-desc" style="margin-bottom:9px">${t('detail.mergeIntoDesc')}</div>
     <div class="detail-actions">
@@ -63,6 +64,8 @@ export function openSiteDetail(domain, source = cache) {
   $('#mergeDomainBtn').addEventListener('click', () => mergeDomainInto(domain));
   $('#mergeDomainInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') mergeDomainInto(domain); });
 
+  renderSessions(domain, keys);
+
   const labelEvery = timeline.length > 20 ? Math.ceil(timeline.length / 12) : 1;
   barChart($('#detailChart'), timeline.map((d, i) => ({
     label: i % labelEvery === 0 ? `${parseDayKey(d.key).getDate()}/${parseDayKey(d.key).getMonth() + 1}` : '',
@@ -77,6 +80,31 @@ export function openSiteDetail(domain, source = cache) {
       title: `${h}:00 - ${h + 1}:00: ${formatDuration(v)}`,
     })), { height: 170, valueFmt: formatDuration });
   }
+}
+
+// Visit-length distribution, from the opt-in session log. Loaded after the modal
+// opens so the rest of the card appears immediately.
+async function renderSessions(domain, keys) {
+  const stats = sessionStats(await getSessions(keys), domain);
+  const host = $('#detailSessions');
+  if (!host) return;                                   // modal was closed or re-rendered meanwhile
+  if (!stats.count) {
+    host.innerHTML = `<div class="set-desc" style="margin:14px 0">${t(settings.sessionLog ? 'detail.sessionsNone' : 'detail.sessionsOff')}</div>`;
+    return;
+  }
+  host.innerHTML = `
+    <div class="detail-section-title">${t('detail.sessions')}</div>
+    <div class="detail-stats">
+      <div class="detail-stat"><div class="v">${stats.count}</div><div class="l">${t('detail.sessionCount')}</div></div>
+      <div class="detail-stat"><div class="v">${formatDuration(stats.average)}</div><div class="l">${t('detail.sessionAvg')}</div></div>
+      <div class="detail-stat"><div class="v">${formatDuration(stats.longest)}</div><div class="l">${t('detail.sessionMax')}</div></div>
+    </div>
+    <div id="detailSessionChart" class="chart-box"></div>`;
+  barChart($('#detailSessionChart'), stats.buckets.map((count, i) => ({
+    label: SESSION_BUCKET_LABELS[i],
+    value: count,
+    title: `${SESSION_BUCKET_LABELS[i]}: ${count}`,
+  })), { height: 150 });
 }
 
 // Combine a rebranded/renamed site's history into another domain, from its detail modal.

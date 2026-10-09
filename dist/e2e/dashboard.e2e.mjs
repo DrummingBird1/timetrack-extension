@@ -347,6 +347,52 @@ test('export: JSON, CSV and current-view CSV downloads have the right content (a
   assert.ok(viewRows > 0 && viewRows < domainDays, `view export has ${viewRows} rows (< ${domainDays})`);
 });
 
+// ------------------------------------------------------------ session log
+test('session log: opt-in toggle, per-site visit-length stats and deletion', async () => {
+  const top = ranked(snapshot)[0].dom;
+  const day = Object.keys(snapshot.days).sort().slice(-1)[0];
+
+  // off by default, and the site detail says how to turn it on
+  assert.equal((await ext.getSettings()).sessionLog, false);
+  await openTab('sites');
+  await waitFor(async () => (await count('#sitesBody tr')) > 0);
+  const openTop = () => page.$$eval('#sitesBody tr', (rows, t) => rows.find((r) => r.querySelector('.dom').textContent === t).click(), top);
+  await openTop();
+  await page.waitForSelector('#detailSessions .set-desc');
+  await page.keyboard.press('Escape');
+
+  // turn it on from Settings
+  await openTab('settings');
+  await page.$eval('#setSessionLog', (e) => e.closest('label').click());
+  await waitFor(async () => (await ext.getSettings()).sessionLog === true, { message: 'session log enabled' });
+
+  // visits recorded by the engine would look like this
+  await ext.run(async (url, d, dom) => {
+    const s = await import(url);
+    await s.recordSession({ dateKey: d, domain: dom, startSec: 3600, seconds: 30 });
+    await s.recordSession({ dateKey: d, domain: 'other.example.com', startSec: 3700, seconds: 10 });
+    await s.recordSession({ dateKey: d, domain: dom, startSec: 4000, seconds: 600 });
+    await s.recordSession({ dateKey: d, domain: 'other.example.com', startSec: 5000, seconds: 10 });
+    await s.recordSession({ dateKey: d, domain: dom, startSec: 7000, seconds: 4000 });
+  }, `${ext.base}src/lib/storage.js`, day, top);
+
+  await openTab('sites');
+  await openTop();
+  await page.waitForSelector('#detailSessionChart svg');
+  const stats = await page.$$eval('#detailSessions .detail-stat .v', (els) => els.map((e) => e.textContent.trim()));
+  assert.equal(stats[0], '3', 'three recorded visits to this site');
+  assert.equal(await page.$$eval('#detailSessionChart svg rect', (r) => r.length) > 0, true);
+  await page.keyboard.press('Escape');
+
+  // delete the log: the tracked time stays
+  const before = (await dayData()).idx.length;
+  await openTab('settings');
+  await page.click('#clearSessions');
+  await waitFor(async () => (await ext.run(async (url, k) => Object.keys(await (await import(url)).getSessions([k])).length, `${ext.base}src/lib/storage.js`, day)) === 0, { message: 'sessions deleted' });
+  assert.equal((await dayData()).idx.length, before, 'tracked days are untouched');
+  assert.ok(ext.dialogs.some((d) => d.type === 'confirm'));
+});
+
 // --------------------------------------------------------- import / clear
 test('import: a JSON backup and a CSV file are imported through the file inputs', async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'tt-e2e-'));

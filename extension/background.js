@@ -7,7 +7,7 @@
 // trackable. State survives SW restarts via chrome.storage.session.
 
 import {
-  getSettings, saveSettings, addTime, addVisit, getDay, getDays, pruneOld,
+  getSettings, saveSettings, addTime, addVisit, recordSession, getDay, getDays, pruneOld,
   saveMeta, getMeta, migrate, storageFootprint,
 } from './src/lib/storage.js';
 import { domainFromUrl, dayKey, rangeKeys, addDays, formatDuration } from './src/lib/utils.js';
@@ -200,6 +200,10 @@ async function refresh() {
       if (elapsed >= 1) {
         const when = new Date(st.since);
         await addTime({ dateKey: dayKey(when), domain: st.domain, seconds: elapsed, hour: when.getHours() });
+        if (settings.sessionLog) {
+          const startSec = when.getHours() * 3600 + when.getMinutes() * 60 + when.getSeconds();
+          await recordSession({ dateKey: dayKey(when), domain: st.domain, startSec, seconds: elapsed });
+        }
       }
     }
 
