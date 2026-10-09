@@ -90,3 +90,14 @@ The tests tell you what you missed.
    and creates the GitHub Release (with the banner) from the CHANGELOG section.
 3. Changes to `store-assets/site/` deploy to GitHub Pages automatically on merge to `main`.
 4. Store submission is manual: see [store-assets/STORE_LISTING.md](store-assets/STORE_LISTING.md).
+
+### Testing the package that ships
+
+The store zip is built from `extension/`, but it is the zip's contents that users run. Before
+uploading, build it, extract it somewhere, and point the end-to-end suite at that copy:
+
+```powershell
+pwsh dist/build.ps1                                   # → dist/timetrack-v<version>.zip
+Expand-Archive dist/timetrack-v<version>.zip $env:TEMP/timetrack-zip-check
+cd dist; $env:TT_EXTENSION_PATH = "$env:TEMP/timetrack-zip-check"; pnpm test:e2e
+```

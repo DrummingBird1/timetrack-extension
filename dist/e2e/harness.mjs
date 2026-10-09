@@ -7,7 +7,11 @@ import http from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-export const EXT_PATH = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../extension');
+// TT_EXTENSION_PATH points the whole suite at another build of the extension — e.g. the store zip
+// extracted to a temp folder (see CONTRIBUTING.md "Testing the package that ships").
+export const EXT_PATH = process.env.TT_EXTENSION_PATH
+  ? path.resolve(process.env.TT_EXTENSION_PATH)
+  : path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../extension');
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 export { sleep };
