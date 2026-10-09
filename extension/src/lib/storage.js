@@ -4,14 +4,18 @@
 
 import { dayKey } from './utils.js';
 
-export const SCHEMA_VERSION = 2;
+// v2: per-domain hourly map `dh`.  v3: optional per-day session logs (ttt_sess_<day>).
+// Both are additive — old records need no rewrite.
+export const SCHEMA_VERSION = 3;
 
 export const K = {
   SETTINGS: 'ttt_settings',
   INDEX: 'ttt_index',
   META: 'ttt_meta',
   day: (key) => `ttt_day_${key}`,
+  sess: (key) => `ttt_sess_${key}`,
 };
+const SESS_PREFIX = 'ttt_sess_';
 
 export const DEFAULT_SETTINGS = {
   enabled: true,
@@ -32,6 +36,7 @@ export const DEFAULT_SETTINGS = {
   blacklist: [],                 // domains never tracked
   pinnedSites: [],                // domains pinned to the top of the Sites table
   realFavicons: false,           // use Chrome's local _favicon icons (opt-in perm)
+  sessionLog: false,             // also record each visit's start + length (opt-in; powers session-length stats)
   focus: {
     defaultMinutes: 25,                          // suggested work length
     breakMinutes: 5,                             // Pomodoro break length
@@ -211,13 +216,53 @@ export async function addVisit(dateKey, domain) {
   await ensureIndexed(dateKey);
 }
 
+// ---- session log (opt-in) ----
+// One array per day: [domain, startSec, seconds] where startSec counts from local
+// midnight. Kept apart from the day aggregates so the always-on write path stays small.
+const SESSION_GAP_SECONDS = 5;   // segments closer than this belong to the same visit
+
+/**
+ * Record `seconds` spent on `domain` starting at `startSec`. The worker commits an
+ * open segment at least every minute, so a segment that begins where the last
+ * session for that domain ended extends it instead of starting a new one.
+ */
+export async function recordSession({ dateKey, domain, startSec, seconds }) {
+  if (!domain || !(seconds > 0)) return;
+  const key = K.sess(dateKey);
+  const list = (await chrome.storage.local.get(key))[key] || [];
+  const last = list[list.length - 1];
+  if (last && last[0] === domain && startSec - (last[1] + last[2]) <= SESSION_GAP_SECONDS && startSec >= last[1]) {
+    last[2] = Math.max(last[2], Math.round(startSec + seconds - last[1]));
+  } else {
+    list.push([domain, Math.round(startSec), Math.round(seconds)]);
+  }
+  await chrome.storage.local.set({ [key]: list });
+}
+
+/** Session logs for the given day keys; days that have none are absent from the result. */
+export async function getSessions(keys) {
+  if (!keys.length) return {};
+  const r = await chrome.storage.local.get(keys.map(K.sess));
+  const out = {};
+  for (const key of keys) if (r[K.sess(key)]) out[key] = r[K.sess(key)];
+  return out;
+}
+
+/** Delete every session log (tracked time is untouched). Returns how many days had one. */
+export async function clearSessions() {
+  const all = await chrome.storage.local.get(null);
+  const keys = Object.keys(all).filter((k) => k.startsWith(SESS_PREFIX));
+  if (keys.length) await chrome.storage.local.remove(keys);
+  return keys.length;
+}
+
 export async function pruneOld(retentionDays) {
   if (!retentionDays || retentionDays <= 0) return 0;
   const idx = await getIndex();
   const cutoff = dayKey(new Date(Date.now() - retentionDays * 86400000));
   const remove = idx.filter((k) => k < cutoff);
   if (!remove.length) return 0;
-  await chrome.storage.local.remove(remove.map(K.day));
+  await chrome.storage.local.remove([...remove.map(K.day), ...remove.map(K.sess)]);
   const kept = idx.filter((k) => k >= cutoff);
   await chrome.storage.local.set({ [K.INDEX]: kept });
   return remove.length;
@@ -226,6 +271,7 @@ export async function pruneOld(retentionDays) {
 export async function clearAllData() {
   const idx = await getIndex();
   await chrome.storage.local.remove(idx.map(K.day));
+  await clearSessions();
   await chrome.storage.local.set({ [K.INDEX]: [] });
   await saveMeta({ firstDay: null });
 }
@@ -240,13 +286,17 @@ function stripSecrets(settings) {
   return { ...settings, backup: { ...settings.backup, passphrase: '', endpointToken: '' } };
 }
 
-/** Full snapshot for export / backup (credentials removed — see stripSecrets). */
-export async function exportAll() {
+/**
+ * Full snapshot for export / backup (credentials removed — see stripSecrets).
+ * Session logs ride along only when there are any; the 100 KB chrome.storage.sync
+ * backup passes { sessions: false } because they would not fit.
+ */
+export async function exportAll({ sessions = true } = {}) {
   const settings = stripSecrets(await getSettings());
   const idx = await getIndex();
   const days = await getDays(idx);
   const meta = await getMeta();
-  return {
+  const snapshot = {
     app: 'TimeTrack',
     version: SCHEMA_VERSION,
     exportedAt: Date.now(),
@@ -254,6 +304,11 @@ export async function exportAll() {
     settings,
     days,
   };
+  if (sessions) {
+    const logs = await getSessions(idx);
+    if (Object.keys(logs).length) snapshot.sessions = logs;
+  }
+  return snapshot;
 }
 
 /**
@@ -299,6 +354,18 @@ export async function importAll(snapshot, { mode = 'merge', includeSettings = tr
       domainsChanged += changed;
     }
     idx.add(key);
+  }
+  // Session logs: keep whichever side recorded more for a day, so re-importing the same
+  // file never doubles entries (the same idempotence rule as the day aggregates).
+  const incomingSessions = snapshot.sessions || {};
+  const sessionKeys = Object.keys(incomingSessions);
+  if (sessionKeys.length) {
+    const existingSessions = await getSessions(sessionKeys);
+    const total = (list) => (list || []).reduce((sum, e) => sum + (e[2] || 0), 0);
+    for (const key of sessionKeys) {
+      const keep = total(existingSessions[key]) >= total(incomingSessions[key]) ? existingSessions[key] : incomingSessions[key];
+      if (keep && keep.length) writes[K.sess(key)] = keep;
+    }
   }
   writes[K.INDEX] = [...idx].sort();
   await chrome.storage.local.set(writes);
@@ -363,6 +430,7 @@ export async function mergeDomainAlias(oldDomain, newDomain) {
   const days = await getDays(idx);
   const writes = {};
   let touched = 0;
+  const touchedKeys = [];
 
   for (const key of idx) {
     const day = days[key];
@@ -376,8 +444,21 @@ export async function mergeDomainAlias(oldDomain, newDomain) {
     delete nextDomains[oldDomain];
     writes[K.day(key)] = { ...day, domains: nextDomains };
     touched++;
+    touchedKeys.push(key);
   }
   if (touched) await chrome.storage.local.set(writes);
+
+  // Session logs name domains too; only days where the old domain had time can mention it.
+  if (touchedKeys.length) {
+    const logs = await getSessions(touchedKeys);
+    const sessionWrites = {};
+    for (const [key, list] of Object.entries(logs)) {
+      if (list.some((e) => e[0] === oldDomain)) {
+        sessionWrites[K.sess(key)] = list.map((e) => (e[0] === oldDomain ? [newDomain, e[1], e[2]] : e));
+      }
+    }
+    if (Object.keys(sessionWrites).length) await chrome.storage.local.set(sessionWrites);
+  }
 
   // Re-point every per-domain setting. An existing entry for the new domain wins.
   const settings = await getSettings();
@@ -412,6 +493,9 @@ function sumDh(a = {}, b = {}) {
 const MIGRATIONS = [
   // v2 added the per-domain hourly map `dh`. It's additive and lazily populated,
   // so old day records need no rewrite — stats treat a missing `dh` as "no data".
+  // v3 added the opt-in per-day session logs (ttt_sess_<day>) and settings.sessionLog
+  // (defaults to false via DEFAULT_SETTINGS). Also additive: nothing to transform.
+  { to: 3, run: async () => {} },
 ];
 
 export async function migrate() {

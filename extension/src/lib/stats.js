@@ -218,3 +218,29 @@ export function generateInsights(curDays, prevDays, categoryMap = {}) {
 
   return out.slice(0, 4);
 }
+
+// ---- session log analytics (opt-in data, see storage.recordSession) ----
+// Bucket upper bounds in seconds; the last bucket is open-ended.
+const SESSION_BUCKETS = [60, 300, 900, 1800, 3600];
+export const SESSION_BUCKET_LABELS = ['<1', '1–5', '5–15', '15–30', '30–60', '60+'];   // minutes
+
+/**
+ * Length distribution of the visits to one domain.
+ * @param {Record<string, Array<[string, number, number]>>} sessions day key -> [domain, startSec, seconds][]
+ */
+export function sessionStats(sessions, domain) {
+  const out = { count: 0, totalSeconds: 0, average: 0, longest: 0, buckets: new Array(SESSION_BUCKET_LABELS.length).fill(0) };
+  for (const list of Object.values(sessions || {})) {
+    for (const [d, , seconds] of list) {
+      if (d !== domain) continue;
+      out.count++;
+      out.totalSeconds += seconds;
+      out.longest = Math.max(out.longest, seconds);
+      let i = SESSION_BUCKETS.findIndex((limit) => seconds < limit);
+      if (i < 0) i = SESSION_BUCKETS.length;
+      out.buckets[i]++;
+    }
+  }
+  out.average = out.count ? out.totalSeconds / out.count : 0;
+  return out;
+}

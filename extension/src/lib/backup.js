@@ -77,7 +77,7 @@ async function buildPayload(settings, snapshot) {
 
 export async function backupToSync() {
   const settings = await getSettings();
-  const full = await exportAll();
+  const full = await exportAll({ sessions: false });   // session logs would not fit the 100 KB quota
   let budget = encryptionOn(settings) ? SYNC_ENCRYPTED_BUDGET : SYNC_PLAINTEXT_BUDGET;
 
   // Trim by raw size, then check the REAL stored size (escaping inflates it) and
