@@ -355,5 +355,15 @@
   "focusLog.total": "Tiempo de enfoque total",
   "focusLog.rate": "Completadas",
   "focusLog.early": "Terminada antes de tiempo",
-  "focusLog.row": "{done}/{total} ciclos · {m} min"
+  "focusLog.row": "{done}/{total} ciclos · {m} min",
+  "bulk.selected": "{n} seleccionados",
+  "bulk.setCategory": "Asignar categoría…",
+  "bulk.limitPh": "Límite diario (min)",
+  "bulk.setLimit": "Fijar límite",
+  "bulk.untrack": "Dejar de rastrear",
+  "bulk.clear": "Borrar selección",
+  "bulk.done": "Aplicado a {n} sitios",
+  "bulk.selectAll": "Seleccionar todos los sitios de la lista",
+  "bulk.selectRow": "Seleccionar {d}",
+  "sites.showing": "Mostrando {shown} de {total}: desplácese para cargar más"
 }

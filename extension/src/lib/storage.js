@@ -142,6 +142,16 @@ export function setSettingsMapEntry(key, entryKey, value) {
   return editMapSetting(key, (map) => { map[entryKey] = value; });
 }
 
+/** Add or replace many entries of a map setting in a single write. */
+export function setSettingsMapEntries(key, entries) {
+  return editMapSetting(key, (map) => { Object.assign(map, entries); });
+}
+
+/** Delete many entries of a map setting in a single write. */
+export function removeSettingsMapEntries(key, entryKeys) {
+  return editMapSetting(key, (map) => { for (const k of entryKeys) delete map[k]; });
+}
+
 /** Delete one entry of a map setting. Deleting a missing entry is a no-op. */
 export function removeSettingsMapEntry(key, entryKey) {
   return editMapSetting(key, (map) => { delete map[entryKey]; });

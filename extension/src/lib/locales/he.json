@@ -355,5 +355,15 @@
   "focusLog.total": "זמן פוקוס כולל",
   "focusLog.rate": "הושלמו עד הסוף",
   "focusLog.early": "הסתיים מוקדם",
-  "focusLog.row": "{done}/{total} סבבים · {m} דק׳"
+  "focusLog.row": "{done}/{total} סבבים · {m} דק׳",
+  "bulk.selected": "{n} נבחרו",
+  "bulk.setCategory": "קבע קטגוריה…",
+  "bulk.limitPh": "מגבלה יומית (דק׳)",
+  "bulk.setLimit": "קבע מגבלה",
+  "bulk.untrack": "אל תעקוב",
+  "bulk.clear": "נקה בחירה",
+  "bulk.done": "הפעולה בוצעה על {n} אתרים",
+  "bulk.selectAll": "בחר את כל האתרים ברשימה",
+  "bulk.selectRow": "בחר את {d}",
+  "sites.showing": "מוצגים {shown} מתוך {total} — גלול כדי לטעון עוד"
 }

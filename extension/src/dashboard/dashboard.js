@@ -7,7 +7,7 @@ import {
   actions, send, toast, loadRange, closeModal, debounce,
 } from './core.js';
 import { renderOverview } from './overview.js';
-import { renderSites } from './sites.js';
+import { renderSites, wireSites } from './sites.js';
 import { renderInsights } from './insights.js';
 import { wireCustomCompare } from './compare.js';
 import { fillSettingsForm, filterSettings, renderStorageInfo, wireSettings } from './settings.js';
@@ -122,6 +122,7 @@ async function init() {
   $('#settingsSearch').addEventListener('input', filterSettings);
 
   wireSettings();
+  wireSites();
   wireCustomCompare();
 
   // modal dismissal

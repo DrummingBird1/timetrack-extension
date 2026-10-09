@@ -499,6 +499,68 @@ test('insights: focus-session history shows totals and the latest sessions', asy
   assert.equal(await count('#focusLogBody .tl-row'), 2);
 });
 
+// ---------------------------------------------------- sites at scale + bulk actions
+async function seedManySites(n = 3000) {
+  const d = new Date();
+  const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const domains = {};
+  for (let i = 0; i < n; i++) domains[`bulk-site-${i}.example.com`] = { t: 60 + (i % 50), v: 1 };
+  await ext.seed({ app: 'TimeTrack', version: 3, days: { [key]: { domains, hours: new Array(24).fill(0) } } }, 'merge');
+}
+
+test('sites at scale: thousands of domains render in chunks and load more on scroll', async (t) => {
+  await seedManySites();
+  await page.reload();
+  await page.waitForSelector('#summaryCards .stat-card');
+  const started = Date.now();
+  await openTab('sites');
+  await waitFor(async () => (await count('#sitesBody tr')) > 0, { message: 'first rows' });
+  t.diagnostic(`first paint of the Sites tab with ~3000 domains: ${Date.now() - started}ms`);
+  const first = await count('#sitesBody tr');
+  assert.ok(first <= 150, `only the first chunk is in the DOM, got ${first}`);
+  assert.match(await text('#sitesFooter'), /3\d{3}/);
+
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  await waitFor(async () => (await count('#sitesBody tr')) > first, { message: 'next chunk on scroll' });
+});
+
+test('bulk actions: select everything that matches the search (not just the rendered rows) and apply', async () => {
+  await seedManySites();
+  await page.reload();
+  await page.waitForSelector('#summaryCards .stat-card');
+  await openTab('sites');
+  await waitFor(async () => (await count('#sitesBody tr')) > 0);
+
+  // "bulk-site-12" matches 12, 120-129 and 1200-1299 → 1 + 10 + 100 = 111 sites, more than one chunk
+  await page.type('#siteSearch', 'bulk-site-12');
+  await waitFor(async () => (await text('#sitesFooter')).includes('111') || (await count('#sitesBody tr')) === 111, { message: 'filtered list' });
+  await page.click('#selectAllSites');
+  await page.waitForSelector('#bulkBar:not(.hidden)');
+  assert.match(await text('#bulkCount'), /111/);
+
+  await page.select('#bulkCategory', 'news');
+  await waitFor(async () => Object.keys((await ext.getSettings()).categoryMap).length === 111, { message: '111 categories saved in one go' });
+  const map = (await ext.getSettings()).categoryMap;
+  assert.ok(Object.values(map).every((c) => c === 'news'));
+  await page.waitForSelector('#bulkBar.hidden');                   // selection is cleared after applying
+
+  // pick two rows by hand: limit + untrack + pin
+  const boxes = await page.$$('#sitesBody .row-select');
+  await boxes[0].click();
+  await boxes[1].click();
+  assert.match(await text('#bulkCount'), /2/);
+  const domains = await page.$$eval('#sitesBody tr', (rows) => rows.slice(0, 2).map((r) => r.dataset.domain));
+  await page.type('#bulkLimit', '25');
+  await page.click('#bulkSetLimit');
+  await waitFor(async () => Object.keys((await ext.getSettings()).siteLimits).length === 2, { message: 'limits saved' });
+  assert.deepEqual(Object.keys((await ext.getSettings()).siteLimits).sort(), [...domains].sort());
+
+  const again = await page.$$('#sitesBody .row-select');
+  await again[0].click();
+  await page.click('#bulkUntrack');
+  await waitFor(async () => (await ext.getSettings()).blacklist.length === 1, { message: 'one site no longer tracked' });
+});
+
 // --------------------------------------------------------- import / clear
 test('import: a JSON backup and a CSV file are imported through the file inputs', async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'tt-e2e-'));

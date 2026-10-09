@@ -179,6 +179,17 @@ test('map settings are edited with set/removeSettingsMapEntry, and removal reall
   assert.equal((await storage.removeSettingsMapEntry('siteLimits', 'never-set.com')).siteLimits['never-set.com'], undefined, 'removing a missing key is a no-op');
 });
 
+test('batch helpers set and remove many map entries in one go', async () => {
+  const many = Object.fromEntries(Array.from({ length: 500 }, (_, i) => [`site${i}.com`, 'news']));
+  let s = await storage.setSettingsMapEntries('categoryMap', many);
+  assert.equal(Object.keys(s.categoryMap).length, 500);
+  s = await storage.removeSettingsMapEntries('categoryMap', ['site0.com', 'site1.com', 'not-there.com']);
+  assert.equal(Object.keys(s.categoryMap).length, 498);
+  assert.ok(!('site0.com' in (await storage.getSettings()).categoryMap));
+  await storage.removeSettingsMapEntries('categoryMap', Object.keys(many));
+  assert.deepEqual((await storage.getSettings()).categoryMap, {});
+});
+
 test('saveSettings refuses map settings, so the deepMerge deletion bug cannot be reintroduced', async () => {
   await assert.rejects(() => storage.saveSettings({ categoryMap: { 'a.com': 'news' } }), /categoryMap.*removeSettingsMapEntry/s);
   await assert.rejects(() => storage.saveSettings({ siteLimits: {} }), /siteLimits/);

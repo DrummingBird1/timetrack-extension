@@ -355,5 +355,15 @@
   "focusLog.total": "إجمالي وقت التركيز",
   "focusLog.rate": "المكتملة",
   "focusLog.early": "انتهت مبكرًا",
-  "focusLog.row": "{done}/{total} دورات · {m} د"
+  "focusLog.row": "{done}/{total} دورات · {m} د",
+  "bulk.selected": "تم تحديد {n}",
+  "bulk.setCategory": "تعيين التصنيف…",
+  "bulk.limitPh": "الحد اليومي (د)",
+  "bulk.setLimit": "تعيين الحد",
+  "bulk.untrack": "إيقاف التتبع",
+  "bulk.clear": "مسح التحديد",
+  "bulk.done": "تم التطبيق على {n} موقعًا",
+  "bulk.selectAll": "تحديد كل المواقع المعروضة",
+  "bulk.selectRow": "تحديد {d}",
+  "sites.showing": "عرض {shown} من {total} — مرّر لتحميل المزيد"
 }

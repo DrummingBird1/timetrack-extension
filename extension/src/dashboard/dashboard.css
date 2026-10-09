@@ -405,3 +405,16 @@ select { cursor: pointer; }
 /* Custom range comparison */
 .range-pair { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 16px; }
 .range-pair .custom-range { flex-wrap: wrap; }
+
+/* Sites tab: selection + bulk actions */
+.th-select, .select-cell { width: 34px; padding-inline-end: 0 !important; }
+.data-table input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; }
+.bulk-bar {
+  display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 14px; margin-bottom: 12px;
+  background: var(--surface); border: 1px solid var(--accent); border-radius: var(--radius);
+}
+.bulk-bar select, .bulk-bar input[type="number"] {
+  background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; color: var(--text);
+  padding: 6px 10px; font-family: inherit; font-size: 12.5px;
+}
+.bulk-bar input[type="number"] { width: 150px; }

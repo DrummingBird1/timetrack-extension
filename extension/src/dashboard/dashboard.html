@@ -147,10 +147,21 @@
             <span data-i18n="sites.allHistory">כל ההיסטוריה</span>
           </label>
         </div>
+        <div class="bulk-bar hidden" id="bulkBar" role="toolbar">
+          <strong id="bulkCount"></strong>
+          <select id="bulkCategory"></select>
+          <input type="number" id="bulkLimit" min="0" max="1440" data-i18n-ph="bulk.limitPh" placeholder="מגבלה יומית (דק׳)" />
+          <button class="btn" id="bulkSetLimit" data-i18n="bulk.setLimit">קבע מגבלה</button>
+          <button class="btn" id="bulkUntrack" data-i18n="bulk.untrack">אל תעקוב</button>
+          <button class="btn ghost" id="bulkPin" data-i18n="sites.pin">הצמד</button>
+          <button class="btn ghost" id="bulkUnpin" data-i18n="sites.unpin">בטל הצמדה</button>
+          <button class="btn ghost" id="bulkClear" data-i18n="bulk.clear">נקה בחירה</button>
+        </div>
         <div class="table-wrap">
           <table class="data-table" id="sitesTable">
             <thead>
               <tr>
+                <th class="th-select"><input type="checkbox" id="selectAllSites" /></th>
                 <th class="th-pin"></th>
                 <th data-i18n="th.site">אתר</th>
                 <th data-i18n="th.category">קטגוריה</th>
@@ -163,6 +174,8 @@
             <tbody id="sitesBody"></tbody>
           </table>
           <div id="sitesEmpty" class="empty hidden" data-i18n="sites.empty">לא נמצאו אתרים בטווח הזמן הזה.</div>
+          <div id="sitesFooter" class="set-desc hidden" style="padding:12px 16px"></div>
+          <div id="sitesSentinel" style="height:1px"></div>
         </div>
       </section>
 

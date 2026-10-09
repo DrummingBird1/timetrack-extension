@@ -355,5 +355,15 @@
   "focusLog.total": "Total focus time",
   "focusLog.rate": "Completed",
   "focusLog.early": "Ended early",
-  "focusLog.row": "{done}/{total} cycles · {m} min"
+  "focusLog.row": "{done}/{total} cycles · {m} min",
+  "bulk.selected": "{n} selected",
+  "bulk.setCategory": "Set category…",
+  "bulk.limitPh": "Daily limit (min)",
+  "bulk.setLimit": "Set limit",
+  "bulk.untrack": "Stop tracking",
+  "bulk.clear": "Clear selection",
+  "bulk.done": "Applied to {n} sites",
+  "bulk.selectAll": "Select all listed sites",
+  "bulk.selectRow": "Select {d}",
+  "sites.showing": "Showing {shown} of {total} — scroll to load more"
 }

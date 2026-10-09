@@ -355,5 +355,15 @@
   "focusLog.total": "Temps de concentration total",
   "focusLog.rate": "Terminées",
   "focusLog.early": "Arrêtée plus tôt",
-  "focusLog.row": "{done}/{total} cycles · {m} min"
+  "focusLog.row": "{done}/{total} cycles · {m} min",
+  "bulk.selected": "{n} sélectionnés",
+  "bulk.setCategory": "Définir la catégorie…",
+  "bulk.limitPh": "Limite quotidienne (min)",
+  "bulk.setLimit": "Définir la limite",
+  "bulk.untrack": "Ne plus suivre",
+  "bulk.clear": "Effacer la sélection",
+  "bulk.done": "Appliqué à {n} sites",
+  "bulk.selectAll": "Sélectionner tous les sites de la liste",
+  "bulk.selectRow": "Sélectionner {d}",
+  "sites.showing": "{shown} sur {total} affichés — faites défiler pour en charger plus"
 }
