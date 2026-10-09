@@ -1,6 +1,8 @@
 // Shared helpers: dates, domains, formatting. No DOM, no chrome APIs here so it
 // can be imported equally from the service worker, popup and dashboard.
 
+import { PSL_RULES } from './psl.js';
+
 export function pad2(n) {
   return n < 10 ? '0' + n : '' + n;
 }
@@ -46,27 +48,40 @@ export function keysBetween(start, end) {
   return keys;
 }
 
-// Common multi-part public suffixes so "bbc.co.uk" groups correctly.
-const MULTI_TLDS = new Set([
-  'co.uk', 'org.uk', 'gov.uk', 'ac.uk', 'me.uk', 'net.uk',
-  'co.il', 'org.il', 'ac.il', 'gov.il', 'net.il', 'muni.il',
-  'co.jp', 'or.jp', 'ne.jp', 'go.jp',
-  'com.au', 'net.au', 'org.au', 'gov.au', 'edu.au',
-  'co.nz', 'org.nz', 'govt.nz',
-  'com.br', 'com.cn', 'com.mx', 'com.tr', 'com.sg', 'com.hk', 'com.tw',
-  'co.in', 'co.za', 'co.kr', 'co.id', 'co.th',
-  // wider coverage
-  'com.ar', 'com.co', 'com.pe', 'com.ve', 'com.uy', 'com.ec', 'com.py', 'com.bo',
-  'com.ua', 'com.pl', 'com.ph', 'com.my', 'com.pk', 'com.bd', 'com.np', 'com.lk',
-  'com.eg', 'com.sa', 'com.ng', 'com.gh', 'com.kw', 'com.qa', 'com.bh', 'com.lb',
-  'com.ru', 'net.ru', 'org.ru', 'gov.ru',
-  'co.ke', 'co.tz', 'co.ug', 'co.ma', 'co.zw', 'co.ao',
-  'or.id', 'web.id', 'sch.id', 'ac.id', 'go.id',
-  'gob.mx', 'edu.mx', 'org.mx', 'net.mx',
-  'org.br', 'net.br', 'gov.br', 'edu.br',
-  'co.jp', 'ac.jp', 'ne.jp',
-  'org.au', 'edu.au', 'asn.au', 'id.au',
-]);
+// ---- public suffix handling (see psl.js — generated from the Public Suffix List) ----
+// The rule index is built on first use, so code paths that never group a hostname
+// (e.g. a service-worker cold start with nothing to track) don't pay for it.
+let pslIndex = null;
+function loadPsl() {
+  if (pslIndex) return pslIndex;
+  const rules = new Set();
+  const wildcards = new Set();   // "*.ck"  -> "ck"
+  const exceptions = new Set();  // "!www.ck" -> "www.ck"
+  for (const rule of PSL_RULES.split('\n')) {
+    if (!rule) continue;
+    if (rule[0] === '!') exceptions.add(rule.slice(1));
+    else if (rule[0] === '*') wildcards.add(rule.slice(2));
+    else rules.add(rule);
+  }
+  pslIndex = { rules, wildcards, exceptions };
+  return pslIndex;
+}
+
+/** How many trailing labels of `labels` are a public suffix (PSL algorithm; default rule "*" = 1). */
+function publicSuffixLength(labels) {
+  const { rules, wildcards, exceptions } = loadPsl();
+  let best = 1;
+  for (let i = 0; i < labels.length; i++) {
+    const suffix = labels.slice(i).join('.');
+    if (exceptions.has(suffix)) return labels.length - i - 1;     // an exception beats every other rule
+    const n = labels.length - i;
+    if (rules.has(suffix) || (i + 1 < labels.length && wildcards.has(labels.slice(i + 1).join('.')))) best = Math.max(best, n);
+  }
+  return best;
+}
+
+const isIpv4 = (host) => /^\d{1,3}(\.\d{1,3}){3}$/.test(host);
+const isIpv6 = (host) => host.includes(':');   // URL.hostname brackets these: "[::1]"
 
 /** Extract a lowercase hostname from a URL, or null for non-web pages. */
 export function hostnameFromUrl(url) {
@@ -81,14 +96,18 @@ export function hostnameFromUrl(url) {
   }
 }
 
-/** Collapse a hostname to its registrable domain (example.com, bbc.co.uk). */
+/**
+ * Collapse a hostname to its registrable domain (example.com, bbc.co.uk,
+ * alice.github.io). IP addresses, dev hosts like "localhost", and hosts that ARE a
+ * public suffix are returned unchanged.
+ */
 export function registrableDomain(host) {
   if (!host) return host;
-  const parts = host.split('.');
-  if (parts.length <= 2) return host;
-  const lastTwo = parts.slice(-2).join('.');
-  if (MULTI_TLDS.has(lastTwo)) return parts.slice(-3).join('.');
-  return lastTwo;
+  if (isIpv4(host) || isIpv6(host)) return host;
+  const labels = host.split('.');
+  const suffixLen = publicSuffixLength(labels);
+  if (labels.length <= suffixLen) return host;
+  return labels.slice(labels.length - suffixLen - 1).join('.');
 }
 
 /** Resolve a tab URL to the bucket we store time under. */
