@@ -300,6 +300,53 @@ test('export: a JSON snapshot never contains the passphrase or the endpoint toke
   assert.ok(!json.includes('bearer-secret-token'));
 });
 
+// Capture what the page hands to the download link instead of writing files to disk.
+async function captureExports() {
+  const cdp = await ext.browser.target().createCDPSession();
+  await cdp.send('Browser.setDownloadBehavior', { behavior: 'deny' }).catch(() => {});
+  await page.evaluate(() => {
+    window.__exports = [];
+    const original = URL.createObjectURL.bind(URL);
+    URL.createObjectURL = (blob) => { window.__exports.push(blob); return original(blob); };
+  });
+  return {
+    async last() {
+      await page.waitForFunction((n) => window.__exports.length > n, {}, 0);
+      return page.evaluate(async () => {
+        const blob = window.__exports[window.__exports.length - 1];
+        return { type: blob.type, text: await blob.text() };
+      });
+    },
+  };
+}
+
+test('export: JSON, CSV and current-view CSV downloads have the right content (and no secrets)', async () => {
+  await ext.saveSettings({ backup: { encrypt: true, passphrase: 'never-export-me' } });
+  await openTab('settings');
+  const cap = await captureExports();
+
+  await page.click('#exportJson');
+  const json = await cap.last();
+  const snap = JSON.parse(json.text);
+  assert.equal(snap.app, 'TimeTrack');
+  assert.equal(Object.keys(snap.days).length, Object.keys(snapshot.days).length);
+  assert.ok(!json.text.includes('never-export-me'), 'passphrase must not be in the export');
+
+  await page.evaluate(() => { window.__exports.length = 0; });
+  await page.click('#exportCsv');
+  const csv = await cap.last();
+  const lines = csv.text.replace(/^﻿/, '').trim().split('\n');
+  assert.equal(lines[0], '"date","domain","category","seconds","minutes","visits"');
+  const domainDays = Object.values(snapshot.days).reduce((n, d) => n + Object.keys(d.domains).length, 0);
+  assert.equal(lines.length - 1, domainDays, 'one CSV row per domain-day');
+
+  await page.evaluate(() => { window.__exports.length = 0; });
+  await page.click('#exportView');                                  // current 7-day view only
+  const view = await cap.last();
+  const viewRows = view.text.trim().split('\n').length - 1;
+  assert.ok(viewRows > 0 && viewRows < domainDays, `view export has ${viewRows} rows (< ${domainDays})`);
+});
+
 // --------------------------------------------------------- import / clear
 test('import: a JSON backup and a CSV file are imported through the file inputs', async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'tt-e2e-'));

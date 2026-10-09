@@ -1,6 +1,6 @@
 import { getDays, getSettings } from '../lib/storage.js';
 import {
-  dayKey, rangeKeys, formatDuration, formatClock, favicon, weekdaysShort, parseDayKey,
+  rangeKeys, formatDuration, formatClock, favicon, weekdaysShort, parseDayKey,
 } from '../lib/utils.js';
 import { aggregateDomains, topSites, dailyTotals } from '../lib/stats.js';
 import { barChart } from '../lib/charts.js';
