@@ -1,4 +1,4 @@
-// Pure analytics added for v2: category budgets, weekly focus score, best week and the
+// Pure analytics added in 1.5.0: category budgets, weekly focus score, best week and the
 // goal-met streak. Fixtures use known domains so categories are predictable:
 //   github.com -> productivity (+1)   youtube.com -> entertainment (-1)   bbc.co.uk -> news (0)
 

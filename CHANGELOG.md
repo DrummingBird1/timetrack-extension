@@ -4,7 +4,7 @@ All notable changes to TimeTrack are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/); this project uses
 [Semantic Versioning](https://semver.org/).
 
-## [2.0.0] — 2026-10-10
+## [1.5.0] — 2026-10-10
 
 A foundations-first release: a real-browser test suite that immediately exposed several
 long-standing bugs (now fixed), a leaner and typed codebase, and the features that were

@@ -12,7 +12,7 @@ cloud backup, and data export.
 All data lives **locally** in `chrome.storage.local`. Nothing is sent anywhere
 unless the user explicitly enables a backup target. The UI is available in six
 languages (Hebrew is the default and the source language; Hebrew and Arabic are RTL).
-Current version: **2.0.0** (see `CHANGELOG.md`).
+Current version: **1.5.0** (see `CHANGELOG.md`).
 
 ## Repository layout
 
@@ -87,7 +87,7 @@ node dist/make-release-banner.mjs <version> <themeKey> "<tagline>"
 This writes `store-assets/promo/releases/v<version>.svg`. Pick (or add) a
 `themeKey` in that script that reflects what the release actually shipped —
 e.g. `cloud` for a backup-focused release, `globe` for a languages/i18n
-release, `shield` for a security/hardening release — the same way v1.1.0–v2.0.0
+release, `shield` for a security/hardening release — the same way v1.1.0–v1.5.0
 were themed (see the script's `THEMES` map; add a new icon there for a release
 that doesn't fit the existing ones, rather than reusing a mismatched theme).
 
@@ -342,7 +342,7 @@ editable in the focus panel), and the `backup` sub-object (`syncEnabled`,
 `lastBackupStatus`). When settings change from the dashboard, it sends
 `settingsChanged` so the worker re-applies the idle interval and refreshes.
 
-v2 added: `sessionLog` (opt-in visit log, off by default), `categoryBudgets`
+1.5.0 added: `sessionLog` (opt-in visit log, off by default), `categoryBudgets`
 (weekly seconds-per-category caps), and under `focus`: `strict` (no early exit /
 pause) and `schedule` (auto-start entries, fired by `checkFocusSchedule` with a
 10-minute grace window).
@@ -357,7 +357,7 @@ new one. So **`saveSettings` throws for a map key**: use
 (`blacklist`, `focus.blockDomains`, `pinnedSites`, `focus.schedule`…) don't have this
 problem — `deepMerge` replaces an array wholesale via `patch.slice()`. This bit two
 features (category-mapping removal, site-limit clearing) before v1.4.0 and was made
-unrepresentable in v2.
+unrepresentable in 1.5.0.
 
 Every settings write goes through `withSettingsLock`: read-modify-write without it
 lost updates when two changes landed together (`backup.integration.test.js`:
@@ -405,7 +405,7 @@ Two zero-infra targets plus manual file I/O:
 `backup.endpointToken` (`stripSecrets`) from every target (file, sync, endpoint);
 `importAll` keeps this device's own credentials instead of overwriting them, and
 forces `encrypt` off when there is no passphrase (so a restore can't silently turn
-encryption into a no-op). Before v2 both were exported in clear text.
+encryption into a no-op). Before 1.5.0 both were exported in clear text.
 
 **Encryption (`crypto.js`):** when `backup.encrypt` + `backup.passphrase` are set,
 the snapshot is AES-256-GCM encrypted (PBKDF2-SHA256 key) before it leaves the
@@ -431,7 +431,7 @@ at start / on each work resume) redirect any blocked tab to `src/blocked/blocked
 `startFocus`/`stopFocus`/`getFocus`; `chrome.commands` also toggles focus/tracking.
 No host permissions — redirection uses the existing `tabs` API.
 
-v2 additions: **strict mode** (`focus.strict`, snapshotted into the session) removes
+1.5.0 additions: **strict mode** (`focus.strict`, snapshotted into the session) removes
 every escape hatch during a work phase — `stopFocus` is refused (`{refused:true}`),
 the popup hides "end", the keyboard command does nothing, and the block page shows no
 snooze. Otherwise the block page offers **"allow 10 minutes"** (`snoozeFocus` sets
@@ -494,7 +494,7 @@ restart can't double-start). Finished sessions are appended to `ttt_focuslog`
   chart, render it from `renderCurrentTab()` for the active tab, and re-render on
   resize/theme change via `rerenderCharts()`. SVG ids must be unique per chart:
   `url(#id)` resolves to the first match in the document, and a gradient inside a
-  hidden tab doesn't render (this made every later chart's bars invisible until v2).
+  hidden tab doesn't render (this made every later chart's bars invisible until 1.5.0).
 - **Branded Chrome ≥ 137 ignores `--load-extension`**, so the E2E suite uses *Chrome for
   Testing* (`pnpm exec puppeteer browsers install chrome`) with `enableExtensions`.
   The SW's in-memory `lastDomain`, and the real `chrome.idle` state of the machine
@@ -586,7 +586,7 @@ UI translated into Arabic, Russian, Spanish, and French (6 languages total); the
 marketing/privacy site. Done in 1.4.0: preview-before-restore, passphrase strength
 meter, merge-conflict counts, 80%-approaching limit warnings + snooze, first/last-visit
 timestamps, the settings search box, pinned sites, and domain rename/alias-merge.
-Done in 2.0.0: see `CHANGELOG.md` — real-browser E2E + typecheck + a11y foundations,
+Done in 1.5.0: see `CHANGELOG.md` — real-browser E2E + typecheck + a11y foundations,
 secret-free backups and a fixed sync quota, the full PSL, category budgets, weekly
 focus-score trend / best week / goal streak, any-range comparison, scheduled / strict /
 snoozable focus + history, opt-in session log, bulk site actions at scale, tolerant CSV

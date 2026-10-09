@@ -2,7 +2,7 @@
 
 Everything you need to paste into the Developer Dashboard, plus the answers the
 review form expects. Store-listing text can be entered per language in the
-dashboard (no manifest changes needed). Current release: **2.0.0**.
+dashboard (no manifest changes needed). Current release: **1.5.0**.
 
 ---
 
@@ -15,7 +15,7 @@ dashboard (no manifest changes needed). Current release: **2.0.0**.
 - **Website / support:** https://github.com/DrummingBird1/timetrack-extension
 - **Privacy policy URL:** https://drummingbird1.github.io/timetrack-extension/ ✅ **live**
   (hosted on GitHub Pages; contains no personal data). It must be redeployed
-  (merge to `main` → `pages.yml`) so it matches the 2.0.0 policy text before you submit.
+  (merge to `main` → `pages.yml`) so it matches the 1.5.0 policy text before you submit.
 
 ### Short description (≤132 chars)
 
@@ -93,7 +93,7 @@ dashboard (no manifest changes needed). Current release: **2.0.0**.
 | `favicon` *(optional)* | Requested **only at runtime** if the user turns on "Real site icons". Displays site icons from Chrome's **local** favicon cache (`_favicon/`) instead of the generated letter avatars. No network requests and no extra data access; off by default, and removed when the user turns it off. |
 | `web_accessible_resources` (block page) | During a focus session, redirect a blocked tab to the extension's own block page. Uses `use_dynamic_url`, so sites cannot probe for the extension. |
 
-2.0.0 adds **no new permissions** (enforced by `dist/tests/package.test.js`).
+1.5.0 adds **no new permissions** (enforced by `dist/tests/package.test.js`).
 
 ---
 
@@ -145,15 +145,15 @@ Upload `screenshots/he/*` to the Hebrew listing and `screenshots/en/*` to the En
       accessibility (axe-core). A final manual smoke test of a fresh profile is still wise.
 - [x] Host the privacy policy publicly — https://drummingbird1.github.io/timetrack-extension/
 - [x] Screenshots and promo graphics captured / generated (section 5).
-- [x] `version` in `extension/manifest.json` is **2.0.0**; `CHANGELOG.md` and the
+- [x] `version` in `extension/manifest.json` is **1.5.0**; `CHANGELOG.md` and the
       release banner are in place.
 - [ ] Merge `v2-foundations` into `main` (this also redeploys the site so the live
-      privacy policy matches 2.0.0).
+      privacy policy matches 1.5.0).
 - [x] Chrome Web Store developer account — the owner already has one.
 - [ ] Fill single-purpose, permission justifications, and data disclosures
       (sections 2–4).
 - [ ] Build the upload zip: `pwsh dist/build.ps1` (zips `extension/`),
-      then upload the resulting `dist/timetrack-v2.0.0.zip`. Tagging `v2.0.0`
+      then upload the resulting `dist/timetrack-v1.5.0.zip`. Tagging `v1.5.0`
       also builds it in CI (`release.yml`) and attaches it to the GitHub Release.
 - [ ] Bump `version` for every later upload.
 

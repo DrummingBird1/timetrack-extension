@@ -1,6 +1,6 @@
 name: Release
 
-# Push a tag like v2.0.0 to publish a GitHub Release. The tag must match
+# Push a tag like v1.5.0 to publish a GitHub Release. The tag must match
 # extension/manifest.json, the CHANGELOG must have a section for it, and the release
 # banner (store-assets/promo/releases/v<version>.svg) must exist.
 #

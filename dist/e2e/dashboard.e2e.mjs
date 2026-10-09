@@ -395,7 +395,7 @@ test('session log: opt-in toggle, per-site visit-length stats and deletion', asy
   assert.ok(ext.dialogs.some((d) => d.type === 'confirm'));
 });
 
-// ----------------------------------------------- v2 analytics: budgets, trend, streak, compare
+// ----------------------------------------------- 1.5.0 analytics: budgets, trend, streak, compare
 test('category budgets: add in Settings, progress shows on Overview, remove hides it', async () => {
   await openTab('settings');
   assert.ok(await page.$('#budgetList'), 'budget editor present');
@@ -459,7 +459,7 @@ test('overview: any two date ranges can be compared, with the biggest per-site c
   assert.match(await toastText(), /./);
 });
 
-// -------------------------------------------------------- v2 focus: strict, schedule, history
+// -------------------------------------------------------- 1.5.0 focus: strict, schedule, history
 test('settings: strict mode toggle and scheduled focus sessions', async () => {
   await openTab('settings');
   await page.$eval('#setFocusStrict', (e) => e.closest('label').click());

@@ -1,7 +1,7 @@
 // Builds the GitHub Release notes for a version: the version's banner image followed by
 // that version's section of CHANGELOG.md.
 //
-//   node tools/release-notes.mjs 2.0.0 > release-notes.md
+//   node tools/release-notes.mjs 1.5.0 > release-notes.md
 //
 // The banner is referenced by the TAG's raw URL, so it resolves as soon as the tag exists
 // (a `main` URL would 404 for a tag pushed before its branch is merged).

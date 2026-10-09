@@ -137,7 +137,7 @@ test('a stopped session is no longer active', async () => {
   assert.equal(f.active, false);
 });
 
-// ---------------- strict mode, snooze, history, schedule (v2) ----------------
+// ---------------- strict mode, snooze, history, schedule (1.5.0) ----------------
 test('strict mode: a work phase cannot be ended or snoozed; a break can be ended', async () => {
   await storage.saveSettings({ focus: { mode: 'block', defaultMinutes: 10, breakMinutes: 1, cycles: 2, strict: true } });
   let f = await send({ type: 'startFocus' });

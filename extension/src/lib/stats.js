@@ -245,7 +245,7 @@ export function sessionStats(sessions, domain) {
   return out;
 }
 
-// ---- budgets, weekly focus score, goal streak (v2) ----
+// ---- budgets, weekly focus score, goal streak (1.5.0) ----
 
 /** Seconds per category across a set of day records. */
 export function categorySeconds(days, categoryMap = {}) {
