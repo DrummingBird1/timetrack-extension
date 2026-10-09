@@ -374,5 +374,6 @@
   "demo.remove": "Supprimer les données de démo",
   "demo.loaded": "Données de démo chargées — vous pouvez les supprimer à tout moment",
   "demo.removed": "Données de démo supprimées",
-  "demo.hasData": "Il y a déjà des données sur cette période : impossible de charger la démo"
+  "demo.hasData": "Il y a déjà des données sur cette période : impossible de charger la démo",
+  "btn.close": "Fermer"
 }

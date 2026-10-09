@@ -374,5 +374,6 @@
   "demo.remove": "Remove demo data",
   "demo.loaded": "Demo data loaded — you can remove it any time",
   "demo.removed": "Demo data removed",
-  "demo.hasData": "There is already data in that period, so demo data can't be loaded"
+  "demo.hasData": "There is already data in that period, so demo data can't be loaded",
+  "btn.close": "Close"
 }

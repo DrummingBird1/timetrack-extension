@@ -30,7 +30,7 @@ export function openSiteDetail(domain, source = cache) {
   card.innerHTML = `
     <div class="modal-head">
       <div class="site-cell"><img src="${iconFor(domain)}" alt=""><h3>${domain}</h3></div>
-      <button class="modal-close" id="modalClose">✕</button>
+      <button class="modal-close" id="modalClose" aria-label="${t('btn.close')}">✕</button>
     </div>
     <div class="detail-stats">
       <div class="detail-stat"><div class="v">${formatDuration(totalT)}</div><div class="l">${t('detail.totalTime')}</div></div>
@@ -41,7 +41,7 @@ export function openSiteDetail(domain, source = cache) {
       <div class="detail-stat"><div class="v">${fmtDay(first)}</div><div class="l">${t('detail.firstVisit')}</div></div>
       <div class="detail-stat"><div class="v">${fmtDay(last)}</div><div class="l">${t('detail.lastVisit')}</div></div>
     </div>
-    <div class="detail-section-title">${t('detail.category')}: <span style="color:${def.color}">${categoryLabel(catKey)}</span></div>
+    <div class="detail-section-title">${t('detail.category')}: <span class="cat-text" style="--c:${def.color}">${categoryLabel(catKey)}</span></div>
     <div class="detail-section-title">${t('detail.timeline')}</div>
     <div id="detailChart" class="chart-box"></div>
     ${hourly ? `<div class="detail-section-title">${t('detail.hourly')}</div><div id="detailHourly" class="chart-box"></div>` : ''}
@@ -58,6 +58,7 @@ export function openSiteDetail(domain, source = cache) {
       </div>
     </div>`;
 
+  $('#siteModal').setAttribute('aria-label', domain);
   $('#siteModal').classList.remove('hidden');
   $('#modalClose').addEventListener('click', closeModal);
   $('#detailTrackToggle').addEventListener('click', () => toggleBlacklist(domain, source));

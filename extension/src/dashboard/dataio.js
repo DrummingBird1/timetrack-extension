@@ -36,7 +36,7 @@ function showRestorePreview(preview, passphrase) {
   card.innerHTML = `
     <div class="modal-head">
       <h3>${t('restore.previewTitle')}</h3>
-      <button class="modal-close" id="restoreModalClose">✕</button>
+      <button class="modal-close" id="restoreModalClose" aria-label="${t('btn.close')}">✕</button>
     </div>
     <div class="detail-stats">
       <div class="detail-stat"><div class="v">${preview.dayCount}</div><div class="l">${t('restore.dayRange')}</div></div>
@@ -56,6 +56,7 @@ function showRestorePreview(preview, passphrase) {
       <button class="btn ghost" id="restoreModalCancel">${t('restore.cancelBtn')}</button>
       <button class="btn-primary" id="restoreModalConfirm">${t('restore.confirmBtn')}</button>
     </div>`;
+  $('#restoreModal').setAttribute('aria-label', t('restore.previewTitle'));
   $('#restoreModal').classList.remove('hidden');
   $('#restoreModalClose').addEventListener('click', closeRestoreModal);
   $('#restoreModalCancel').addEventListener('click', closeRestoreModal);

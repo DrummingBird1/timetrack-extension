@@ -103,7 +103,7 @@ function renderTopList(host, list, total) {
       <img src="${iconFor(s.domain)}" loading="lazy" alt="" />
       <span class="tl-name" title="${s.domain}">${s.domain}</span>
       <span class="tl-bar"><span class="tl-fill" style="width:${Math.max(3, (s.t / max) * 100)}%"></span></span>
-      <span class="tl-cat" style="background:${def.color}22;color:${def.color}">${categoryLabel(catKey)}</span>
+      <span class="tl-cat" style="--c:${def.color}">${categoryLabel(catKey)}</span>
       <span class="tl-time">${formatDuration(s.t)}</span>`;
     row.addEventListener('click', () => openSiteDetail(s.domain));
     host.appendChild(row);

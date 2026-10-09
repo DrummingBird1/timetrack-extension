@@ -31,11 +31,12 @@ function buildRow(s) {
   const isPinned = view.pinned.has(s.domain);
   const tr = document.createElement('tr');
   tr.dataset.domain = s.domain;
+  tr.tabIndex = 0;                       // Enter / Space opens the detail, like a click
   tr.innerHTML = `
     <td class="select-cell"><input type="checkbox" class="row-select" aria-label="${t('bulk.selectRow', { d: s.domain })}" ${selected.has(s.domain) ? 'checked' : ''}></td>
     <td class="pin-cell"><button class="pin-btn${isPinned ? ' on' : ''}" data-domain="${s.domain}" title="${isPinned ? t('sites.unpin') : t('sites.pin')}" aria-label="${isPinned ? t('sites.unpin') : t('sites.pin')}">${PIN_ICON}</button></td>
     <td><div class="site-cell"><img src="${iconFor(s.domain)}" loading="lazy" alt=""><span class="dom">${s.domain}</span></div></td>
-    <td><span class="cat-pill" style="background:${def.color}22;color:${def.color}">${categoryLabel(catKey)}</span></td>
+    <td><span class="cat-pill" style="--c:${def.color}">${categoryLabel(catKey)}</span></td>
     <td>${formatDuration(s.t)}</td>
     <td>${s.v}</td>
     <td><div class="share-mini"><div class="bar"><div class="fill" style="width:${pct}%"></div></div><span>${pct}%</span></div></td>
@@ -164,6 +165,10 @@ export function wireSites() {
     if (target.closest('.limit-input') || target.closest('.row-select')) return;
     const row = target.closest('tr');
     if (row) openSiteDetail(row.dataset.domain, view.src);
+  });
+  body.addEventListener('keydown', (e) => {
+    const row = /** @type {HTMLElement} */ (e.target);
+    if ((e.key === 'Enter' || e.key === ' ') && row.tagName === 'TR') { e.preventDefault(); openSiteDetail(row.dataset.domain, view.src); }
   });
   body.addEventListener('change', (e) => {
     const target = /** @type {HTMLInputElement} */ (e.target);

@@ -14,6 +14,9 @@ importers:
       '@types/node':
         specifier: ^26.6.4
         version: 26.6.4
+      axe-core:
+        specifier: ^4.14.0
+        version: 4.14.0
       puppeteer:
         specifier: ^25.12.0
         version: 25.12.0
@@ -178,6 +181,10 @@ packages:
   ansi-styles@6.2.3:
     resolution: {integrity: sha512-4Dj6M28JB+oAH8kFkTLUo+a2jwOFkuqb3yucU0CANcRRUbxS0cP0nZYCGjcc3BNXwRIsUVmDGgzawme7zvJHvg==}
     engines: {node: '>=12'}
+
+  axe-core@4.14.0:
+    resolution: {integrity: sha512-9WTZxEjsZ7b13TH8JPmbV2z8CHbl80/2hm3XPEG4JgNdQLK81IBRXmSxHfMAOkSqQeRxT/0dwNDz2GOm3zzpcQ==}
+    engines: {node: '>=4'}
 
   chromium-bidi@17.0.2:
     resolution: {integrity: sha512-5v9GQFhTktFvotn/OFNJBmKLKRAb6n9r0bVCwf7sHgWc3/JryK0bj1nn93L3pHFrfgcsu6Be6EWsDi+1XHTGDg==}
@@ -371,6 +378,8 @@ snapshots:
   ansi-regex@6.4.0: {}
 
   ansi-styles@6.2.3: {}
+
+  axe-core@4.14.0: {}
 
   chromium-bidi@17.0.2(devtools-protocol@0.0.1687809):
     dependencies:

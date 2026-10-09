@@ -374,5 +374,6 @@
   "demo.remove": "Quitar datos de demostración",
   "demo.loaded": "Datos de demostración cargados: puede quitarlos cuando quiera",
   "demo.removed": "Datos de demostración eliminados",
-  "demo.hasData": "Ya hay datos en ese período, así que no se pueden cargar datos de demostración"
+  "demo.hasData": "Ya hay datos en ese período, así que no se pueden cargar datos de demostración",
+  "btn.close": "Cerrar"
 }

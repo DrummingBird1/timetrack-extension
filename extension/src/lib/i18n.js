@@ -94,6 +94,15 @@ export function t(key, vars) {
 export function localize(root = document) {
   const all = (selector) => /** @type {NodeListOf<HTMLElement>} */ (root.querySelectorAll(selector));
   all('[data-i18n]').forEach((el) => { el.textContent = t(el.dataset.i18n); });
-  all('[data-i18n-ph]').forEach((el) => { /** @type {HTMLInputElement} */ (el).placeholder = t(el.dataset.i18nPh); });
+  all('[data-i18n-ph]').forEach((el) => {
+    const input = /** @type {HTMLInputElement} */ (el);
+    input.placeholder = t(el.dataset.i18nPh);
+    // A placeholder vanishes on input and is not a reliable name: reuse it as the accessible name
+    // unless the control already has a real label.
+    if (!input.hasAttribute('aria-labelledby') && !input.hasAttribute('data-i18n-aria') && !(input.labels && input.labels.length)) {
+      input.setAttribute('aria-label', input.placeholder);
+    }
+  });
+  all('[data-i18n-aria]').forEach((el) => { el.setAttribute('aria-label', t(el.dataset.i18nAria)); });
   all('[data-i18n-title]').forEach((el) => { el.title = t(el.dataset.i18nTitle); });
 }

@@ -4,7 +4,7 @@ import { dayKey, parseDayKey, addDays } from '../lib/utils.js';
 import { setLang, getLang, t, dir, localize } from '../lib/i18n.js';
 import {
   $, $$, settings, setSettings, setCurrentRange, currentTab, setCurrentTab, siteAllHistory, setSiteAllHistory, setAllCache,
-  actions, send, toast, loadRange, closeModal, debounce,
+  actions, send, toast, loadRange, closeModal, debounce, watchModals,
 } from './core.js';
 import { renderOverview } from './overview.js';
 import { renderSites, wireSites } from './sites.js';
@@ -42,7 +42,11 @@ async function ensureFaviconPermission() {
 // ---------------- navigation / refresh ----------------
 function switchTab(tab) {
   setCurrentTab(tab);
-  $$('.nav-item').forEach((b) => b.classList.toggle('active', b.dataset.tab === tab));
+  $$('.nav-item').forEach((b) => {
+    b.classList.toggle('active', b.dataset.tab === tab);
+    b.setAttribute('aria-selected', String(b.dataset.tab === tab));
+    b.tabIndex = b.dataset.tab === tab ? 0 : -1;       // roving tabindex: one stop for the whole tab list
+  });
   $$('.tab-panel').forEach((p) => p.classList.toggle('active', p.id === `tab-${tab}`));
   $('#pageTitle').textContent = t(`title.${tab}`);
   $('#pageSubtitle').textContent = t(`sub.${tab}`);
@@ -91,8 +95,19 @@ async function init() {
   $('#appVersion').textContent = chrome.runtime.getManifest().version;
 
   $$('.nav-item').forEach((b) => b.addEventListener('click', () => switchTab(b.dataset.tab)));
+  $('.nav').addEventListener('keydown', (e) => {
+    const items = [...$$('.nav-item')];
+    const at = items.findIndex((b) => b === document.activeElement);
+    const step = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1 }[e.key];
+    const next = e.key === 'Home' ? 0 : e.key === 'End' ? items.length - 1 : step ? (at + step + items.length) % items.length : -1;
+    if (next < 0) return;
+    e.preventDefault();
+    items[next].focus();
+    items[next].click();
+  });
+  watchModals();
   $$('#rangePicker button').forEach((b) => b.addEventListener('click', () => {
-    $$('#rangePicker button').forEach((x) => x.classList.remove('active'));
+    $$('#rangePicker button').forEach((x) => { x.classList.remove('active'); x.setAttribute('aria-pressed', String(x === b)); });
     b.classList.add('active');
     if (b.dataset.range === 'custom') {
       $('#customRange').classList.remove('hidden');

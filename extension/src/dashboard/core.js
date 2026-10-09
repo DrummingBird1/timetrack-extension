@@ -134,3 +134,49 @@ export function debounce(fn, ms) {
   let timer;
   return (...a) => { clearTimeout(timer); timer = setTimeout(() => fn(...a), ms); };
 }
+
+/** Make the "✕" of a chip a real, keyboard-operable remove button. */
+export function wireRemove(chip, onRemove) {
+  const x = chip.querySelector('.x');
+  x.setAttribute('role', 'button');
+  x.tabIndex = 0;
+  x.setAttribute('aria-label', t('btn.remove'));
+  x.addEventListener('click', onRemove);
+  x.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onRemove(); } });
+}
+
+const FOCUSABLE = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+const focusables = (root) => [...root.querySelectorAll(FOCUSABLE)].filter((el) => !el.disabled && el.offsetParent !== null);
+
+/**
+ * Dialog behaviour for every .modal without touching the code that opens them: when one is
+ * shown, move focus inside it and remember the opener; trap Tab within it; when it is hidden,
+ * give focus back. (Escape-to-close is wired in dashboard.js.)
+ */
+export function watchModals() {
+  for (const modal of $$('.modal')) {
+    let opener = null;
+    new MutationObserver(() => {
+      const open = !modal.classList.contains('hidden');
+      if (open && !modal.dataset.open) {
+        modal.dataset.open = '1';
+        opener = document.activeElement;
+        const card = modal.querySelector('.modal-card');
+        card.tabIndex = -1;
+        (focusables(modal)[0] || card).focus();
+      } else if (!open && modal.dataset.open) {
+        delete modal.dataset.open;
+        if (opener && document.contains(opener)) opener.focus();
+      }
+    }).observe(modal, { attributes: true, attributeFilter: ['class'] });
+    modal.addEventListener('keydown', (e) => {
+      if (e.key !== 'Tab') return;
+      const items = focusables(modal);
+      if (!items.length) { e.preventDefault(); return; }
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    });
+  }
+}

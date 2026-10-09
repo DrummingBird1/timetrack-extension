@@ -3,7 +3,7 @@ import { saveSettings, setSettingsMapEntry, removeSettingsMapEntry } from '../li
 import { weekdaysShort } from '../lib/utils.js';
 import { CATEGORY_DEFS, CATEGORY_ORDER, categoryDef } from '../lib/categories.js';
 import { t, categoryLabel } from '../lib/i18n.js';
-import { $, settings, setSettings, toast, send, cleanDomain, actions } from './core.js';
+import { $, settings, setSettings, toast, send, cleanDomain, actions, wireRemove } from './core.js';
 
 export function updateFocusModeFields() {
   const allow = settings.focus.mode === 'allow';
@@ -41,7 +41,7 @@ export function renderFocusDomains(hostSel, settingKey) {
     const chip = document.createElement('div');
     chip.className = 'cat-chip';
     chip.innerHTML = `<span>${domain}</span><span class="x">✕</span>`;
-    chip.querySelector('.x').addEventListener('click', async () => {
+    wireRemove(chip, async () => {
       const next = (settings.focus[settingKey] || []).filter((d) => d !== domain);
       setSettings(await saveSettings({ focus: { [settingKey]: next } }));
       renderFocusDomains(hostSel, settingKey);
@@ -75,7 +75,7 @@ export function renderBlacklist() {
     const chip = document.createElement('div');
     chip.className = 'cat-chip';
     chip.innerHTML = `<span>🚫 ${domain}</span><span class="x">✕</span>`;
-    chip.querySelector('.x').addEventListener('click', async () => {
+    wireRemove(chip, async () => {
       const next = (settings.blacklist || []).filter((d) => d !== domain);
       setSettings(await saveSettings({ blacklist: next }));
       await send('settingsChanged');
@@ -120,7 +120,7 @@ export function renderCategoryEditor() {
     chip.innerHTML = `<span class="dot" style="background:${def.color}"></span>
       <span>${domain} → ${categoryLabel(cat)}</span>
       <span class="x" data-domain="${domain}">✕</span>`;
-    chip.querySelector('.x').addEventListener('click', async () => {
+    wireRemove(chip, async () => {
       setSettings(await removeSettingsMapEntry('categoryMap', domain));
       renderCategoryEditor();
       actions.rerenderCharts();
