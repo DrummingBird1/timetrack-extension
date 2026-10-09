@@ -26,6 +26,16 @@ test('popup renders on an empty profile without errors', async () => {
   await popup.close();
 });
 
+test('popup top-site bars are visible when there is data', async () => {
+  const { buildSnapshot } = await import('../tools/fixture.mjs');
+  await ext.seed(buildSnapshot({ days: 3, seed: 2 }));
+  const popup = await ext.openPage('src/popup/popup.html');
+  await popup.waitForSelector('#topList .top-row');
+  const fills = await popup.$$eval('#topList .bar-fill', (els) => els.map((e) => e.getBoundingClientRect().width));
+  assert.ok(fills.length > 0 && fills.every((w) => w > 2), `bars must have width, got ${fills}`);
+  await popup.close();
+});
+
 test('every dashboard tab renders on an empty profile without errors', async () => {
   const page = await ext.openPage('src/dashboard/dashboard.html');
   for (const tab of ['overview', 'sites', 'insights', 'settings']) {

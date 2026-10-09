@@ -66,6 +66,8 @@ test('overview: summary cards, charts, insights, compare and top sites render wi
   assert.ok(await page.$('#categoryDonut svg'), 'category donut');
   assert.ok((await count('#categoryLegend > *')) > 0, 'donut legend');
   assert.equal(await count('#overviewTop .tl-row'), 8);
+  const fills = await page.$$eval('#overviewTop .tl-fill', (els) => els.map((e) => e.getBoundingClientRect().width));
+  assert.ok(fills.length === 8 && fills.every((w) => w > 2), `top-site bars must have width, got ${fills}`);
   assert.ok((await count('#comparePanel .cmp-row')) >= 1, 'period comparison');
   assert.ok((await count('#insightsPanel > *')) >= 1, 'insights panel has content or an empty note');
 });
@@ -661,3 +663,30 @@ test('modals close with Escape and the welcome flow can be dismissed', async () 
   await page.waitForSelector('#siteModal.hidden');
   await sleep(50);
 });
+
+// ------------------------------------------------------------------ chart rendering
+test('charts: bars stay visible after visiting other tabs (gradient ids are unique per chart)', async () => {
+  // Overview draws a chart in a tab that is hidden once Sites is active. The site-detail chart
+  // opened from Sites used to reference that hidden gradient (duplicate id) and render blank.
+  await openTab('overview');
+  await page.waitForSelector('#trendChart svg rect');
+  await openTab('sites');
+  await waitFor(async () => (await count('#sitesBody tr')) > 0);
+  await page.click('#sitesBody tr');
+  await page.waitForSelector('#detailChart svg rect');
+
+  const report = await page.evaluate(() => {
+    const ids = [...document.querySelectorAll('[id]')].map((e) => e.id);
+    const duplicateIds = ids.filter((id, i) => ids.indexOf(id) !== i);
+    const unresolved = [];
+    document.querySelectorAll('svg rect[fill^="url(#"]').forEach((rect) => {
+      const id = rect.getAttribute('fill').slice(5, -1);
+      const target = document.getElementById(id);
+      if (!target || target.closest('svg') !== rect.closest('svg')) unresolved.push(id);
+    });
+    return { duplicateIds, unresolved };
+  });
+  assert.deepEqual(report.duplicateIds, [], 'no duplicate element ids in the document');
+  assert.deepEqual(report.unresolved, [], 'every bar references a gradient inside its own chart');
+});
+

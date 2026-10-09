@@ -50,9 +50,10 @@ export async function launch() {
   } catch { /* the worker can be torn down mid-attach; page-level checks still apply */ }
 
   /** Open an extension page and record every uncaught error / console.error on it. */
-  async function openPage(rel, { viewport = { width: 1400, height: 900 } } = {}) {
+  async function openPage(rel, { viewport = { width: 1400, height: 900 }, init = null } = {}) {
     const page = await browser.newPage();
     await page.setViewport(viewport);
+    if (init) await page.evaluateOnNewDocument(init);        // runs before the page's own scripts
     page.on('pageerror', (e) => errors.push(`[${rel}] pageerror: ${e.message}`));
     page.on('console', (m) => {
       if (m.type() === 'error') errors.push(`[${rel}] console.error: ${m.text()}`);

@@ -184,7 +184,7 @@ body {
 .tl-row img { width: 22px; height: 22px; border-radius: 6px; background: var(--surface-3); flex-shrink: 0; }
 .tl-name { flex: 0 0 24%; font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tl-bar { flex: 1; height: 9px; background: var(--surface-3); border-radius: 6px; overflow: hidden; }
-.tl-fill { height: 100%; border-radius: 6px; background: linear-gradient(90deg, var(--accent), var(--accent-2)); }
+.tl-fill { display: block; height: 100%; border-radius: 6px; background: linear-gradient(90deg, var(--accent), var(--accent-2)); }
 .tl-time { font-size: 12.5px; color: var(--text-dim); min-width: 84px; text-align: start; font-variant-numeric: tabular-nums; }
 .tl-cat { font-size: 11px; padding: 2px 8px; border-radius: 20px; flex-shrink: 0; }
 

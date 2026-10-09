@@ -3,6 +3,7 @@
 // charts follow the active theme.
 
 const NS = 'http://www.w3.org/2000/svg';
+let gradientSeq = 0;   // makes each bar chart's gradient id unique (see barChart)
 
 function el(tag, attrs = {}, parent = null) {
   const node = document.createElementNS(NS, tag);
@@ -40,7 +41,11 @@ export function barChart(container, data, { height = 220, goal = 0, valueFmt = (
   const accent = cssVar('--accent', '#6366f1');
   const accent2 = cssVar('--accent-2', '#8b5cf6');
 
-  const grad = el('linearGradient', { id: 'barGrad', x1: '0', y1: '0', x2: '0', y2: '1' }, svg);
+  // The id must be unique per chart: `url(#id)` resolves to the FIRST element with that id in
+  // the document, and a gradient inside a hidden tab (display:none) does not render — so a
+  // shared id made the bars of every later chart invisible while an earlier one sat in a hidden tab.
+  const gradId = `barGrad${++gradientSeq}`;
+  const grad = el('linearGradient', { id: gradId, x1: '0', y1: '0', x2: '0', y2: '1' }, svg);
   el('stop', { offset: '0', 'stop-color': accent2 }, grad);
   el('stop', { offset: '1', 'stop-color': accent }, grad);
 
@@ -60,7 +65,7 @@ export function barChart(container, data, { height = 220, goal = 0, valueFmt = (
     const y = padTop + plotH - h;
     const rect = el('rect', {
       x, y, width: barW, height: h, rx: Math.min(6, barW / 2),
-      fill: d.value > 0 ? 'url(#barGrad)' : cssVar('--border', '#2a2a3a'),
+      fill: d.value > 0 ? `url(#${gradId})` : cssVar('--border', '#2a2a3a'),
       class: 'bar',
     }, svg);
     el('title', {}, rect).textContent = d.title || `${d.label}: ${valueFmt(d.value)}`;
