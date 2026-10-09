@@ -126,6 +126,7 @@ async function renderFocus() {
     const cyc = focus.totalCycles > 1 ? ' · ' + t('popup.cycle', { n: focus.cycle, total: focus.totalCycles }) : '';
     if (label) label.textContent = phaseTxt + cyc;
     $('focusActive').classList.toggle('is-break', focus.phase === 'break');
+    $('endFocus').classList.toggle('hidden', !!focus.strict && focus.phase === 'work');   // strict mode: no early exit
     const endsAt = focus.endsAt;
     const upd = () => {
       const remaining = Math.max(0, (endsAt - Date.now()) / 1000);

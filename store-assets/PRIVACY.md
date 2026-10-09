@@ -22,6 +22,7 @@ TimeTrack הוא תוסף דפדפן למעקב אחר זמן הגלישה של�
 - **משך הזמן הפעיל** וכמות הביקורים לכל דומיין, מקובצים לפי יום ולפי שעה ביום.
 - **יומן ביקורים (אופציונלי, כבוי כברירת מחדל)** — אם תפעיל אותו: שעת ההתחלה
   ואורך כל ביקור באתר. נשאר מקומי, ואפשר למחוק אותו בכל עת.
+- **היסטוריית סשני פוקוס** — מתי התחיל כל סשן, כמה זמן נמשך והאם הושלם.
 - **ההגדרות שלך** (יעדים, מגבלות, קטגוריות, ערכת נושא וכו׳).
 
 התוסף **אינו** אוסף: היסטוריית גלישה מלאה (URLs), תוכן דפים, כותרות, הקלדות,
@@ -82,6 +83,8 @@ Locally, and only locally, the extension measures:
 - **Active time** and visit counts per domain, bucketed by day and hour-of-day.
 - **Session log (optional, off by default)** — if you turn it on: the start time and
   length of each visit to a site. It stays local and can be deleted at any time.
+- **Focus-session history** — when each focus session started, how long it lasted and whether
+  it was completed.
 - **Your settings** (goals, limits, categories, theme, etc.).
 
 The extension does **not** collect: full browsing history (URLs), page content,

@@ -1,5 +1,6 @@
 // Settings-tab list editors: focus categories/domains, never-track list, category mappings.
 import { saveSettings, setSettingsMapEntry, removeSettingsMapEntry } from '../lib/storage.js';
+import { weekdaysShort } from '../lib/utils.js';
 import { CATEGORY_DEFS, CATEGORY_ORDER, categoryDef } from '../lib/categories.js';
 import { t, categoryLabel } from '../lib/i18n.js';
 import { $, settings, setSettings, toast, send, cleanDomain, actions } from './core.js';
@@ -138,4 +139,55 @@ export async function addCategoryMapping() {
   renderCategoryEditor();
   actions.rerenderCharts();
   toast(t('toast.catSaved', { d: domain, c: categoryLabel(cat) }), 'success');
+}
+
+// ---- scheduled focus sessions (settings.focus.schedule) ----
+export function renderSchedule() {
+  const daysHost = $('#scheduleDays');
+  const checked = new Set([...daysHost.querySelectorAll('input:checked')].map((i) => Number(i.value)));
+  const names = weekdaysShort(settings.language);
+  daysHost.innerHTML = '';
+  for (let day = 0; day < 7; day++) {
+    const label = document.createElement('label');
+    label.className = `chip-check${checked.has(day) ? ' on' : ''}`;
+    label.innerHTML = `<input type="checkbox" value="${day}" ${checked.has(day) ? 'checked' : ''}>${names[day]}`;
+    label.querySelector('input').addEventListener('change', (e) => label.classList.toggle('on', /** @type {HTMLInputElement} */ (e.target).checked));
+    daysHost.appendChild(label);
+  }
+
+  const list = $('#scheduleList');
+  list.innerHTML = '';
+  const entries = settings.focus.schedule || [];
+  if (!entries.length) {
+    list.innerHTML = `<span style="color:var(--text-faint);font-size:12.5px">${t('schedule.none')}</span>`;
+    return;
+  }
+  entries.forEach((slot, index) => {
+    const chip = document.createElement('div');
+    chip.className = 'cat-chip';
+    const dayNames = slot.days.map((d) => names[d]).join(' ');
+    chip.innerHTML = `<span>${t('schedule.entry', { days: dayNames, time: slot.time, m: slot.minutes })}</span>
+      <span class="x" role="button" tabindex="0" aria-label="${t('btn.remove')}">✕</span>`;
+    const remove = async () => {
+      setSettings(await saveSettings({ focus: { schedule: entries.filter((_, i) => i !== index) } }));
+      renderSchedule();
+      send('settingsChanged');
+    };
+    const x = chip.querySelector('.x');
+    x.addEventListener('click', remove);
+    x.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); remove(); } });
+    list.appendChild(chip);
+  });
+}
+
+export async function addScheduleEntry() {
+  const days = [...$('#scheduleDays').querySelectorAll('input:checked')].map((i) => Number(i.value));
+  const time = $('#scheduleTime').value;
+  const minutes = Math.max(1, Math.min(240, Math.round(Number($('#scheduleMinutes').value) || settings.focus.defaultMinutes || 25)));
+  if (!days.length || !/^\d{2}:\d{2}$/.test(time)) { toast(t('schedule.pickDays'), 'error'); return; }
+  const next = [...(settings.focus.schedule || []), { days, time, minutes }];
+  setSettings(await saveSettings({ focus: { schedule: next } }));
+  renderSchedule();
+  send('settingsChanged');
+  toast(t('toast.scheduleSaved'), 'success');
 }

@@ -7,7 +7,7 @@
 // trackable. State survives SW restarts via chrome.storage.session.
 
 import {
-  getSettings, saveSettings, addTime, addVisit, recordSession, getDay, getDays, pruneOld,
+  getSettings, saveSettings, addTime, addVisit, recordSession, addFocusLog, getDay, getDays, pruneOld,
   saveMeta, getMeta, migrate, storageFootprint,
 } from './src/lib/storage.js';
 import { domainFromUrl, dayKey, rangeKeys, addDays, formatDuration, startOfWeek, keysBetween } from './src/lib/utils.js';
@@ -71,7 +71,8 @@ function sessionLive(focus) {
   return !!(focus && focus.active && Date.now() < focus.endsAt);
 }
 function blockingLive(focus) {
-  return sessionLive(focus) && focus.phase === 'work';
+  const paused = focus.pausedUntil && Date.now() < focus.pausedUntil;     // "allow 10 minutes" on the block page
+  return sessionLive(focus) && focus.phase === 'work' && !paused;
 }
 function isBlocked(domain, settings, focus) {
   if (!domain || !blockingLive(focus)) return false;
@@ -106,6 +107,17 @@ async function enforceAllTabs(settings, focus) {
   } catch { /* tabs permission edge */ }
 }
 
+/** Append a finished / early-ended session to the history (sessions under 30 s of work are noise). */
+async function logFocusSession(focus, endedEarly) {
+  const total = focus.totalCycles || 1;
+  const inWork = focus.phase === 'work';
+  const completedCycles = endedEarly ? (inWork ? focus.cycle || 0 : (focus.cycle || 0) + 1) : total;
+  const partialMs = endedEarly && inWork ? Math.max(0, focus.workMs - Math.max(0, focus.endsAt - Date.now())) : 0;
+  const workedMs = Math.round(completedCycles * focus.workMs + partialMs);
+  if (workedMs < 30000) return;
+  await addFocusLog({ start: focus.startedAt || Date.now(), end: Date.now(), cycles: total, completedCycles, workedMs, endedEarly });
+}
+
 function focusView(focus) {
   return {
     active: sessionLive(focus),
@@ -114,12 +126,19 @@ function focusView(focus) {
     remaining: sessionLive(focus) ? Math.max(0, (focus.endsAt - Date.now()) / 1000) : 0,
     cycle: (focus.cycle || 0) + 1,
     totalCycles: focus.totalCycles || 1,
+    strict: !!focus.strict,
+    pausedUntil: focus.pausedUntil || 0,
   };
 }
 
 /** Advance the Pomodoro state machine when a phase ends. Returns current focus. */
 async function checkFocusExpiry() {
   const focus = await loadFocus();
+  if (focus.active && focus.pausedUntil && Date.now() >= focus.pausedUntil) {
+    focus.pausedUntil = 0;                                   // the snooze is over: block again, including tabs opened meanwhile
+    await saveFocus(focus);
+    await enforceAllTabs(await getSettings(), focus);
+  }
   if (!focus.active || Date.now() < focus.endsAt) return focus;
   const settings = await getSettings();
   await setLang(settings.language || 'he');
@@ -148,6 +167,7 @@ async function checkFocusExpiry() {
     }
     focus.active = false;
     await saveFocus(focus);
+    await logFocusSession(focus, false);
     notify(t('notif.focusComplete.title'), t('notif.focusComplete.body'));
     return focus;
   }
@@ -226,6 +246,7 @@ async function refresh() {
     // 3) Limits / goals / focus expiry.
     await checkLimits(settings, info.domain);
     await checkFocusExpiry();
+    await checkFocusSchedule(settings);
     updateBadge(settings, counting);
   });
 }
@@ -571,12 +592,49 @@ async function handleMessage(raw) {
     }
     case 'stopFocus': {
       const focus = await loadFocus();
+      if (sessionLive(focus) && focus.strict && focus.phase === 'work') return { active: true, refused: true };
+      if (sessionLive(focus)) await logFocusSession(focus, true);
       focus.active = false;
       await saveFocus(focus);
       return { active: false };
     }
+    case 'snoozeFocus': {
+      const focus = await loadFocus();
+      if (!sessionLive(focus) || focus.phase !== 'work' || focus.strict) return { ...focusView(focus), refused: true };
+      const minutes = Math.max(1, Math.min(30, msg.minutes || 10));
+      focus.pausedUntil = Date.now() + minutes * 60000;
+      await saveFocus(focus);
+      return focusView(focus);
+    }
     default:
       return { ok: false, unknown: true };
+  }
+}
+
+// Auto-start sessions at their scheduled weekday + time. A slot fires if its time passed
+// within the last 10 minutes (the worker may sleep between ticks) and has not fired today.
+const SCHEDULE_FIRED = 'ttt_sched_fired';
+const SCHEDULE_GRACE_MS = 10 * 60 * 1000;
+async function checkFocusSchedule(settings) {
+  const schedule = settings.focus.schedule || [];
+  if (!schedule.length) return;
+  if (sessionLive(await loadFocus())) return;
+  const now = new Date();
+  const today = dayKey(now);
+  const stored = (await chrome.storage.session.get(SCHEDULE_FIRED))[SCHEDULE_FIRED] || {};
+  const fired = stored.day === today ? stored : { day: today, slots: {} };
+  for (let i = 0; i < schedule.length; i++) {
+    const slot = schedule[i];
+    if (!slot || !Array.isArray(slot.days) || !slot.days.includes(now.getDay())) continue;
+    const [h, m] = String(slot.time).split(':').map(Number);
+    if (!Number.isFinite(h) || !Number.isFinite(m)) continue;
+    const late = now.getTime() - new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m).getTime();
+    const id = i + '@' + slot.time;
+    if (late < 0 || late > SCHEDULE_GRACE_MS || fired.slots[id]) continue;
+    fired.slots[id] = true;
+    await chrome.storage.session.set({ [SCHEDULE_FIRED]: fired });
+    await startFocusSession(slot.minutes);
+    return;
   }
 }
 
@@ -599,6 +657,9 @@ async function startFocusSession(minutesArg) {
     blockDomains: f.blockDomains || [],
     allowCategories: f.allowCategories || [],
     allowDomains: f.allowDomains || [],
+    strict: !!f.strict,
+    pausedUntil: 0,
+    startedAt: Date.now(),
   };
   await saveFocus(focus);
   await enforceAllTabs(settings, focus);
@@ -620,9 +681,14 @@ chrome.commands.onCommand.addListener(async (command) => {
   } else if (command === 'start-focus') {
     const focus = await loadFocus();
     if (sessionLive(focus)) {
+      await setLang((await getSettings()).language || 'he');
+      if (focus.strict && focus.phase === 'work') {
+        notify('TimeTrack', t('blocked.strict'));
+        return;
+      }
+      await logFocusSession(focus, true);
       focus.active = false;
       await saveFocus(focus);
-      await setLang((await getSettings()).language || 'he');
       notify('TimeTrack', t('notif.focusEndedCmd'));
     } else await startFocusSession();
   } else if (command === 'open-dashboard') {

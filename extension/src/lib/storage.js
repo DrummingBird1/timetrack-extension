@@ -14,6 +14,7 @@ export const K = {
   META: 'ttt_meta',
   day: (key) => `ttt_day_${key}`,
   sess: (key) => `ttt_sess_${key}`,
+  FOCUS_LOG: 'ttt_focuslog',
 };
 const SESS_PREFIX = 'ttt_sess_';
 
@@ -49,6 +50,8 @@ export const DEFAULT_SETTINGS = {
     blockDomains: [],                            // extra domains always blocked
     allowCategories: ['productivity', 'reference', 'communication'], // allowed in allow mode
     allowDomains: [],                            // extra domains always allowed
+    strict: false,                               // work phases cannot be ended early or have the block paused
+    schedule: [],                                // [{ days: [0-6], time: 'HH:MM', minutes }] auto-start slots
   },
   backup: {
     syncEnabled: false,          // mirror into chrome.storage.sync
@@ -222,6 +225,25 @@ export async function addVisit(dateKey, domain) {
   await ensureIndexed(dateKey);
 }
 
+// ---- focus session history ----
+// One entry per finished or early-ended session: { start, end, cycles, completedCycles,
+// workedMs, endedEarly }. Capped so it can never grow without bound.
+const FOCUS_LOG_MAX = 300;
+
+export async function getFocusLog() {
+  return (await chrome.storage.local.get(K.FOCUS_LOG))[K.FOCUS_LOG] || [];
+}
+
+export async function addFocusLog(entry) {
+  const list = await getFocusLog();
+  list.push(entry);
+  await chrome.storage.local.set({ [K.FOCUS_LOG]: list.slice(-FOCUS_LOG_MAX) });
+}
+
+export async function clearFocusLog() {
+  await chrome.storage.local.remove(K.FOCUS_LOG);
+}
+
 // ---- session log (opt-in) ----
 // One array per day: [domain, startSec, seconds] where startSec counts from local
 // midnight. Kept apart from the day aggregates so the always-on write path stays small.
@@ -278,6 +300,7 @@ export async function clearAllData() {
   const idx = await getIndex();
   await chrome.storage.local.remove(idx.map(K.day));
   await clearSessions();
+  await clearFocusLog();
   await chrome.storage.local.set({ [K.INDEX]: [] });
   await saveMeta({ firstDay: null });
 }
@@ -314,6 +337,8 @@ export async function exportAll({ sessions = true } = {}) {
     const logs = await getSessions(idx);
     if (Object.keys(logs).length) snapshot.sessions = logs;
   }
+  const focusLog = await getFocusLog();
+  if (focusLog.length) snapshot.focusLog = focusLog;
   return snapshot;
 }
 
@@ -372,6 +397,12 @@ export async function importAll(snapshot, { mode = 'merge', includeSettings = tr
       const keep = total(existingSessions[key]) >= total(incomingSessions[key]) ? existingSessions[key] : incomingSessions[key];
       if (keep && keep.length) writes[K.sess(key)] = keep;
     }
+  }
+  if (Array.isArray(snapshot.focusLog) && snapshot.focusLog.length) {
+    // union by start time, so re-importing the same file never duplicates sessions
+    const merged = new Map((await getFocusLog()).map((e) => [e.start, e]));
+    for (const e of snapshot.focusLog) merged.set(e.start, e);
+    writes[K.FOCUS_LOG] = [...merged.values()].sort((a, b) => a.start - b.start).slice(-FOCUS_LOG_MAX);
   }
   writes[K.INDEX] = [...idx].sort();
   await chrome.storage.local.set(writes);

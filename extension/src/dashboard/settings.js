@@ -5,7 +5,7 @@ import { t, locale } from '../lib/i18n.js';
 import { $, $$, settings, setSettings, setAllCache, toast, send, actions } from './core.js';
 import {
   updateFocusModeFields, renderFocusCats, renderFocusDomains, addFocusDomain, renderBlacklist, addBlacklist,
-  renderCategoryEditor, addCategoryMapping,
+  renderCategoryEditor, addCategoryMapping, renderSchedule, addScheduleEntry,
 } from './settingsEditors.js';
 import { renderBudgetEditor, wireBudgets } from './budgets.js';
 import { startRestoreFlow, exportData, exportCsv, handleImport, handleCsvImport } from './dataio.js';
@@ -31,6 +31,7 @@ export function fillSettingsForm() {
   $('#setLongBreakEvery').value = settings.focus.longBreakEvery;
   $('#setFocusCycles').value = settings.focus.cycles;
   $('#setFocusMode').value = settings.focus.mode;
+  $('#setFocusStrict').checked = settings.focus.strict;
   $('#setSyncEnabled').checked = settings.backup.syncEnabled;
   $('#setBackupInterval').value = settings.backup.autoIntervalHours;
   $('#setEndpoint').value = settings.backup.endpointUrl;
@@ -45,6 +46,7 @@ export function fillSettingsForm() {
   renderFocusDomains('#focusBlockDomains', 'blockDomains');
   renderFocusDomains('#focusAllowDomains', 'allowDomains');
   updateFocusModeFields();
+  renderSchedule();
   renderBackupStatus();
   renderStorageInfo();
   renderCategoryEditor();
@@ -203,6 +205,8 @@ export function wireSettings() {
   });
 
   wireBudgets();
+  $('#setFocusStrict').addEventListener('change', (e) => persist({ focus: { strict: e.target.checked } }));
+  $('#scheduleAdd').addEventListener('click', addScheduleEntry);
   $('#catAdd').addEventListener('click', addCategoryMapping);
   $('#catDomain').addEventListener('keydown', (e) => { if (e.key === 'Enter') addCategoryMapping(); });
 

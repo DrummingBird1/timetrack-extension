@@ -348,3 +348,19 @@ export function siteChanges(aggA, aggB, limit = 5) {
     .sort((x, y) => Math.abs(y.delta) - Math.abs(x.delta))
     .slice(0, limit);
 }
+
+/**
+ * Summary of the focus-session history (see storage.addFocusLog).
+ * @param {Array<{ start: number, workedMs: number, endedEarly: boolean }>} log
+ * @param {number} [sinceMs]  only count sessions that started at or after this time
+ */
+export function focusLogStats(log, sinceMs = 0) {
+  const sessions = (log || []).filter((e) => e.start >= sinceMs);
+  const completed = sessions.filter((e) => !e.endedEarly).length;
+  return {
+    sessions: sessions.length,
+    completed,
+    completionRate: sessions.length ? completed / sessions.length : 0,
+    totalWorkedMs: sessions.reduce((sum, e) => sum + (e.workedMs || 0), 0),
+  };
+}

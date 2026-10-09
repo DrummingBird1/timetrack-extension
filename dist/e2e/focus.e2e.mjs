@@ -127,3 +127,44 @@ test('tracking: the active tab domain is detected, and time is credited while th
   assert.ok(found.visits >= 1, `${domain} recorded ${found.visits} visits`);
   await tab.close();
 });
+
+test('block page: "allow 10 minutes" pauses blocking; strict mode removes every escape hatch', async () => {
+  const blockedBase = `${ext.base}src/blocked/blocked.html`;
+  await ext.saveSettings({ focus: { mode: 'block', blockDomains: ['localhost'], strict: false } });
+  await ext.message('startFocus', { minutes: 5 });
+  const tab = await ext.browser.newPage();
+  await tab.goto(hostUrl(), { waitUntil: 'load' }).catch(() => {});
+  await waitFor(() => tab.url().startsWith(blockedBase), { message: 'redirect to block page' });
+  await tab.waitForSelector('#snoozeBtn');
+  assert.equal(await tab.$eval('#snoozeBtn', (e) => e.hidden), false);
+  assert.equal(await tab.$eval('#endBtn', (e) => e.hidden), false);
+  assert.equal(await tab.$eval('#strictNote', (e) => e.hidden), true);
+
+  await tab.click('#snoozeBtn');
+  await waitFor(async () => (await ext.message('getFocus')).pausedUntil > Date.now(), { message: 'blocking paused' });
+  const other = await ext.browser.newPage();
+  await other.goto(hostUrl(), { waitUntil: 'load' });
+  await sleep(700);
+  assert.equal(other.url(), hostUrl(), 'not redirected while paused');
+  await other.close();
+  await tab.close();
+  await ext.message('stopFocus');
+
+  // strict mode
+  await ext.saveSettings({ focus: { strict: true } });
+  await ext.message('startFocus', { minutes: 5 });
+  const strictTab = await ext.browser.newPage();
+  await strictTab.goto(hostUrl(), { waitUntil: 'load' }).catch(() => {});
+  await waitFor(() => strictTab.url().startsWith(blockedBase), { message: 'redirect to block page (strict)' });
+  await strictTab.waitForSelector('#strictNote:not([hidden])');
+  assert.equal(await strictTab.$eval('#endBtn', (e) => e.hidden), true);
+  assert.equal(await strictTab.$eval('#snoozeBtn', (e) => e.hidden), true);
+  assert.equal((await ext.message('stopFocus')).refused, true, 'the worker refuses to stop a strict work phase');
+  assert.equal((await ext.message('snoozeFocus', { minutes: 10 })).refused, true);
+
+  const popup = await ext.openPage('src/popup/popup.html');
+  await popup.waitForSelector('#focusActive:not(.hidden)');
+  assert.ok(await popup.$eval('#endFocus', (e) => e.classList.contains('hidden')), 'no end button in the popup either');
+  await popup.close();
+  await strictTab.close();
+});

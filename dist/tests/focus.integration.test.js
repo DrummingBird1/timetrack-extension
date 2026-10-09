@@ -136,3 +136,100 @@ test('a stopped session is no longer active', async () => {
   const f = await send({ type: 'getFocus' });
   assert.equal(f.active, false);
 });
+
+// ---------------- strict mode, snooze, history, schedule (v2) ----------------
+test('strict mode: a work phase cannot be ended or snoozed; a break can be ended', async () => {
+  await storage.saveSettings({ focus: { mode: 'block', defaultMinutes: 10, breakMinutes: 1, cycles: 2, strict: true } });
+  let f = await send({ type: 'startFocus' });
+  assert.equal(f.strict, true);
+
+  const stop = await send({ type: 'stopFocus' });
+  assert.equal(stop.refused, true);
+  assert.equal(stop.active, true);
+  const snooze = await send({ type: 'snoozeFocus', minutes: 10 });
+  assert.equal(snooze.refused, true, 'strict mode forbids pausing the block');
+  assert.equal((await send({ type: 'getFocus' })).active, true, 'the session is still running');
+
+  clock += 10 * 60_000 + 1000;                       // work #1 ends → break
+  f = await send({ type: 'getFocus' });
+  assert.equal(f.phase, 'break');
+  assert.equal((await send({ type: 'stopFocus' })).active, false, 'a break may be ended');
+  await storage.saveSettings({ focus: { strict: false } });
+});
+
+test('snooze: pauses blocking for a while, then blocking resumes', async () => {
+  await storage.saveSettings({ focus: { mode: 'block', blockDomains: ['facebook.com'], blockCategories: [], defaultMinutes: 60, cycles: 1, strict: false } });
+  tabsList = [{ id: 1, url: 'https://facebook.com/feed' }];
+  await send({ type: 'startFocus' });
+  await settle();
+  assert.ok(updates.some((u) => u.id === 1 && u.url.includes('blocked.html')), 'blocked at first');
+
+  const snoozed = await send({ type: 'snoozeFocus', minutes: 10 });
+  assert.ok(snoozed.pausedUntil > clock, 'the view reports the pause');
+  updates = [];
+  tabsList = [{ id: 2, url: 'https://facebook.com/other' }];
+  await chrome.tabs.onUpdated._fire?.(2, { url: 'https://facebook.com/other' }, { id: 2, active: false });
+  await settle();
+  assert.ok(!updates.some((u) => u.id === 2), 'not redirected while snoozed');
+
+  clock += 10 * 60_000 + 1000;                       // pause over
+  await send({ type: 'getFocus' });                  // expiry is handled when the engine next looks
+  await settle();
+  assert.ok(updates.some((u) => u.id === 2 && u.url.includes('blocked.html')), 'blocking resumed and re-enforced open tabs');
+  await send({ type: 'stopFocus' });
+  await storage.saveSettings({ focus: { blockDomains: [] } });
+});
+
+test('history: finished and early-ended sessions are logged; trivial ones are not', async () => {
+  await storage.clearFocusLog();
+  await storage.saveSettings({ focus: { mode: 'block', blockDomains: [], defaultMinutes: 10, breakMinutes: 1, cycles: 2, strict: false } });
+
+  await send({ type: 'startFocus' });
+  clock += 10 * 60_000 + 1000;                       // work #1 done → break
+  await send({ type: 'getFocus' });
+  clock += 61_000;                                   // break done → work #2
+  await send({ type: 'getFocus' });
+  clock += 4 * 60_000;                               // 4 minutes into work #2, then the user stops
+  await send({ type: 'stopFocus' });
+
+  await send({ type: 'startFocus' });
+  await send({ type: 'stopFocus' });                 // stopped immediately: noise, not logged
+
+  await send({ type: 'startFocus', minutes: 5 });
+  clock += 5 * 60_000 + 1000;
+  await send({ type: 'getFocus' });                  // (cycles: 2 → break), finish everything
+  clock += 61_000; await send({ type: 'getFocus' });
+  clock += 5 * 60_000 + 1000; await send({ type: 'getFocus' });
+
+  const log = await storage.getFocusLog();
+  assert.equal(log.length, 2, 'two real sessions');
+  assert.equal(log[0].endedEarly, true);
+  assert.equal(log[0].completedCycles, 1);
+  assert.ok(Math.abs(log[0].workedMs - (10 + 4) * 60_000) < 5000, `worked ${log[0].workedMs}`);
+  assert.equal(log[1].endedEarly, false);
+  assert.equal(log[1].completedCycles, 2);
+  assert.ok(log[1].end > log[1].start);
+});
+
+test('schedule: a session starts at its slot, once per day, only on chosen weekdays', async () => {
+  const now = new Date();
+  const hhmm = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  const otherDay = (now.getDay() + 3) % 7;
+  await storage.saveSettings({ focus: { defaultMinutes: 10, cycles: 1, schedule: [
+    { days: [otherDay], time: hhmm, minutes: 7 },          // wrong weekday → ignored
+    { days: [now.getDay()], time: hhmm, minutes: 15 },
+  ] } });
+  assert.equal((await send({ type: 'getFocus' })).active, false);
+
+  await send({ type: 'flush' });                           // the engine's tick checks the schedule
+  await settle();
+  const started = await send({ type: 'getFocus' });
+  assert.equal(started.active, true, 'scheduled session started');
+  assert.ok(Math.abs(started.remaining - 15 * 60) < 5, `expected 15 min, got ${started.remaining}s`);
+
+  await send({ type: 'stopFocus' });
+  await send({ type: 'flush' });
+  await settle();
+  assert.equal((await send({ type: 'getFocus' })).active, false, 'does not restart the same slot again today');
+  await storage.saveSettings({ focus: { schedule: [] } });
+});

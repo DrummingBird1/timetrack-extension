@@ -186,6 +186,11 @@
           <div id="focusTrendChart" class="chart-box"></div>
         </div>
 
+        <div class="panel">
+          <div class="panel-head"><h3 data-i18n="panel.focusLog">סשני פוקוס</h3></div>
+          <div id="focusLogBody"></div>
+        </div>
+
         <div class="panel-row">
           <div class="panel grow">
             <div class="panel-head"><h3 data-i18n="panel.hourly">התפלגות לפי שעות היום</h3></div>
@@ -312,6 +317,21 @@
             <div class="setting-row">
               <div><div class="set-label" data-i18n="set.focusMode">מצב חסימה</div><div class="set-desc" data-i18n="set.focusModeDesc">רשימת חסימה או רשימת היתר</div></div>
               <select id="setFocusMode"><option value="block" data-i18n="focusMode.block">חסום קטגוריות נבחרות</option><option value="allow" data-i18n="focusMode.allow">אפשר רק קטגוריות נבחרות</option></select>
+            </div>
+            <div class="setting-row">
+              <div><div class="set-label" data-i18n="set.focusStrict">מצב קפדני</div><div class="set-desc" data-i18n="set.focusStrictDesc">אי אפשר לסיים סשן פוקוס מוקדם או להשהות את החסימה</div></div>
+              <label class="switch"><input type="checkbox" id="setFocusStrict" /><span class="switch-track"><span class="switch-thumb"></span></span></label>
+            </div>
+            <div class="field-block">
+              <label class="set-label" data-i18n="set.focusSchedule">סשנים מתוזמנים</label>
+              <div class="set-desc" data-i18n="set.focusScheduleDesc">התחל סשן פוקוס אוטומטית בימים ובשעה שתבחר (כשהדפדפן פתוח)</div>
+              <div id="scheduleDays" class="chip-checks"></div>
+              <div class="cat-add">
+                <input type="time" id="scheduleTime" value="09:00" />
+                <input type="number" id="scheduleMinutes" min="1" max="240" data-i18n-ph="schedule.minutesPh" placeholder="דקות" />
+                <button class="btn" id="scheduleAdd" data-i18n="btn.add">הוסף</button>
+              </div>
+              <div id="scheduleList" class="cat-list"></div>
             </div>
             <div class="field-block" id="focusBlockField">
               <label class="set-label" data-i18n="set.focusBlock">חסום בזמן פוקוס</label>

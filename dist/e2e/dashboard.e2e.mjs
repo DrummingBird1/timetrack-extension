@@ -457,6 +457,48 @@ test('overview: any two date ranges can be compared, with the biggest per-site c
   assert.match(await toastText(), /./);
 });
 
+// -------------------------------------------------------- v2 focus: strict, schedule, history
+test('settings: strict mode toggle and scheduled focus sessions', async () => {
+  await openTab('settings');
+  await page.$eval('#setFocusStrict', (e) => e.closest('label').click());
+  await waitFor(async () => (await ext.getSettings()).focus.strict === true, { message: 'strict saved' });
+
+  // needs a day and a time
+  await page.click('#scheduleAdd');
+  assert.match(await toastText(), /./);
+  assert.deepEqual((await ext.getSettings()).focus.schedule, []);
+
+  await page.$$eval('#scheduleDays .chip-check input', (inputs) => { inputs[1].click(); inputs[3].click(); });
+  await page.$eval('#scheduleTime', (e) => { e.value = '08:30'; });
+  await page.type('#scheduleMinutes', '45');
+  await page.click('#scheduleAdd');
+  await waitFor(async () => (await ext.getSettings()).focus.schedule.length === 1, { message: 'schedule saved' });
+  const [slot] = (await ext.getSettings()).focus.schedule;
+  assert.deepEqual(slot, { days: [1, 3], time: '08:30', minutes: 45 });
+  assert.equal(await count('#scheduleList .cat-chip'), 1);
+
+  await page.click('#scheduleList .cat-chip .x');
+  await waitFor(async () => (await ext.getSettings()).focus.schedule.length === 0, { message: 'schedule removed' });
+});
+
+test('insights: focus-session history shows totals and the latest sessions', async () => {
+  await openTab('insights');
+  await page.waitForSelector('#focusLogBody .empty');           // nothing yet
+  const now = Date.now();
+  await ext.run(async (url, base) => {
+    const s = await import(url);
+    await s.addFocusLog({ start: base - 86400000, end: base - 86400000 + 1500000, cycles: 1, completedCycles: 1, workedMs: 1500000, endedEarly: false });
+    await s.addFocusLog({ start: base - 3600000, end: base - 3000000, cycles: 2, completedCycles: 1, workedMs: 900000, endedEarly: true });
+  }, `${ext.base}src/lib/storage.js`, now);
+  await page.reload();
+  await openTab('insights');
+  await page.waitForSelector('#focusLogBody .detail-stats');
+  const stats = await page.$$eval('#focusLogBody .detail-stat .v', (els) => els.map((e) => e.textContent.trim()));
+  assert.equal(stats[0], '2', 'two sessions');
+  assert.equal(stats[2], '50%', 'one of two completed');
+  assert.equal(await count('#focusLogBody .tl-row'), 2);
+});
+
 // --------------------------------------------------------- import / clear
 test('import: a JSON backup and a CSV file are imported through the file inputs', async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'tt-e2e-'));

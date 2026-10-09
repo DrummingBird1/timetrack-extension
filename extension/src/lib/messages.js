@@ -18,6 +18,9 @@
  * @property {number} remaining
  * @property {number} cycle
  * @property {number} totalCycles
+ * @property {boolean} strict
+ * @property {number} pausedUntil
+ * @property {boolean} [refused]
  *
  * @typedef {object} BackupResult
  * @property {boolean} ran
@@ -33,13 +36,14 @@
  *   prune:           { req: {}, res: { removed: number } },
  *   getFocus:        { req: {}, res: FocusView },
  *   startFocus:      { req: { minutes?: number }, res: FocusView },
- *   stopFocus:       { req: {}, res: { active: boolean } },
+ *   stopFocus:       { req: {}, res: { active: boolean, refused?: boolean } },
+ *   snoozeFocus:     { req: { minutes?: number }, res: FocusView },
  * }} MessageMap
  */
 
 /** @type {Array<keyof MessageMap>} */
 export const MESSAGE_TYPES = [
-  'getLive', 'setEnabled', 'settingsChanged', 'flush', 'runBackup', 'prune', 'getFocus', 'startFocus', 'stopFocus',
+  'getLive', 'setEnabled', 'settingsChanged', 'flush', 'runBackup', 'prune', 'getFocus', 'startFocus', 'stopFocus', 'snoozeFocus',
 ];
 
 /**
@@ -67,9 +71,10 @@ export function parseMessage(raw) {
   switch (msg.type) {
     case 'setEnabled':
       return { type: 'setEnabled', value: !!msg.value };
-    case 'startFocus': {
+    case 'startFocus':
+    case 'snoozeFocus': {
       const minutes = Number(msg.minutes);
-      return { type: 'startFocus', minutes: Number.isFinite(minutes) && minutes > 0 ? minutes : undefined };
+      return { type: msg.type, minutes: Number.isFinite(minutes) && minutes > 0 ? minutes : undefined };
     }
     default:
       return { type: msg.type };

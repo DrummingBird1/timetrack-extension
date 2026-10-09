@@ -4,6 +4,7 @@ import { formatClock } from '../lib/utils.js';
 import { sendMessage as msg } from '../lib/messages.js';
 
 const $ = (id) => document.getElementById(id);
+const SNOOZE_MINUTES = 10;
 let timer = null;
 
 
@@ -50,6 +51,17 @@ async function main() {
     return;
   }
 
+  // Strict mode removes the escape hatches; otherwise the user may pause blocking for a while.
+  const strict = !!focus.strict;
+  $('endBtn').hidden = strict;
+  $('snoozeBtn').hidden = strict;
+  $('strictNote').hidden = !strict;
+  $('strictNote').textContent = t('blocked.strict');
+  $('snoozeBtn').textContent = t('blocked.snooze', { m: SNOOZE_MINUTES });
+  $('snoozeBtn').addEventListener('click', async () => {
+    await msg('snoozeFocus', { minutes: SNOOZE_MINUTES });
+    location.replace(siteUrl());
+  });
   $('endBtn').addEventListener('click', async () => {
     await msg('stopFocus');
     location.replace(siteUrl());
