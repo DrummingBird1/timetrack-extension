@@ -365,5 +365,8 @@
   "bulk.done": "Applied to {n} sites",
   "bulk.selectAll": "Select all listed sites",
   "bulk.selectRow": "Select {d}",
-  "sites.showing": "Showing {shown} of {total} — scroll to load more"
+  "sites.showing": "Showing {shown} of {total} — scroll to load more",
+  "csv.badHeader": "Could not find date, site and duration columns in the file",
+  "csv.noRows": "No usable rows to import",
+  "toast.importedCsvSkipped": "Imported {n} days from CSV ({s} rows skipped — not websites or invalid)"
 }

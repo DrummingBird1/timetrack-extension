@@ -4,6 +4,7 @@ import { restoreFromSync, peekSync } from '../lib/backup.js';
 import { isEncrypted, decryptJSON } from '../lib/crypto.js';
 import { dayKey, parseDayKey, formatDuration } from '../lib/utils.js';
 import { categorize } from '../lib/categories.js';
+import { parseUsageCsv } from '../lib/csvimport.js';
 import { t, locale } from '../lib/i18n.js';
 import { $, settings, setSettings, cache, setAllCache, toast, actions } from './core.js';
 
@@ -153,73 +154,22 @@ export async function handleImport(e) {
   }
 }
 
-// ---- CSV import (migration path) ----
-function parseCsv(text) {
-  const rows = [];
-  let field = '';
-  let row = [];
-  let inQ = false;
-  for (let i = 0; i < text.length; i++) {
-    const c = text[i];
-    if (inQ) {
-      if (c === '"') {
-        if (text[i + 1] === '"') { field += '"'; i++; } else inQ = false;
-      } else field += c;
-    } else if (c === '"') {
-      inQ = true;
-    } else if (c === ',') {
-      row.push(field); field = '';
-    } else if (c === '\n' || c === '\r') {
-      if (c === '\r' && text[i + 1] === '\n') i++;
-      row.push(field); field = '';
-      if (row.some((x) => x !== '')) rows.push(row);
-      row = [];
-    } else field += c;
-  }
-  if (field !== '' || row.length) { row.push(field); if (row.some((x) => x !== '')) rows.push(row); }
-  return rows;
-}
-
+// ---- CSV import (migration path: TimeTrack exports, RescueTime-style exports, any date/site/duration CSV) ----
 export async function handleCsvImport(e) {
   const file = e.target.files[0];
   if (!file) return;
   try {
-    let text = await file.text();
-    if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1); // strip BOM
-    const rows = parseCsv(text);
-    if (rows.length < 2) throw new Error('CSV empty');
-    const header = rows[0].map((h) => h.trim().toLowerCase());
-    const iDate = header.indexOf('date');
-    const iDom = header.indexOf('domain');
-    const iSec = header.indexOf('seconds');
-    const iMin = header.indexOf('minutes');
-    const iVis = header.indexOf('visits');
-    if (iDate < 0 || iDom < 0 || (iSec < 0 && iMin < 0)) throw new Error('missing date/domain/seconds columns');
-
-    const days = {};
-    for (let r = 1; r < rows.length; r++) {
-      const c = rows[r];
-      const date = (c[iDate] || '').trim();
-      const domain = (c[iDom] || '').trim().toLowerCase();
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !domain) continue;
-      const sec = iSec >= 0 ? parseFloat(c[iSec]) : parseFloat(c[iMin]) * 60;
-      if (!(sec > 0)) continue;
-      const vis = iVis >= 0 ? (parseInt(c[iVis], 10) || 0) : 0;
-      if (!days[date]) days[date] = { domains: {}, hours: new Array(24).fill(0) };
-      const cur = days[date].domains[domain] || { t: 0, v: 0 };
-      cur.t += Math.round(sec); cur.v += vis;
-      days[date].domains[domain] = cur;
-    }
+    const { days, skipped } = parseUsageCsv(await file.text());
     const count = Object.keys(days).length;
-    if (!count) throw new Error('no valid rows');
     const mode = $('#importMode').value;
-    await importAll({ app: 'TimeTrack', version: 2, days }, { mode, includeSettings: false });
+    await importAll({ app: 'TimeTrack', version: 3, days }, { mode, includeSettings: false });
     setAllCache(null);
     await actions.refresh();
     actions.renderStorageInfo();
-    toast(t('toast.importedCsv', { n: count }), 'success');
+    toast(skipped ? t('toast.importedCsvSkipped', { n: count, s: skipped }) : t('toast.importedCsv', { n: count }), 'success');
   } catch (err) {
-    toast(t('toast.importErr', { e: err.message }), 'error');
+    const message = err.code === 'NO_COLUMNS' ? t('csv.badHeader') : err.code === 'NO_ROWS' ? t('csv.noRows') : err.message;
+    toast(t('toast.importErr', { e: message }), 'error');
   } finally {
     e.target.value = '';
   }

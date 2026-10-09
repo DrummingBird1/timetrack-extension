@@ -2,13 +2,13 @@
 import { getIndex, getDays, getDay } from '../lib/storage.js';
 import { dayKey, rangeKeys, parseDayKey, addDays, formatDuration, sum, weekdaysFull } from '../lib/utils.js';
 import {
-  aggregateDomains, totalTime, topSites, byCategory, focusScore, dailyTotals,
+  totalTime, topSites, byCategory, focusScore, dailyTotals,
   activeDaysCount, currentStreak, goalStreak, trend, generateInsights,
 } from '../lib/stats.js';
 import { categorize, categoryDef } from '../lib/categories.js';
 import { barChart, donutChart } from '../lib/charts.js';
 import { t, locale, categoryLabel } from '../lib/i18n.js';
-import { $, settings, currentRange, cache, rangeLabel, iconFor, statCard, ICONS, productiveTime } from './core.js';
+import { $, settings, currentRange, cache, rangeLabel, iconFor, statCard, ICONS } from './core.js';
 import { openSiteDetail } from './siteDetail.js';
 import { renderCompare } from './compare.js';
 import { renderBudgetPanel } from './budgets.js';

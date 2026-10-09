@@ -365,5 +365,8 @@
   "bulk.done": "تم التطبيق على {n} موقعًا",
   "bulk.selectAll": "تحديد كل المواقع المعروضة",
   "bulk.selectRow": "تحديد {d}",
-  "sites.showing": "عرض {shown} من {total} — مرّر لتحميل المزيد"
+  "sites.showing": "عرض {shown} من {total} — مرّر لتحميل المزيد",
+  "csv.badHeader": "تعذّر العثور على أعمدة التاريخ والموقع والمدة في الملف",
+  "csv.noRows": "لا توجد صفوف صالحة للاستيراد",
+  "toast.importedCsvSkipped": "تم استيراد {n} يومًا من CSV (تم تخطي {s} صفًا — ليست مواقع أو غير صالحة)"
 }

@@ -585,6 +585,36 @@ test('import: a JSON backup and a CSV file are imported through the file inputs'
   }
 });
 
+test('import: a RescueTime-style CSV is imported with its hourly detail, and an unrecognized CSV is rejected clearly', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'tt-e2e-'));
+  try {
+    await ext.run(async (url) => (await import(url)).clearAllData(), `${ext.base}src/lib/storage.js`);
+    await openTab('settings');
+
+    const good = path.join(dir, 'rescuetime.csv');
+    fs.writeFileSync(good, [
+      'Date,Time Spent (seconds),Number of People,Activity,Category,Productivity',
+      '2026-03-02T09:00:00,600,1,github.com,Software Development,2',
+      '2026-03-02T09:00:00,120,1,Slack,General Communication,1',
+      '2026-03-02T10:00:00,300,1,github.com,Software Development,2',
+    ].join('\n'));
+    await (await page.$('#importCsvFile')).uploadFile(good);
+    await waitFor(async () => (await dayData()).idx.includes('2026-03-02'), { message: 'rescuetime import' });
+    const day = (await dayData()).days['2026-03-02'];
+    assert.equal(day.domains['github.com'].t, 900);
+    assert.deepEqual(day.domains['github.com'].dh, { 9: 600, 10: 300 });
+    assert.ok(!('Slack' in day.domains) && !('slack' in day.domains), 'app rows are not websites');
+
+    const bad = path.join(dir, 'bad.csv');
+    fs.writeFileSync(bad, 'foo,bar\n1,2\n');
+    await (await page.$('#importCsvFile')).uploadFile(bad);
+    await page.waitForSelector('#toast.show.error');
+    assert.equal((await dayData()).idx.length, 1, 'a rejected file changes nothing');
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test('clear all data: confirms, then empties the history', async () => {
   await openTab('settings');
   await page.click('#clearData');

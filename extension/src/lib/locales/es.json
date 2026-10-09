@@ -365,5 +365,8 @@
   "bulk.done": "Aplicado a {n} sitios",
   "bulk.selectAll": "Seleccionar todos los sitios de la lista",
   "bulk.selectRow": "Seleccionar {d}",
-  "sites.showing": "Mostrando {shown} de {total}: desplácese para cargar más"
+  "sites.showing": "Mostrando {shown} de {total}: desplácese para cargar más",
+  "csv.badHeader": "No se encontraron columnas de fecha, sitio y duración en el archivo",
+  "csv.noRows": "No hay filas utilizables para importar",
+  "toast.importedCsvSkipped": "Se importaron {n} días desde CSV ({s} filas omitidas: no son sitios web o no son válidas)"
 }

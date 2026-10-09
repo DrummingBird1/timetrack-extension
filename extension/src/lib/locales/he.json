@@ -365,5 +365,8 @@
   "bulk.done": "הפעולה בוצעה על {n} אתרים",
   "bulk.selectAll": "בחר את כל האתרים ברשימה",
   "bulk.selectRow": "בחר את {d}",
-  "sites.showing": "מוצגים {shown} מתוך {total} — גלול כדי לטעון עוד"
+  "sites.showing": "מוצגים {shown} מתוך {total} — גלול כדי לטעון עוד",
+  "csv.badHeader": "לא זוהו עמודות תאריך, אתר ומשך זמן בקובץ",
+  "csv.noRows": "לא נמצאו שורות תקינות לייבוא",
+  "toast.importedCsvSkipped": "יובאו {n} ימים מ-CSV ({s} שורות דולגו — לא אתרים או לא תקינות)"
 }

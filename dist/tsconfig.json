@@ -19,7 +19,8 @@
       "chrome",
       "node"
     ],
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "noUnusedLocals": true
   },
   "include": [
     "../extension/**/*.js",
