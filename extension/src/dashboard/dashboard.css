@@ -418,3 +418,10 @@ select { cursor: pointer; }
   padding: 6px 10px; font-family: inherit; font-size: 12.5px;
 }
 .bulk-bar input[type="number"] { width: 150px; }
+
+/* Demo-data banner */
+.demo-banner {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  padding: 10px 16px; margin-bottom: 16px; border: 1px solid var(--warn); border-radius: var(--radius);
+  background: var(--surface); font-size: 13.5px;
+}

@@ -306,6 +306,15 @@ export async function pruneOld(retentionDays) {
   return remove.length;
 }
 
+/** Delete specific days (and their session logs), keeping the index and firstDay consistent. */
+export async function removeDays(keys) {
+  const drop = new Set(keys);
+  await chrome.storage.local.remove([...keys.map(K.day), ...keys.map(K.sess)]);
+  const kept = (await getIndex()).filter((k) => !drop.has(k));
+  await chrome.storage.local.set({ [K.INDEX]: kept });
+  await saveMeta({ firstDay: kept[0] || null });
+}
+
 export async function clearAllData() {
   const idx = await getIndex();
   await chrome.storage.local.remove(idx.map(K.day));

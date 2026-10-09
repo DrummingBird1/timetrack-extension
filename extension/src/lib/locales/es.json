@@ -368,5 +368,11 @@
   "sites.showing": "Mostrando {shown} de {total}: desplácese para cargar más",
   "csv.badHeader": "No se encontraron columnas de fecha, sitio y duración en el archivo",
   "csv.noRows": "No hay filas utilizables para importar",
-  "toast.importedCsvSkipped": "Se importaron {n} días desde CSV ({s} filas omitidas: no son sitios web o no son válidas)"
+  "toast.importedCsvSkipped": "Se importaron {n} días desde CSV ({s} filas omitidas: no son sitios web o no son válidas)",
+  "welcome.demo": "Probar con datos de demostración",
+  "demo.banner": "Estos son datos de demostración, no su navegación real",
+  "demo.remove": "Quitar datos de demostración",
+  "demo.loaded": "Datos de demostración cargados: puede quitarlos cuando quiera",
+  "demo.removed": "Datos de demostración eliminados",
+  "demo.hasData": "Ya hay datos en ese período, así que no se pueden cargar datos de demostración"
 }

@@ -10,6 +10,7 @@ import { renderOverview } from './overview.js';
 import { renderSites, wireSites } from './sites.js';
 import { renderInsights } from './insights.js';
 import { wireCustomCompare } from './compare.js';
+import { wireDemo, updateDemoBanner } from './demo.js';
 import { fillSettingsForm, filterSettings, renderStorageInfo, wireSettings } from './settings.js';
 
 function applyTheme() {
@@ -63,6 +64,7 @@ function rerenderCharts() {
 async function refresh() {
   await loadRange();
   renderCurrentTab();
+  updateDemoBanner();
 }
 
 async function updateTrackState() {
@@ -123,6 +125,7 @@ async function init() {
 
   wireSettings();
   wireSites();
+  wireDemo();
   wireCustomCompare();
 
   // modal dismissal
@@ -140,6 +143,7 @@ async function init() {
   if (location.hash === '#welcome') $('#welcomeModal').classList.remove('hidden');
 
   updateTrackState();
+  updateDemoBanner();
   setInterval(updateTrackState, 30000);
 
   matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => {

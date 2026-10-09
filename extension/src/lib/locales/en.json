@@ -368,5 +368,11 @@
   "sites.showing": "Showing {shown} of {total} — scroll to load more",
   "csv.badHeader": "Could not find date, site and duration columns in the file",
   "csv.noRows": "No usable rows to import",
-  "toast.importedCsvSkipped": "Imported {n} days from CSV ({s} rows skipped — not websites or invalid)"
+  "toast.importedCsvSkipped": "Imported {n} days from CSV ({s} rows skipped — not websites or invalid)",
+  "welcome.demo": "Try it with demo data",
+  "demo.banner": "This is demo data, not your browsing",
+  "demo.remove": "Remove demo data",
+  "demo.loaded": "Demo data loaded — you can remove it any time",
+  "demo.removed": "Demo data removed",
+  "demo.hasData": "There is already data in that period, so demo data can't be loaded"
 }

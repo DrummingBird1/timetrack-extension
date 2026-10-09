@@ -561,6 +561,35 @@ test('bulk actions: select everything that matches the search (not just the rend
   await waitFor(async () => (await ext.getSettings()).blacklist.length === 1, { message: 'one site no longer tracked' });
 });
 
+// -------------------------------------------------------------------- onboarding
+test('onboarding: demo data loads from the welcome screen and is removed from the banner', async () => {
+  await page.close();
+  await ext.reset();                                                   // a brand-new, empty profile
+  page = await ext.openPage('src/dashboard/dashboard.html#welcome');
+  await page.waitForSelector('#welcomeModal:not(.hidden)');
+  await page.click('#welcomeDemo');
+  await page.waitForSelector('#demoBanner:not(.hidden)');
+  await page.waitForSelector('#welcomeModal.hidden');
+  await waitFor(async () => (await dayData()).idx.length === 28, { message: '28 demo days' });
+  await waitFor(async () => (await count('#overviewTop .tl-row')) > 0, { message: 'overview shows the demo' });
+
+  await ext.run(async (url) => (await import(url)).addTime({ dateKey: '2099-01-01', domain: 'real.example.com', seconds: 60, hour: 9 }), `${ext.base}src/lib/storage.js`);
+  await page.click('#demoRemove');
+  await page.waitForSelector('#demoBanner.hidden');
+  assert.deepEqual((await dayData()).idx, ['2099-01-01'], 'only the demo days are removed');
+});
+
+test('onboarding: demo data refuses to mix with existing history', async () => {
+  await page.goto(`${ext.base}src/dashboard/dashboard.html#welcome`);
+  await page.reload();
+  await page.waitForSelector('#welcomeModal:not(.hidden)');
+  const before = (await dayData()).idx.length;
+  await page.click('#welcomeDemo');
+  await page.waitForSelector('#toast.show.error');
+  assert.equal((await dayData()).idx.length, before);
+  assert.ok(await page.$('#demoBanner.hidden'));
+});
+
 // --------------------------------------------------------- import / clear
 test('import: a JSON backup and a CSV file are imported through the file inputs', async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'tt-e2e-'));
