@@ -1,0 +1,60 @@
+name: Release
+
+# Push a tag like v2.0.0 to publish a GitHub Release. The tag must match
+# extension/manifest.json, the CHANGELOG must have a section for it, and the release
+# banner (store-assets/promo/releases/v<version>.svg) must exist.
+#
+# This only creates the GitHub Release + zip. Submitting to the Chrome Web Store / Edge
+# Add-ons is a manual step (see store-assets/STORE_LISTING.md).
+
+on:
+  push:
+    tags: ['v*.*.*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+
+      - name: Check the tag, manifest and release assets agree
+        id: meta
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          manifest=$(node -p "require('./extension/manifest.json').version")
+          if [ "$version" != "$manifest" ]; then
+            echo "::error::tag v$version does not match extension/manifest.json ($manifest)"; exit 1
+          fi
+          if [ ! -f "store-assets/promo/releases/v$version.svg" ]; then
+            echo "::error::missing release banner - run: node dist/make-release-banner.mjs $version <theme> \"<tagline>\""; exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Unit + integration tests
+        working-directory: dist
+        run: node --test
+
+      - name: Build the store zip
+        shell: pwsh
+        run: ./dist/build.ps1
+
+      - name: Release notes from the CHANGELOG
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: node dist/tools/release-notes.mjs "${{ steps.meta.outputs.version }}" > release-notes.md
+
+      - name: Create the GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            "dist/timetrack-v${{ steps.meta.outputs.version }}.zip" \
+            --title "TimeTrack v${{ steps.meta.outputs.version }}" \
+            --notes-file release-notes.md

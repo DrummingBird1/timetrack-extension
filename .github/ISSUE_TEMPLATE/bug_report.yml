@@ -1,0 +1,46 @@
+name: Bug report
+description: Something isn't working as expected
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! **Please don't paste your browsing data** — a description or a screenshot with
+        site names blurred is enough. TimeTrack never sends data anywhere, so we can only see what you tell us.
+  - type: input
+    id: version
+    attributes:
+      label: TimeTrack version
+      description: Shown at the bottom of the dashboard sidebar, or on chrome://extensions
+      placeholder: "2.0.0"
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and OS
+      placeholder: "Chrome 155 on Windows 11"
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Where did it happen?
+      options: [Tracking / counting time, Popup, Dashboard — Overview, Dashboard — Sites, Dashboard — Insights, Dashboard — Settings, Focus mode / block page, Backup / restore / import / export, Notifications, Translations, Other]
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+  - type: input
+    id: language
+    attributes:
+      label: UI language
+      placeholder: "Hebrew / English / Arabic / Russian / Spanish / French"

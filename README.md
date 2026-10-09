@@ -80,6 +80,13 @@ analytics, goals, cloud backup, and data export.
   with live switching.
 - **Privacy** — no host permissions, no external tracking, no involuntary
   network calls (icons are generated locally), automatic deletion of old data.
+- **Weekly category budgets** — cap the time per category each week, with progress bars on the Overview and 80% / 100% notifications.
+- **More analytics** — a weekly focus-score trend with your best week, a goal-met streak, and a comparison of any two date ranges with the biggest per-site changes.
+- **Smarter focus sessions** — scheduled auto-start, a strict mode with no early exit, a "pause for 10 minutes" option on the block page, and a session history.
+- **Optional session log** — off by default: record each visit's start and length to see how long your visits to a site last. It stays on your device.
+- **Built for large histories** — thousands of sites render instantly; select many at once to categorize, limit, pin, or stop tracking them in one go.
+- **Flexible CSV import & demo data** — import TimeTrack or RescueTime-style CSVs, or try the dashboard on demo data you can remove with one click.
+- **Accessible** — keyboard navigation, screen-reader labels and AA text contrast, checked automatically with axe-core.
 
 ## 🚀 Installation
 
@@ -108,17 +115,19 @@ the dashboard.
 
 ## 🔧 Development
 
-No build step, no dependencies — pure modular JavaScript. The test suite (74
-cases) runs from `dist`:
+No build step, no extension dependencies — pure modular JavaScript. Dev tooling lives in `dist` (unit, integration, real-browser and accessibility tests, plus a type-check):
 
 ```bash
 cd dist
-npm test               # node --test (no external dependencies)
-pwsh build.ps1          # builds the upload zip from extension/
+pnpm test                                    # unit + integration tests (no browser needed)
+pnpm install                                 # dev tooling: Puppeteer, TypeScript, axe-core
+pnpm typecheck                               # tsc --checkJs over the extension
+pnpm exec puppeteer browsers install chrome  # one-time: download Chrome for Testing
+pnpm test:e2e                                # real-browser tests
+pwsh build.ps1                               # builds the upload zip from extension/
 ```
 
-For architecture, the data model, and a full file map, see
-**[CLAUDE.md](CLAUDE.md)**.
+For architecture, the data model, and a full file map, see **[CLAUDE.md](CLAUDE.md)**; to contribute (or add a language), see **[CONTRIBUTING.md](CONTRIBUTING.md)**.
 
 ## 📁 Structure
 
@@ -127,6 +136,7 @@ extension/               ← the shippable extension (load/upload this folder)
   manifest.json          — extension config (MV3)
   background.js          — the tracking engine (service worker)
   src/lib/                — shared logic (storage, stats, charts, backup, crypto, i18n)
+  src/lib/locales/        — UI languages (JSON, one file each)
   src/popup/               — the quick popup
   src/dashboard/            — the full dashboard
   src/blocked/              — the focus-mode block page

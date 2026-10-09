@@ -48,6 +48,13 @@
 - **تصدير/استيراد** — بصيغة JSON (نسخة احتياطية كاملة) وCSV (كل شيء، أو العرض الحالي فقط).
 - **ست لغات** — العبرية، الإنجليزية، العربية، الروسية، الإسبانية، والفرنسية، مع تبديل فوري بينها.
 - **الخصوصية** — بلا أذونات وصول للمواقع (host permissions)، وبلا تتبع خارجي، وبلا أي اتصالات شبكة غير مرغوبة (الأيقونات تُنشأ محليًا)، وحذف تلقائي للبيانات القديمة.
+- **ميزانيات أسبوعية للتصنيفات** — حدّد سقف الوقت لكل تصنيف أسبوعيًا، مع أشرطة تقدّم في النظرة العامة وتنبيهات عند 80٪ و100٪.
+- **تحليلات إضافية** — اتجاه أسبوعي لدرجة التركيز مع أفضل أسبوع، وسلسلة بلوغ الهدف، ومقارنة أي نطاقين زمنيين مع أكبر التغيّرات حسب الموقع.
+- **جلسات تركيز أذكى** — بدء تلقائي حسب جدول، ووضع صارم بلا خروج مبكر، وخيار «إيقاف مؤقت لمدة 10 دقائق» في صفحة الحظر، وسجل للجلسات.
+- **سجل زيارات اختياري** — متوقف افتراضيًا: يسجّل وقت بدء كل زيارة ومدتها لتعرف كم تدوم زياراتك لموقع ما. يبقى على جهازك.
+- **مصمَّم للسجلات الكبيرة** — آلاف المواقع تظهر فورًا؛ حدّد عدة مواقع دفعة واحدة لتصنيفها أو تحديد حدٍّ لها أو تثبيتها أو إيقاف تتبعها.
+- **استيراد CSV مرن وبيانات تجريبية** — استورد ملفات CSV من TimeTrack أو بنمط RescueTime، أو جرّب لوحة التحكم ببيانات تجريبية تُزال بنقرة واحدة.
+- **سهل الوصول** — تنقّل بلوحة المفاتيح، وتسميات لقارئات الشاشة، وتباين نص بمستوى AA، يُفحص تلقائيًا بواسطة axe-core.
 
 ## 🚀 التثبيت
 
@@ -69,15 +76,19 @@
 
 ## 🔧 التطوير
 
-لا توجد خطوة بناء (build) ولا تبعيات — جافاسكريبت نمطية خالصة. تُشغَّل مجموعة الاختبارات (74 حالة) من `dist`:
+لا توجد خطوة بناء ولا تبعيات في الإضافة نفسها — جافاسكريبت نمطية خالصة. أدوات التطوير في `dist` (اختبارات الوحدة والتكامل والمتصفح الحقيقي وإمكانية الوصول، مع فحص الأنواع):
 
 ```bash
 cd dist
-npm test               # node --test (no external dependencies)
-pwsh build.ps1          # builds the upload zip from extension/
+pnpm test                                    # unit + integration tests (no browser needed)
+pnpm install                                 # dev tooling: Puppeteer, TypeScript, axe-core
+pnpm typecheck                               # tsc --checkJs over the extension
+pnpm exec puppeteer browsers install chrome  # one-time: download Chrome for Testing
+pnpm test:e2e                                # real-browser tests
+pwsh build.ps1                               # builds the upload zip from extension/
 ```
 
-للاطلاع على البنية المعمارية، ونموذج البيانات، وخريطة كاملة للملفات، راجع **[CLAUDE.md](CLAUDE.md)**.
+للاطلاع على البنية المعمارية ونموذج البيانات وخريطة الملفات راجع **[CLAUDE.md](CLAUDE.md)**؛ وللمساهمة (أو إضافة لغة) راجع **[CONTRIBUTING.md](CONTRIBUTING.md)**.
 
 ## 📁 البنية
 
@@ -86,6 +97,7 @@ extension/               ← the shippable extension (load/upload this folder)
   manifest.json          — extension config (MV3)
   background.js          — the tracking engine (service worker)
   src/lib/                — shared logic (storage, stats, charts, backup, crypto, i18n)
+  src/lib/locales/        — UI languages (JSON, one file each)
   src/popup/               — the quick popup
   src/dashboard/            — the full dashboard
   src/blocked/              — the focus-mode block page
