@@ -236,6 +236,46 @@ test('the session log records visits only when enabled, and one visit survives t
   await storage.saveSettings({ sessionLog: false });
 });
 
+test('a weekly category budget fires an 80% warning then a reached notification, each once, and can be snoozed', async () => {
+  const { startOfWeek } = await import('../../extension/src/lib/utils.js');
+  await storage.saveSettings({ notifyLimits: true, dailyLimitMinutes: 0, blacklist: [], weekStart: 0 });
+  await storage.setSettingsMapEntry('categoryBudgets', 'entertainment', 10);          // youtube.com is entertainment → 600 s
+  const today = dayKey();
+  const weekKey = dayKey(startOfWeek(new Date(), 0));
+  await chrome.storage.local.remove([`ttt_day_${today}`, 'ttt_index']);
+  await send({ type: 'settingsChanged' });
+
+  await storage.addTime({ dateKey: today, domain: 'youtube.com', seconds: 500, hour: 12 });   // 83%
+  createdNotifications = [];
+  await send({ type: 'flush' });
+  await settle();
+  const warnId = `cat:${weekKey}:entertainment:80`;
+  assert.ok(createdNotifications.some((n) => n.id === warnId), 'expected the 80% category-budget warning');
+
+  await storage.addTime({ dateKey: today, domain: 'youtube.com', seconds: 150, hour: 12 });   // 108%
+  createdNotifications = [];
+  await send({ type: 'flush' });
+  await settle();
+  assert.ok(createdNotifications.some((n) => n.id === `cat:${weekKey}:entertainment`), 'expected the budget-reached notification');
+
+  createdNotifications = [];
+  await send({ type: 'flush' });
+  await settle();
+  assert.equal(createdNotifications.filter((n) => n.id.startsWith('cat:')).length, 0, 'both are deduped for the week');
+
+  // a snoozed budget stays quiet even when it would otherwise fire
+  await chrome.storage.session.remove('ttt_notified');
+  await chrome.notifications.onButtonClicked._fire(warnId, 0);
+  await settle();
+  createdNotifications = [];
+  await send({ type: 'flush' });
+  await settle();
+  assert.equal(createdNotifications.filter((n) => n.id.startsWith('cat:')).length, 0, 'snoozed budget should not fire');
+
+  await storage.removeSettingsMapEntry('categoryBudgets', 'entertainment');
+  await chrome.storage.session.remove(['ttt_notified', 'ttt_snoozed']);
+});
+
 test('a storage-quota warning fires once when local storage crosses the threshold', async () => {
   // Storage warnings use notify()'s default '' id (not snoozable/deduped-by-id
   // like limit notifications), so detect them by their message content instead

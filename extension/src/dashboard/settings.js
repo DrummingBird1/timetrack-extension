@@ -7,6 +7,7 @@ import {
   updateFocusModeFields, renderFocusCats, renderFocusDomains, addFocusDomain, renderBlacklist, addBlacklist,
   renderCategoryEditor, addCategoryMapping,
 } from './settingsEditors.js';
+import { renderBudgetEditor, wireBudgets } from './budgets.js';
 import { startRestoreFlow, exportData, exportCsv, handleImport, handleCsvImport } from './dataio.js';
 
 // ---------------- SETTINGS ----------------
@@ -47,6 +48,7 @@ export function fillSettingsForm() {
   renderBackupStatus();
   renderStorageInfo();
   renderCategoryEditor();
+  renderBudgetEditor();
   renderBlacklist();
   filterSettings();
 }
@@ -200,6 +202,7 @@ export function wireSettings() {
     toast(t('toast.cleared'), 'success');
   });
 
+  wireBudgets();
   $('#catAdd').addEventListener('click', addCategoryMapping);
   $('#catDomain').addEventListener('keydown', (e) => { if (e.key === 'Enter') addCategoryMapping(); });
 

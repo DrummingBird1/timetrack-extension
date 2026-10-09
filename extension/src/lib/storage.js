@@ -30,6 +30,7 @@ export const DEFAULT_SETTINGS = {
   weeklyGoalMinutes: 0,          // weekly focus goal (0 = off)
   dailyLimitMinutes: 0,          // total-time limit alert (0 = off)
   siteLimits: {},                // domain -> minutes/day
+  categoryBudgets: {},           // category -> minutes/week (notifies at 80% and 100%)
   notifyLimits: true,            // fire notifications when limits are hit
   weeklySummary: true,           // weekly digest notification
   categoryMap: {},               // domain -> category override
@@ -104,7 +105,7 @@ async function writeSettingsUnlocked(next) {
  * site-limit clearing before it was caught, so these two can no longer go through
  * saveSettings() at all: use setSettingsMapEntry / removeSettingsMapEntry.
  */
-export const MAP_SETTINGS = ['categoryMap', 'siteLimits'];
+export const MAP_SETTINGS = ['categoryMap', 'siteLimits', 'categoryBudgets'];
 
 export async function saveSettings(patch) {
   const mapKey = MAP_SETTINGS.find((k) => patch && k in patch);
@@ -467,7 +468,7 @@ export async function mergeDomainAlias(oldDomain, newDomain) {
 
   // Re-point every per-domain setting. An existing entry for the new domain wins.
   const settings = await getSettings();
-  for (const mapKey of MAP_SETTINGS) {
+  for (const mapKey of ['categoryMap', 'siteLimits']) {      // the domain-keyed maps (budgets are keyed by category)
     if (settings[mapKey][oldDomain] == null) continue;
     if (settings[mapKey][newDomain] == null) await setSettingsMapEntry(mapKey, newDomain, settings[mapKey][oldDomain]);
     await removeSettingsMapEntry(mapKey, oldDomain);

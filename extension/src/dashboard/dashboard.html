@@ -100,6 +100,27 @@
           <div id="comparePanel" class="compare-grid"></div>
         </div>
 
+        <div class="panel hidden" id="budgetWrap">
+          <div class="panel-head"><h3 data-i18n="panel.budgets">תקציבי קטגוריות — השבוע</h3></div>
+          <div id="budgetPanel" class="cat-breakdown"></div>
+        </div>
+
+        <div class="panel" id="customCompareWrap">
+          <div class="panel-head"><h3 data-i18n="compare.custom">השוואת טווחים מותאמת</h3></div>
+          <div class="range-pair">
+            <div class="custom-range">
+              <label data-i18n="compare.rangeA">טווח א׳</label>
+              <input type="date" id="cmpFromA" /><input type="date" id="cmpToA" />
+            </div>
+            <div class="custom-range">
+              <label data-i18n="compare.rangeB">טווח ב׳</label>
+              <input type="date" id="cmpFromB" /><input type="date" id="cmpToB" />
+            </div>
+            <button class="btn" id="cmpRun" data-i18n="compare.run">השווה</button>
+          </div>
+          <div id="customCompareResult" class="compare-grid"></div>
+        </div>
+
         <div class="panel">
           <div class="panel-head"><h3 data-i18n="panel.topSites">אתרים מובילים</h3></div>
           <div id="overviewTop" class="top-list-full"></div>
@@ -155,6 +176,14 @@
             <span class="panel-hint" data-i18n="panel.heatmapHint">ימים בשורות, שעות בעמודות</span>
           </div>
           <div id="heatmap" class="chart-box"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <h3 data-i18n="panel.focusTrend">ציון פוקוס שבועי</h3>
+            <span class="panel-hint" id="focusTrendHint"></span>
+          </div>
+          <div id="focusTrendChart" class="chart-box"></div>
         </div>
 
         <div class="panel-row">
@@ -244,6 +273,16 @@
             <div class="setting-row">
               <div><div class="set-label" data-i18n="set.weeklySummary">סיכום שבועי</div><div class="set-desc" data-i18n="set.weeklySummaryDesc">התראת תקציר בתחילת כל שבוע</div></div>
               <label class="switch"><input type="checkbox" id="setWeeklySummary" /><span class="switch-track"><span class="switch-thumb"></span></span></label>
+            </div>
+            <div class="field-block">
+              <label class="set-label" data-i18n="set.budgets">תקציבי זמן שבועיים</label>
+              <div class="set-desc" data-i18n="set.budgetsDesc">הגבל את הזמן השבועי בקטגוריה. תקבל התראה ב-80% וכשמגיעים לתקציב.</div>
+              <div class="cat-add">
+                <select id="budgetCat"></select>
+                <input type="number" id="budgetMinutes" min="1" max="10080" data-i18n-ph="budget.minutesPh" placeholder="דקות בשבוע" />
+                <button class="btn" id="budgetAdd" data-i18n="btn.add">הוסף</button>
+              </div>
+              <div id="budgetList" class="cat-list"></div>
             </div>
             <div class="hint-block" data-i18n="set.goalsHint">💡 ניתן להגדיר מגבלה לכל אתר בנפרד מלשונית "אתרים".</div>
           </div>

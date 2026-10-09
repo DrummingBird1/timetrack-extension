@@ -10,10 +10,10 @@ import {
   getSettings, saveSettings, addTime, addVisit, recordSession, getDay, getDays, pruneOld,
   saveMeta, getMeta, migrate, storageFootprint,
 } from './src/lib/storage.js';
-import { domainFromUrl, dayKey, rangeKeys, addDays, formatDuration } from './src/lib/utils.js';
+import { domainFromUrl, dayKey, rangeKeys, addDays, formatDuration, startOfWeek, keysBetween } from './src/lib/utils.js';
 import { runAutoBackup } from './src/lib/backup.js';
 import { categorize } from './src/lib/categories.js';
-import { aggregateDomains, totalTime, topSites, byCategory, focusScore } from './src/lib/stats.js';
+import { aggregateDomains, totalTime, topSites, byCategory, focusScore, categorySeconds } from './src/lib/stats.js';
 import { setLang, t } from './src/lib/i18n.js';
 import { parseMessage } from './src/lib/messages.js';
 
@@ -310,6 +310,29 @@ async function checkLimits(settings, domain) {
       }
     }
   }
+
+  // Weekly category budget — only worth reading the week's days when the site being
+  // visited belongs to a budgeted category.
+  const category = domain ? categorize(domain, settings.categoryMap) : null;
+  const budgetMinutes = category ? settings.categoryBudgets?.[category] : 0;
+  if (budgetMinutes > 0) {
+    const weekStart = startOfWeek(new Date(), settings.weekStart);
+    const baseKey = `cat:${dayKey(weekStart)}:${category}`;
+    if (!(await isSnoozedKey(baseKey))) {
+      const limitSec = budgetMinutes * 60;
+      const used = categorySeconds(await getDays(keysBetween(weekStart, new Date())), settings.categoryMap)[category] || 0;
+      const vars = { c: t(`category.${category}`), n: budgetMinutes };
+      const warnKey = `${baseKey}:80`;
+      if (!set[warnKey] && used >= limitSec * 0.8 && used < limitSec) {
+        notifyLimit(warnKey, t('notif.catBudgetWarn.title'), t('notif.catBudgetWarn.body', vars));
+        await markNotified(warnKey);
+      }
+      if (!set[baseKey] && used >= limitSec) {
+        notifyLimit(baseKey, t('notif.catBudget.title'), t('notif.catBudget.body', vars));
+        await markNotified(baseKey);
+      }
+    }
+  }
 }
 
 function notify(title, message, id) {
@@ -344,7 +367,7 @@ function notifyLimit(id, title, message) {
 chrome.notifications.onButtonClicked.addListener(async (notificationId, buttonIndex) => {
   if (buttonIndex !== 0) return;
   const baseKey = notificationId.endsWith(':80') ? notificationId.slice(0, -3) : notificationId;
-  if (baseKey.startsWith('daily:') || baseKey.startsWith('site:')) {
+  if (baseKey.startsWith('daily:') || baseKey.startsWith('site:') || baseKey.startsWith('cat:')) {
     await setSnoozeKey(baseKey);
     try { chrome.notifications.clear(notificationId); } catch { /* already gone */ }
   }

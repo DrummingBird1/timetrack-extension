@@ -1,7 +1,7 @@
 // Pure analytics over the day records. Everything here is side-effect free so
 // the dashboard can slice the same data many ways cheaply.
 
-import { parseDayKey, sum } from './utils.js';
+import { parseDayKey, sum, dayKey, addDays, startOfWeek } from './utils.js';
 import { categorize, CATEGORY_DEFS, categoryDef } from './categories.js';
 
 /** Sum every domain's time/visits across a set of day records. */
@@ -243,4 +243,108 @@ export function sessionStats(sessions, domain) {
   }
   out.average = out.count ? out.totalSeconds / out.count : 0;
   return out;
+}
+
+// ---- budgets, weekly focus score, goal streak (v2) ----
+
+/** Seconds per category across a set of day records. */
+export function categorySeconds(days, categoryMap = {}) {
+  const out = {};
+  for (const { domain, t } of Object.values(aggregateDomains(days))) {
+    const cat = categorize(domain, categoryMap);
+    out[cat] = (out[cat] || 0) + t;
+  }
+  return out;
+}
+
+/**
+ * Usage against weekly per-category budgets (minutes), most-used first.
+ * @param {Record<string, any>} days  the days of the budget period
+ * @param {Record<string, string>} categoryMap
+ * @param {Record<string, number>} budgets  category -> minutes
+ * @returns {Array<{ key: string, usedSeconds: number, limitSeconds: number, pct: number }>}
+ */
+export function budgetStatus(days, categoryMap, budgets) {
+  const used = categorySeconds(days, categoryMap);
+  return Object.entries(budgets || {})
+    .filter(([, minutes]) => minutes > 0)
+    .map(([key, minutes]) => {
+      const usedSeconds = used[key] || 0;
+      const limitSeconds = minutes * 60;
+      return { key, usedSeconds, limitSeconds, pct: (usedSeconds / limitSeconds) * 100 };
+    })
+    .sort((a, b) => b.pct - a.pct);
+}
+
+/**
+ * Focus score for each of the last `weeks` weeks (oldest first, the last entry is the
+ * week containing `today`). A week without data has `score: null`.
+ * @returns {Array<{ weekKey: string, score: number | null, totalSeconds: number }>}
+ */
+export function weeklyFocusScores(days, { weekStart = 0, weeks = 12, today = new Date(), categoryMap = {} } = {}) {
+  const thisWeek = startOfWeek(today, weekStart);
+  const buckets = new Map();
+  for (let i = weeks - 1; i >= 0; i--) buckets.set(dayKey(addDays(thisWeek, -7 * i)), {});
+  for (const [key, rec] of Object.entries(days)) {
+    const bucket = buckets.get(dayKey(startOfWeek(parseDayKey(key), weekStart)));
+    if (bucket) bucket[key] = rec;
+  }
+  return [...buckets].map(([weekKey, weekDays]) => {
+    const agg = aggregateDomains(weekDays);
+    return { weekKey, score: focusScore(byCategory(agg, categoryMap)), totalSeconds: totalTime(weekDays) };
+  });
+}
+
+/** The highest-scoring week that has at least `minSeconds` of data (default 30 min), or null. */
+export function bestWeek(weeks, minSeconds = 1800) {
+  let best = null;
+  for (const w of weeks) {
+    if (w.score == null || w.totalSeconds < minSeconds) continue;
+    if (!best || w.score > best.score) best = w;
+  }
+  return best;
+}
+
+/**
+ * Consecutive days (ending today) on which productive time reached `goalSeconds`.
+ * Today does not break the streak while it is still short of the goal — the streak
+ * then counts back from yesterday.
+ */
+export function goalStreak(days, goalSeconds, categoryMap, todayKey) {
+  if (!(goalSeconds > 0)) return 0;
+  const productive = (key) => {
+    const day = days[key];
+    if (!day) return 0;
+    let secs = 0;
+    for (const [domain, rec] of Object.entries(day.domains || {})) {
+      if (CATEGORY_DEFS[categorize(domain, categoryMap)]?.score > 0) secs += rec.t || 0;
+    }
+    return secs;
+  };
+  let cursor = parseDayKey(todayKey);
+  if (productive(dayKey(cursor)) < goalSeconds) cursor = addDays(cursor, -1);
+  let streak = 0;
+  while (productive(dayKey(cursor)) >= goalSeconds) {
+    streak++;
+    cursor = addDays(cursor, -1);
+  }
+  return streak;
+}
+
+/**
+ * Per-site change between two aggregated periods (aggregateDomains output), biggest
+ * absolute change first. `a` is the period being examined, `b` the baseline.
+ * @returns {Array<{ domain: string, a: number, b: number, delta: number }>}
+ */
+export function siteChanges(aggA, aggB, limit = 5) {
+  const domains = new Set([...Object.keys(aggA || {}), ...Object.keys(aggB || {})]);
+  return [...domains]
+    .map((domain) => {
+      const a = aggA?.[domain]?.t || 0;
+      const b = aggB?.[domain]?.t || 0;
+      return { domain, a, b, delta: a - b };
+    })
+    .filter((c) => c.delta !== 0)
+    .sort((x, y) => Math.abs(y.delta) - Math.abs(x.delta))
+    .slice(0, limit);
 }

@@ -401,3 +401,7 @@ select { cursor: pointer; }
   .panel-row { grid-template-columns: 1fr; }
   .settings-grid { grid-template-columns: 1fr; }
 }
+
+/* Custom range comparison */
+.range-pair { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 16px; }
+.range-pair .custom-range { flex-wrap: wrap; }

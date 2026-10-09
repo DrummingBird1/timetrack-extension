@@ -9,6 +9,7 @@ import {
 import { renderOverview } from './overview.js';
 import { renderSites } from './sites.js';
 import { renderInsights } from './insights.js';
+import { wireCustomCompare } from './compare.js';
 import { fillSettingsForm, filterSettings, renderStorageInfo, wireSettings } from './settings.js';
 
 function applyTheme() {
@@ -121,6 +122,7 @@ async function init() {
   $('#settingsSearch').addEventListener('input', filterSettings);
 
   wireSettings();
+  wireCustomCompare();
 
   // modal dismissal
   $('#siteModal').addEventListener('click', (e) => { if (e.target.id === 'siteModal') closeModal(); });

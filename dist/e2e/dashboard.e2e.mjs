@@ -393,6 +393,70 @@ test('session log: opt-in toggle, per-site visit-length stats and deletion', asy
   assert.ok(ext.dialogs.some((d) => d.type === 'confirm'));
 });
 
+// ----------------------------------------------- v2 analytics: budgets, trend, streak, compare
+test('category budgets: add in Settings, progress shows on Overview, remove hides it', async () => {
+  await openTab('settings');
+  assert.ok(await page.$('#budgetList'), 'budget editor present');
+  await page.select('#budgetCat', 'entertainment');
+  await page.type('#budgetMinutes', '90');
+  await page.click('#budgetAdd');
+  await waitFor(async () => (await ext.getSettings()).categoryBudgets.entertainment === 90, { message: 'budget saved' });
+  assert.equal(await count('#budgetList .cat-chip'), 1);
+
+  await openTab('overview');
+  await page.waitForSelector('#budgetWrap:not(.hidden) .cb-row');
+  assert.equal(await count('#budgetPanel .cb-row'), 1);
+  assert.match(await text('#budgetPanel .cb-time'), /\d+%/);
+
+  await openTab('settings');
+  await page.click('#budgetList .cat-chip .x');
+  await waitFor(async () => !('entertainment' in (await ext.getSettings()).categoryBudgets), { message: 'budget removed from storage' });
+  await openTab('overview');
+  await page.waitForSelector('#budgetWrap.hidden');
+});
+
+test('category budgets: a non-positive amount is rejected', async () => {
+  await openTab('settings');
+  await page.type('#budgetMinutes', '0');
+  await page.click('#budgetAdd');
+  assert.match(await toastText(), /./);
+  assert.deepEqual((await ext.getSettings()).categoryBudgets, {});
+});
+
+test('insights: the weekly focus-score trend shows the last 12 weeks and the best week', async () => {
+  await openTab('insights');
+  await page.waitForSelector('#focusTrendChart svg');
+  assert.ok((await count('#focusTrendChart svg rect')) >= 10, 'about 12 bars');
+  assert.match(await text('#focusTrendHint'), /\d+/);
+});
+
+test('overview: a goal streak card appears only when a daily goal is set', async () => {
+  assert.equal(await count('#summaryCards .stat-card'), 6, 'no goal → six cards');
+  await ext.saveSettings({ dailyGoalMinutes: 1 });          // 1 productive minute: met on nearly every seeded day
+  await page.reload();
+  await page.waitForSelector('#summaryCards .stat-card');
+  await waitFor(async () => (await count('#summaryCards .stat-card')) === 7, { message: 'seventh card' });
+  assert.match(await text('#summaryCards .stat-card:nth-child(7) .val'), /^\d+/);
+});
+
+test('overview: any two date ranges can be compared, with the biggest per-site changes', async () => {
+  const days = Object.keys(snapshot.days).sort();
+  const set = (sel, v) => page.$eval(sel, (e, val) => { e.value = val; }, v);
+  await set('#cmpFromA', days[days.length - 20]);
+  await set('#cmpToA', days[days.length - 11]);
+  await set('#cmpFromB', days[days.length - 10]);
+  await set('#cmpToB', days[days.length - 1]);
+  await page.click('#cmpRun');
+  await page.waitForSelector('#customCompareResult .cmp-row');
+  assert.equal(await count('#customCompareResult .cmp-row'), 3);
+  assert.ok((await count('#customCompareResult .tl-row')) > 0, 'per-site changes listed');
+
+  await set('#cmpFromA', days[days.length - 1]);            // start after end → rejected
+  await set('#cmpToA', days[days.length - 5]);
+  await page.click('#cmpRun');
+  assert.match(await toastText(), /./);
+});
+
 // --------------------------------------------------------- import / clear
 test('import: a JSON backup and a CSV file are imported through the file inputs', async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'tt-e2e-'));

@@ -1,11 +1,13 @@
 // Insights tab: hour/day heatmap, hourly distribution, category breakdown.
-import { formatDuration, weekdaysShort } from '../lib/utils.js';
-import { hourlyDistribution, busiestHour, byCategory, focusScore, weekHourHeatmap } from '../lib/stats.js';
+import { getDays } from '../lib/storage.js';
+import { formatDuration, weekdaysShort, rangeKeys, parseDayKey } from '../lib/utils.js';
+import { hourlyDistribution, busiestHour, byCategory, focusScore, weekHourHeatmap, weeklyFocusScores, bestWeek } from '../lib/stats.js';
 import { barChart, heatmap } from '../lib/charts.js';
-import { t, categoryLabel } from '../lib/i18n.js';
+import { t, locale, categoryLabel } from '../lib/i18n.js';
 import { $, settings, cache, statCard, ICONS, productiveTime, distractingTime } from './core.js';
 
-export function renderInsights() {
+export async function renderInsights() {
+  renderFocusTrend();
   const { days, agg } = cache;
   const dist = hourlyDistribution(days);
   const peak = busiestHour(dist);
@@ -44,4 +46,26 @@ export function renderInsights() {
       <div class="cb-track"><div class="cb-fill" style="width:${Math.max(2, c.share * 100)}%;background:${c.color}"></div></div>`;
     host.appendChild(row);
   }
+}
+
+const TREND_WEEKS = 12;
+
+/** Weekly focus score for the last 12 weeks (independent of the range picker), with the best week called out. */
+async function renderFocusTrend() {
+  const keys = rangeKeys(TREND_WEEKS * 7 + 6);
+  const weeks = weeklyFocusScores(await getDays(keys), { weekStart: settings.weekStart, weeks: TREND_WEEKS, categoryMap: settings.categoryMap });
+  const best = bestWeek(weeks);
+  const host = $('#focusTrendChart');
+  if (!best) {
+    host.innerHTML = `<div class="empty">${t('focusTrend.none')}</div>`;
+    $('#focusTrendHint').textContent = '';
+    return;
+  }
+  const label = (w) => parseDayKey(w.weekKey).toLocaleDateString(locale(), { day: 'numeric', month: 'short' });
+  $('#focusTrendHint').textContent = t('panel.focusTrendHint', { w: label(best), n: best.score });
+  barChart(host, weeks.map((w) => ({
+    label: w.weekKey === weeks[0].weekKey || w === best || w === weeks[weeks.length - 1] ? label(w) : '',
+    value: w.score ?? 0,
+    title: `${label(w)}: ${w.score == null ? '—' : w.score + '/100'}`,
+  })), { height: 200, goal: 0, valueFmt: (v) => Math.round(v) });
 }
