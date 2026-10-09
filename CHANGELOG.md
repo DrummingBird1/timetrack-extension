@@ -4,6 +4,73 @@ All notable changes to TimeTrack are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/); this project uses
 [Semantic Versioning](https://semver.org/).
 
+## [2.0.0] — 2026-10-10
+
+A foundations-first release: a real-browser test suite that immediately exposed several
+long-standing bugs (now fixed), a leaner and typed codebase, and the features that were
+waiting on that groundwork — budgets, smarter focus sessions, an opt-in visit log, bulk
+site actions, and an accessibility pass. No new permissions.
+
+### Fixed
+- **Backup no longer leaks secrets.** JSON exports, plaintext cloud backups and
+  custom-endpoint payloads all contained `backup.passphrase` and `backup.endpointToken`
+  in clear text. They are now stripped on export; restoring keeps this device's own
+  credentials, and turns "encrypt backups" off if there is no passphrase rather than
+  silently skipping encryption.
+- **Cloud backup (Google Sync) failed on any realistic history** with
+  `kQuotaBytesPerItem quota exceeded`: chunks were sized by character count, but the
+  quota counts the JSON-escaped, UTF-8 form. Chunks are now sized by their real stored
+  size, the total is verified against the quota, and old days are trimmed in one pass.
+- **Charts lost their bars** when a bar chart was opened while another sat in a hidden
+  tab: every chart reused the gradient id `barGrad`, so `url(#barGrad)` pointed at the
+  hidden one. Ids are unique per chart.
+- **Top-site bars were empty** in the popup and the Overview (an inline `<span>` ignores
+  width/height).
+- **IP addresses were "grouped"**: `192.168.1.5` collapsed to `1.5`. IPv4/IPv6 and dev
+  hosts now stay whole.
+- **Two quick settings changes could overwrite each other** (read-modify-write with no
+  lock). Settings writes are serialized.
+- The site's Hebrew privacy card was shorter than the other five languages (no "changes
+  & children" section, backup targets as prose). Now at parity.
+
+### Added
+- **Weekly category budgets** with progress bars on the Overview and 80% / 100%
+  notifications (snoozable like the other limits).
+- **Analytics:** weekly focus-score trend with your best week, a goal-met streak, and a
+  comparison of any two date ranges with the biggest per-site changes.
+- **Focus mode:** scheduled auto-start sessions, strict mode (no early exit, no pause),
+  "Allow 10 minutes" on the block page, and a session history.
+- **Optional session log** (off by default, schema v3): each visit's start and length,
+  powering a per-site visit-length distribution.
+- **Sites tab at scale:** rows render in chunks (about 3,000 domains paint in under 200 ms)
+  and can be selected — including "everything matching the search" — to set a category or
+  limit, pin, or stop tracking in one action.
+- **CSV import** that recognizes aliased headers, RescueTime-style exports (with hourly
+  detail) and any date/site/duration file, and reports skipped rows.
+- **Demo data** on the welcome screen, removable with one click.
+- **Accessibility:** zero axe-core violations on every screen in both themes and in RTL;
+  keyboard-operable tabs, rows and dialogs (focus trap and restore); named form controls;
+  AA text contrast; `prefers-reduced-motion`.
+- Full **Public Suffix List** for grouping domains.
+
+### Changed
+- Sites on shared hosting suffixes are tracked separately (`alice.github.io` and
+  `bob.github.io` are no longer both `github.io`). Existing history is not rewritten.
+- UI languages load lazily from per-language JSON files; the service worker no longer
+  parses all six dictionaries on every cold start.
+- `dashboard.js` is split into focused modules.
+- The popup/dashboard ⇄ service worker protocol is declared and validated in one place.
+- Settings that are maps (`categoryMap`, `siteLimits`, `categoryBudgets`) are edited
+  through dedicated helpers; `saveSettings` refuses them.
+
+### Developer experience
+- A real-browser E2E suite (Puppeteer + Chrome for Testing), `tsc --checkJs`, axe-core,
+  WCAG contrast, store-readiness (permissions, CSP, imports) and documentation-parity
+  tests; CI workflows for checks, release (tag → GitHub Release with the zip) and site
+  deployment; CONTRIBUTING.md and issue/PR templates.
+- Measured: reading three years of history takes ~90 ms, so pre-aggregated rollups were
+  not built.
+
 ## [1.4.0] — 2026-08-27
 
 The "backup & sites trust" release — the ten items proposed in the post-1.3.0
