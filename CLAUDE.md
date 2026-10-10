@@ -58,9 +58,9 @@ history) **must** update the policy, the six site cards and `STORE_LISTING.md`'s
 data disclosures together; `docs.test.js` guards the parts it can.
 **Deploying:** `.github/workflows/pages.yml` copies `store-assets/site/*` (including
 `.nojekyll`) to the `gh-pages` branch whenever that folder changes on `main`
-(or via "Run workflow"). It has never run on GitHub yet — the first merge to `main`
-that touches the site is its real test; the old manual fallback is to copy the files
-to the `gh-pages` root and push.
+(or via "Run workflow"). First run (the 1.5.0 merge) succeeded and the live site matched
+`store-assets/site/index.html` byte for byte; the old manual fallback — copy the files to
+the `gh-pages` root and push — should not be needed.
 
 ## READMEs and release banners
 
@@ -107,7 +107,8 @@ which only resolves once the file exists on `main`.
    version and that the banner exists, runs the unit tests, builds the zip with
    `pwsh dist/build.ps1`, composes the release notes from the CHANGELOG section
    (`dist/tools/release-notes.mjs`, banner pinned to the tag) and runs
-   `gh release create`. It has not run on GitHub yet — watch the first run.
+   `gh release create`. First run (v1.5.0) succeeded: the Release has the banner and a zip whose
+   45 files are identical to `extension/`.
 4. Upload the zip to the Chrome Web Store by hand (`store-assets/STORE_LISTING.md`).
 
 ## Trello roadmap board
@@ -553,8 +554,8 @@ Test data comes from `tools/fixture.mjs` (deterministic, seeded — never `Math.
 CI (`.github/workflows/`) runs the unit tests (`test.yml`) and typecheck + E2E
 (`e2e.yml`, check name "Checks") on every PR to `main` — both ran green on the 1.5.0 PR
 (#1, Ubuntu / UTC). `release.yml` (fires on a `v*.*.*` tag) and `pages.yml` (fires on a merge to
-`main` that touches `store-assets/site/`) **have not run on GitHub yet**; they cannot be
-executed locally, so treat their first runs as part of the release.
+`main` that touches `store-assets/site/`) cannot be executed locally; both ran successfully for the
+first time on 1.5.0, but a new release is still the real test of any change to them.
 
 What isn't covered: a final human look at a fresh profile, other browsers (see
 `store-assets/BROWSER_SUPPORT.md`), and anything that needs real Google Sync or a real
@@ -564,9 +565,8 @@ backup endpoint.
 
 Kept in sync with the Trello board's **🔜 Next up** and **🗄️ Backlog** lists.
 
-- **First real runs of `release.yml` and `pages.yml`** (merge PR #1, tag `v1.5.0`), then
-  the Chrome Web Store submission (the owner has a developer account) — pack in
-  `store-assets/STORE_LISTING.md`.
+- **Chrome Web Store submission** of `timetrack-v1.5.0.zip` (the owner has a developer
+  account) — pack in `store-assets/STORE_LISTING.md`.
 - **Multi-device merge** — needs a design decision first (which device wins, how to
   merge day records, whether `storage.sync` is the transport).
 - **A dedicated Webtime Tracker importer** — needs a real sample of their export (the

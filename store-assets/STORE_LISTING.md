@@ -147,14 +147,16 @@ Upload `screenshots/he/*` to the Hebrew listing and `screenshots/en/*` to the En
 - [x] Screenshots and promo graphics captured / generated (section 5).
 - [x] `version` in `extension/manifest.json` is **1.5.0**; `CHANGELOG.md` and the
       release banner are in place.
-- [ ] Merge `v2-foundations` into `main` (this also redeploys the site so the live
+- [x] Merge `v2-foundations` into `main` (this also redeploys the site so the live
       privacy policy matches 1.5.0).
 - [x] Chrome Web Store developer account — the owner already has one.
 - [ ] Fill single-purpose, permission justifications, and data disclosures
       (sections 2–4).
-- [ ] Build the upload zip: `pwsh dist/build.ps1` (zips `extension/`),
-      then upload the resulting `dist/timetrack-v1.5.0.zip`. Tagging `v1.5.0`
-      also builds it in CI (`release.yml`) and attaches it to the GitHub Release.
+- [x] Tag `v1.5.0` pushed: `release.yml` built the zip and attached it to the
+      [GitHub Release](https://github.com/DrummingBird1/timetrack-extension/releases/tag/v1.5.0)
+      (its 45 files are identical to `extension/`). Upload that zip — or build the same one
+      with `pwsh dist/build.ps1` → `dist/timetrack-v1.5.0.zip`.
+- [ ] **Upload the zip** in the Developer Dashboard (items above are all ready).
 - [ ] Bump `version` for every later upload.
 
 ### Already hardened
