@@ -551,9 +551,10 @@ Four layers, all from `dist/` (pnpm — see "How to run"):
 Test data comes from `tools/fixture.mjs` (deterministic, seeded — never `Math.random`).
 
 CI (`.github/workflows/`) runs the unit tests (`test.yml`) and typecheck + E2E
-(`e2e.yml`, check name "Checks"). **None of the workflows has run on GitHub yet** — they
-were written and linted but cannot be executed locally, so treat the first runs as part
-of the release.
+(`e2e.yml`, check name "Checks") on every PR to `main` — both ran green on the 1.5.0 PR
+(#1, Ubuntu / UTC). `release.yml` (fires on a `v*.*.*` tag) and `pages.yml` (fires on a merge to
+`main` that touches `store-assets/site/`) **have not run on GitHub yet**; they cannot be
+executed locally, so treat their first runs as part of the release.
 
 What isn't covered: a final human look at a fresh profile, other browsers (see
 `store-assets/BROWSER_SUPPORT.md`), and anything that needs real Google Sync or a real
@@ -563,9 +564,9 @@ backup endpoint.
 
 Kept in sync with the Trello board's **🔜 Next up** and **🗄️ Backlog** lists.
 
-- **First real GitHub runs** of `e2e.yml`, `release.yml` and `pages.yml` (merge
-  `v2-foundations` to `main`, tag `v2.0.0`), then the Chrome Web Store submission
-  (needs a developer account, $5) — pack in `store-assets/STORE_LISTING.md`.
+- **First real runs of `release.yml` and `pages.yml`** (merge PR #1, tag `v1.5.0`), then
+  the Chrome Web Store submission (the owner has a developer account) — pack in
+  `store-assets/STORE_LISTING.md`.
 - **Multi-device merge** — needs a design decision first (which device wins, how to
   merge day records, whether `storage.sync` is the transport).
 - **A dedicated Webtime Tracker importer** — needs a real sample of their export (the
