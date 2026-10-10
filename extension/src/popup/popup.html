@@ -16,11 +16,12 @@
       </div>
     </div>
     <label class="switch" id="enabledSwitch">
-      <input type="checkbox" id="enabledToggle" />
+      <input type="checkbox" id="enabledToggle" data-i18n-aria="set.enabled" />
       <span class="switch-track"><span class="switch-thumb"></span></span>
     </label>
   </header>
 
+  <main>
   <section class="now-card" id="nowCard">
     <div class="now-left">
       <img id="nowFavicon" alt="" width="20" height="20" />
@@ -39,7 +40,7 @@
         <span data-i18n="popup.focus">מצב פוקוס</span>
       </div>
       <div class="focus-start">
-        <input type="number" id="focusMin" min="1" max="240" value="25" />
+        <input type="number" id="focusMin" min="1" max="240" value="25" data-i18n-aria="set.focusMinutes" />
         <span class="focus-unit" data-i18n="popup.minutes">דקות</span>
         <button id="startFocus" class="focus-btn" data-i18n="popup.startFocus">התחל סשן פוקוס</button>
       </div>
@@ -82,6 +83,7 @@
     <ul id="topList" class="top-list"></ul>
     <div id="emptyState" class="empty hidden" data-i18n="popup.empty">אין נתונים עדיין — התחל לגלוש 🙂</div>
   </section>
+  </main>
 
   <footer class="pop-footer">
     <button id="openDashboard" class="btn-primary">

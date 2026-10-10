@@ -8,7 +8,7 @@
 <style>
   :root{
     --bg:#0c0c14; --surface:#15151f; --surface-2:#1c1c28; --surface-3:#232331;
-    --border:#2a2a3a; --text:#ececf4; --dim:#9595ad; --faint:#65657c;
+    --border:#2a2a3a; --text:#ececf4; --dim:#9595ad; --faint:#8d8da6;
     --accent:#6366f1; --accent-2:#8b5cf6; --green:#22c55e;
   }
   *{box-sizing:border-box;margin:0;padding:0}
@@ -329,6 +329,8 @@
       <ul>
         <li>The <strong>domain name</strong> of the active site (e.g. <code>youtube.com</code>) — <strong>not</strong> the full URL, query parameters, or page content.</li>
         <li><strong>Active time</strong> and visit counts per domain, bucketed by day and hour-of-day.</li>
+        <li><strong>Session log (optional, off by default)</strong> — if you turn it on: the start time and length of each visit to a site. It stays local and can be deleted at any time.</li>
+        <li><strong>Focus-session history</strong> — when each focus session started, how long it lasted and whether it was completed.</li>
         <li><strong>Your settings</strong> (goals, limits, categories, theme, etc.).</li>
       </ul>
       <p>The extension does <strong>not</strong> collect: full browsing history (URLs),
@@ -380,6 +382,8 @@
       <ul>
         <li><strong>שם הדומיין</strong> של האתר הפעיל (לדוגמה <code>youtube.com</code>) — <strong>לא</strong> את הכתובת המלאה, לא פרמטרים, ולא את תוכן הדף.</li>
         <li><strong>משך הזמן הפעיל</strong> וכמות הביקורים לכל דומיין, מקובצים לפי יום ולפי שעה ביום.</li>
+        <li><strong>יומן ביקורים (אופציונלי, כבוי כברירת מחדל)</strong> — אם תפעיל אותו: שעת ההתחלה ואורך כל ביקור באתר. נשאר מקומי, ואפשר למחוק אותו בכל עת.</li>
+        <li><strong>היסטוריית סשני פוקוס</strong> — מתי התחיל כל סשן, כמה זמן נמשך והאם הושלם.</li>
         <li><strong>ההגדרות שלך</strong> (יעדים, מגבלות, קטגוריות, ערכת נושא וכו׳).</li>
       </ul>
       <p>התוסף <strong>אינו</strong> אוסף: היסטוריית גלישה מלאה (URLs), תוכן דפים,
@@ -392,11 +396,12 @@
       נוצרים מקומית).</p>
 
       <h3>גיבוי בענן (אופציונלי, ביוזמתך בלבד)</h3>
-      <p>אם תבחר להפעיל גיבוי, הנתונים יישלחו <strong>אך ורק</strong> ליעד שאתה מגדיר
-      ושולט בו: חשבון Google שלך דרך <code>chrome.storage.sync</code>, או שרת מותאם
-      אישית בכתובת HTTPS שאתה מספק. ניתן להגדיר <strong>הצפנת AES-256 עם סיסמה</strong>,
-      ואז הנתונים מוצפנים במכשיר שלך לפני היציאה — היעד רואה רק טקסט מוצפן. הסיסמה
-      נשמרת מקומית בלבד ולעולם אינה נשלחת.</p>
+      <p>אם תבחר להפעיל גיבוי, הנתונים יישלחו <strong>אך ורק</strong> ליעד שאתה מגדיר ושולט בו:</p>
+      <ul>
+        <li><strong>חשבון Google שלך</strong> דרך <code>chrome.storage.sync</code> — מנגנון הסנכרון המובנה של Chrome, המשויך לחשבון שלך. איננו צד בכך.</li>
+        <li><strong>שרת מותאם אישית</strong> בכתובת HTTPS שאתה מספק — הנתונים נשלחים לשרת שלך.</li>
+      </ul>
+      <p>ניתן להגדיר <strong>הצפנת AES-256 עם סיסמה</strong>; במצב זה הנתונים מוצפנים במכשיר שלך לפני היציאה, והיעד רואה רק טקסט מוצפן. הסיסמה נשמרת מקומית בלבד ולעולם אינה נשלחת.</p>
 
       <h3>שליטה ומחיקה</h3>
       <p>אתה שולט בכל הנתונים: ייצוא (JSON/CSV), ייבוא, מחיקה אוטומטית של נתונים
@@ -407,6 +412,9 @@
       <code>tabs</code> (זיהוי דומיין הלשונית — ללא גישה לתוכן), <code>idle</code>
       (השהיית ספירה בחוסר פעילות), <code>alarms</code> (שמירה וגיבוי תקופתיים),
       <code>notifications</code> (התראות). אין הרשאות host ואין content scripts.</p>
+
+      <h3>שינויים וילדים</h3>
+      <p>המוצר אינו מיועד לילדים מתחת לגיל 13 ואינו אוסף מהם נתונים ביודעין. עדכונים למדיניות זו יפורסמו בעמוד זה עם תאריך תחילה מעודכן.</p>
     </div>
 
     <div class="card rtl privacy-card" data-lang="ar" dir="rtl">
@@ -418,6 +426,8 @@
       <ul>
         <li><strong>اسم النطاق</strong> للموقع النشط (مثل <code>youtube.com</code>) — <strong>وليس</strong> عنوان URL الكامل، أو معاملات الاستعلام، أو محتوى الصفحة.</li>
         <li><strong>الوقت الفعلي</strong> وعدد الزيارات لكل نطاق، مجمَّعة حسب اليوم وساعة اليوم.</li>
+        <li><strong>سجل الزيارات (اختياري، متوقف افتراضيًا)</strong> — إذا فعّلته: وقت بدء كل زيارة لموقع ومدتها. يبقى محليًا ويمكن حذفه في أي وقت.</li>
+        <li><strong>سجل جلسات التركيز</strong> — وقت بدء كل جلسة ومدتها وهل اكتملت.</li>
         <li><strong>إعداداتك</strong> (الأهداف، الحدود، التصنيفات، السمة، وما إلى ذلك).</li>
       </ul>
       <p>الإضافة <strong>لا</strong> تجمع: سجل التصفح الكامل (عناوين URL)، محتوى الصفحات، العناوين، ضغطات المفاتيح، كلمات المرور، الموقع الجغرافي، أو أي معرّف شخصي.</p>
@@ -452,6 +462,8 @@
       <ul>
         <li><strong>Доменное имя</strong> активного сайта (например, <code>youtube.com</code>) — <strong>не</strong> полный URL, параметры запроса или содержимое страницы.</li>
         <li><strong>Активное время</strong> и количество визитов по каждому домену, сгруппированные по дням и часам суток.</li>
+        <li><strong>Журнал визитов (опционально, по умолчанию выключен)</strong> — если включить: время начала и длительность каждого визита на сайт. Остаётся локально и может быть удалён в любой момент.</li>
+        <li><strong>История сессий фокусировки</strong> — когда началась каждая сессия, сколько длилась и была ли завершена.</li>
         <li><strong>Ваши настройки</strong> (цели, лимиты, категории, тема оформления и т. д.).</li>
       </ul>
       <p>Расширение <strong>не</strong> собирает: полную историю браузера (URL-адреса), содержимое страниц, заголовки, нажатия клавиш, пароли, местоположение или какие-либо личные идентификаторы.</p>
@@ -486,6 +498,8 @@
       <ul>
         <li>El <strong>nombre de dominio</strong> del sitio activo (por ejemplo, <code>youtube.com</code>) — <strong>no</strong> la URL completa, los parámetros de consulta ni el contenido de la página.</li>
         <li><strong>Tiempo activo</strong> y número de visitas por dominio, agrupados por día y por hora del día.</li>
+        <li><strong>Registro de visitas (opcional, desactivado por defecto)</strong> — si lo activa: la hora de inicio y la duración de cada visita a un sitio. Permanece local y puede eliminarse en cualquier momento.</li>
+        <li><strong>Historial de sesiones de enfoque</strong> — cuándo empezó cada sesión, cuánto duró y si se completó.</li>
         <li><strong>Su configuración</strong> (objetivos, límites, categorías, tema, etc.).</li>
       </ul>
       <p>La extensión <strong>no</strong> recopila: historial de navegación completo (URL), contenido de las páginas, títulos, pulsaciones de teclado, contraseñas, ubicación ni ningún identificador personal.</p>
@@ -520,6 +534,8 @@
       <ul>
         <li>Le <strong>nom de domaine</strong> du site actif (par exemple <code>youtube.com</code>) — <strong>pas</strong> l'URL complète, les paramètres de requête, ni le contenu de la page.</li>
         <li>Le <strong>temps actif</strong> et le nombre de visites par domaine, ventilés par jour et par heure de la journée.</li>
+        <li><strong>Journal des visites (optionnel, désactivé par défaut)</strong> — si vous l’activez : l’heure de début et la durée de chaque visite d’un site. Il reste local et peut être supprimé à tout moment.</li>
+        <li><strong>Historique des sessions de concentration</strong> — quand chaque session a commencé, sa durée et si elle est allée à son terme.</li>
         <li><strong>Vos paramètres</strong> (objectifs, limites, catégories, thème, etc.).</li>
       </ul>
       <p>L'extension ne collecte <strong>pas</strong> : l'historique de navigation complet (URL), le contenu des pages, les titres, les frappes clavier, les mots de passe, la localisation, ni aucun identifiant personnel.</p>

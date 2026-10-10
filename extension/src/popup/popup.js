@@ -1,20 +1,19 @@
 import { getDays, getSettings } from '../lib/storage.js';
 import {
-  dayKey, rangeKeys, formatDuration, formatClock, favicon, weekdaysShort, parseDayKey,
+  rangeKeys, formatDuration, formatClock, favicon, weekdaysShort, parseDayKey,
 } from '../lib/utils.js';
 import { aggregateDomains, topSites, dailyTotals } from '../lib/stats.js';
 import { barChart } from '../lib/charts.js';
+import { sendMessage as msg } from '../lib/messages.js';
 import { setLang, getLang, t, dir, locale, localize } from '../lib/i18n.js';
 
+/** @type {(id: string) => any} */
 const $ = (id) => document.getElementById(id);
 let live = null;
 let liveTimer = null;
 let focusTimer = null;
 let settings = null;
 
-function msg(type, extra = {}) {
-  return chrome.runtime.sendMessage({ type, ...extra }).catch(() => ({}));
-}
 
 function iconFor(domain) {
   if (settings && settings.realFavicons) {
@@ -23,8 +22,8 @@ function iconFor(domain) {
   return favicon(domain);
 }
 
-function applyLang() {
-  setLang(settings.language || 'he');
+async function applyLang() {
+  await setLang(settings.language || 'he');
   document.documentElement.lang = getLang();
   document.documentElement.dir = dir();
   if (settings.theme === 'light') document.documentElement.style.colorScheme = 'light';
@@ -127,6 +126,7 @@ async function renderFocus() {
     const cyc = focus.totalCycles > 1 ? ' · ' + t('popup.cycle', { n: focus.cycle, total: focus.totalCycles }) : '';
     if (label) label.textContent = phaseTxt + cyc;
     $('focusActive').classList.toggle('is-break', focus.phase === 'break');
+    $('endFocus').classList.toggle('hidden', !!focus.strict && focus.phase === 'work');   // strict mode: no early exit
     const endsAt = focus.endsAt;
     const upd = () => {
       const remaining = Math.max(0, (endsAt - Date.now()) / 1000);
@@ -177,7 +177,7 @@ async function ensureFaviconPermission() {
 async function init() {
   settings = await getSettings();
   await ensureFaviconPermission();
-  applyLang();
+  await applyLang();
   await render();
   await renderFocus();
 }

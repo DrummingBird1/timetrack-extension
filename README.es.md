@@ -46,6 +46,13 @@ Una extensión moderna para Chrome que mide cuánto tiempo activo dedica a cada 
 - **Exportación/importación** — JSON (copia de seguridad completa) y CSV (todo, o solo la vista actual).
 - **Seis idiomas** — hebreo, inglés, árabe, ruso, español y francés, con cambio en tiempo real.
 - **Privacidad** — sin permisos de host, sin seguimiento externo, sin llamadas de red involuntarias (los iconos se generan localmente), eliminación automática de datos antiguos.
+- **Presupuestos semanales por categoría** — limite el tiempo semanal por categoría, con barras de progreso en el Resumen y avisos al 80 % y al 100 %.
+- **Más análisis** — tendencia semanal de la puntuación de enfoque con su mejor semana, racha de objetivos cumplidos y comparación de dos rangos de fechas cualesquiera con los mayores cambios por sitio.
+- **Sesiones de enfoque más inteligentes** — inicio automático programado, modo estricto sin salida anticipada, opción de «pausar 10 minutos» en la página de bloqueo e historial de sesiones.
+- **Registro de visitas opcional** — desactivado por defecto: guarda la hora de inicio y la duración de cada visita para ver cuánto duran sus visitas a un sitio. Se queda en su dispositivo.
+- **Pensado para historiales grandes** — miles de sitios se muestran al instante; seleccione varios a la vez para categorizarlos, limitarlos, fijarlos o dejar de rastrearlos de una vez.
+- **Importación CSV flexible y datos de demostración** — importe CSV de TimeTrack o al estilo RescueTime, o pruebe el panel con datos de demostración que se quitan con un clic.
+- **Accesible** — navegación con teclado, etiquetas para lectores de pantalla y contraste de texto AA, comprobado automáticamente con axe-core.
 
 ## 🚀 Instalación
 
@@ -67,15 +74,19 @@ Al hacer clic en el icono se abre una ventana emergente rápida; el botón "Abri
 
 ## 🔧 Desarrollo
 
-Sin paso de compilación, sin dependencias — JavaScript modular puro. La suite de pruebas (74 casos) se ejecuta desde `dist`:
+Sin paso de compilación ni dependencias en la propia extensión — JavaScript modular puro. Las herramientas de desarrollo están en `dist` (pruebas unitarias, de integración, de navegador real y de accesibilidad, más una comprobación de tipos):
 
 ```bash
 cd dist
-npm test               # node --test (no external dependencies)
-pwsh build.ps1          # builds the upload zip from extension/
+pnpm test                                    # unit + integration tests (no browser needed)
+pnpm install                                 # dev tooling: Puppeteer, TypeScript, axe-core
+pnpm typecheck                               # tsc --checkJs over the extension
+pnpm exec puppeteer browsers install chrome  # one-time: download Chrome for Testing
+pnpm test:e2e                                # real-browser tests
+pwsh build.ps1                               # builds the upload zip from extension/
 ```
 
-Para conocer la arquitectura, el modelo de datos y un mapa completo de archivos, consulte **[CLAUDE.md](CLAUDE.md)**.
+Para la arquitectura, el modelo de datos y un mapa completo de archivos, consulte **[CLAUDE.md](CLAUDE.md)**; para contribuir (o añadir un idioma), consulte **[CONTRIBUTING.md](CONTRIBUTING.md)**.
 
 ## 📁 Estructura
 
@@ -84,6 +95,7 @@ extension/               ← la extensión distribuible (cargue/suba esta carpet
   manifest.json          — configuración de la extensión (MV3)
   background.js          — el motor de seguimiento (service worker)
   src/lib/                — lógica compartida (almacenamiento, estadísticas, gráficos, copia de seguridad, cifrado, i18n)
+  src/lib/locales/        — idiomas de la interfaz (JSON, uno por idioma)
   src/popup/               — la ventana emergente rápida
   src/dashboard/            — el panel de control completo
   src/blocked/              — la página de bloqueo del modo enfoque

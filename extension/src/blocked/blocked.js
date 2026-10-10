@@ -1,13 +1,12 @@
 import { getSettings } from '../lib/storage.js';
 import { setLang, getLang, t, dir } from '../lib/i18n.js';
 import { formatClock } from '../lib/utils.js';
+import { sendMessage as msg } from '../lib/messages.js';
 
 const $ = (id) => document.getElementById(id);
+const SNOOZE_MINUTES = 10;
 let timer = null;
 
-function msg(type, extra = {}) {
-  return chrome.runtime.sendMessage({ type, ...extra }).catch(() => ({}));
-}
 
 function localizeStatic() {
   $('title').textContent = t('blocked.title');
@@ -35,7 +34,7 @@ function tick(endsAt) {
 
 async function main() {
   const settings = await getSettings();
-  setLang(settings.language || 'he');
+  await setLang(settings.language || 'he');
   document.documentElement.lang = getLang();
   document.documentElement.dir = dir();
   localizeStatic();
@@ -52,6 +51,17 @@ async function main() {
     return;
   }
 
+  // Strict mode removes the escape hatches; otherwise the user may pause blocking for a while.
+  const strict = !!focus.strict;
+  $('endBtn').hidden = strict;
+  $('snoozeBtn').hidden = strict;
+  $('strictNote').hidden = !strict;
+  $('strictNote').textContent = t('blocked.strict');
+  $('snoozeBtn').textContent = t('blocked.snooze', { m: SNOOZE_MINUTES });
+  $('snoozeBtn').addEventListener('click', async () => {
+    await msg('snoozeFocus', { minutes: SNOOZE_MINUTES });
+    location.replace(siteUrl());
+  });
   $('endBtn').addEventListener('click', async () => {
     await msg('stopFocus');
     location.replace(siteUrl());

@@ -10,23 +10,30 @@ to Webtime Tracker. It adds deep analytics, smart categorization, goals/limits,
 cloud backup, and data export.
 
 All data lives **locally** in `chrome.storage.local`. Nothing is sent anywhere
-unless the user explicitly enables a backup target. The UI is **Hebrew, RTL**.
+unless the user explicitly enables a backup target. The UI is available in six
+languages (Hebrew is the default and the source language; Hebrew and Arabic are RTL).
+Current version: **1.5.0** (see `CHANGELOG.md`).
 
 ## Repository layout
 
-Four top-level folders (plus root docs):
+Four top-level folders, plus `.github/` and root docs (`README*.md`, `CHANGELOG.md`,
+`CONTRIBUTING.md`):
 
 - **`extension/`** — the shippable extension (this is what you load-unpacked and
   zip for the store). Self-contained: `manifest.json`, `background.js`, `icons/`,
   `src/`.
 - **`store-assets/`** — everything for the Chrome Web Store listing itself:
-  `PRIVACY.md`, `STORE_LISTING.md`, `promo/` (promo graphics), `screenshots/`,
-  and `site/` (the marketing website source, deployed to the `gh-pages` branch
-  — see below).
-- **`dist/`** — dev tooling and build output: the test suite (`tests/`),
-  `package.json`, `build.ps1`, and the zip(s) it produces
+  `PRIVACY.md`, `STORE_LISTING.md`, `BROWSER_SUPPORT.md` (Edge/Firefox notes — not
+  tested), `promo/` (promo graphics + per-release banners), `screenshots/` (he/en
+  committed, generated), and `site/` (the marketing website source, deployed to the
+  `gh-pages` branch — see below).
+- **`dist/`** — dev tooling and build output: the test suites (`tests/` unit +
+  integration, `e2e/` real-browser), `tools/` (generators, see the file map),
+  `package.json`, `tsconfig.json`, `build.ps1`, and the zip(s) it produces
   (`timetrack-v<version>.zip`, gitignored). Despite the name, nothing here ships
   inside the extension — `build.ps1` zips `extension/`'s contents only.
+- **`.github/`** — CI (`workflows/`: `test.yml`, `e2e.yml` named "Checks", `release.yml`,
+  `pages.yml`), issue forms and the PR template.
 - **`archive/`** — superseded assets kept for reference (old screenshots/promo
   images, old build zips). Not part of the current release; see `archive/README.md`.
 
@@ -42,13 +49,18 @@ extension's own no-dependency ethos. It has a runtime language switcher (a
 six languages as the extension itself (he/en/ar/ru/es/fr) — deliberately a
 separate, much smaller pattern from `extension/src/lib/i18n.js` (the site isn't
 part of the shippable extension bundle, so it has its own compact dictionary,
-~25 keys vs. the extension's ~300). The privacy-policy section shows only the
+~25 keys vs. the extension's ~380). The privacy-policy section shows only the
 currently-selected language's card (translated per language, not just en/he
 shown side-by-side); its content mirrors `store-assets/PRIVACY.md` — keep both
-in sync (across **all six languages**) when the policy changes.
-**Deploying it is a manual step** — copy `store-assets/site/*` (including
-`.nojekyll`) to the `gh-pages` branch root and push; this does not happen
-automatically on a release.
+in sync (across **all six languages**) when the policy changes. Any change to what
+data is stored or where it can go (e.g. the optional session log, the focus
+history) **must** update the policy, the six site cards and `STORE_LISTING.md`'s
+data disclosures together; `docs.test.js` guards the parts it can.
+**Deploying:** `.github/workflows/pages.yml` copies `store-assets/site/*` (including
+`.nojekyll`) to the `gh-pages` branch whenever that folder changes on `main`
+(or via "Run workflow"). It has never run on GitHub yet — the first merge to `main`
+that touches the site is its real test; the old manual fallback is to copy the files
+to the `gh-pages` root and push.
 
 ## READMEs and release banners
 
@@ -57,9 +69,10 @@ renders this one by default and it's what search engines index) plus
 `README.he.md`/`README.ar.md`/`README.ru.md`/`README.es.md`/`README.fr.md`,
 all cross-linked via the language-switcher row at the top of each file. When
 the feature list or any other shared section changes, **update all six** — the
-English one first (it's the source), then propagate. There's no automated
-parity check for these like `i18n.test.js` has for the extension's own
-dictionary, so this relies on discipline when editing.
+English one first (it's the source), then propagate. `dist/tests/docs.test.js`
+fails if the six files diverge in structure (sections, feature-bullet count, the
+language switcher) or mention a stale test command; it can't check that the
+translations say the same thing, so that part is still on you.
 
 **Every GitHub Release gets its own banner image** at the top of its notes —
 this is deliberate, not decorative: it makes the releases page scannable and
@@ -74,17 +87,28 @@ node dist/make-release-banner.mjs <version> <themeKey> "<tagline>"
 This writes `store-assets/promo/releases/v<version>.svg`. Pick (or add) a
 `themeKey` in that script that reflects what the release actually shipped —
 e.g. `cloud` for a backup-focused release, `globe` for a languages/i18n
-release, `shield` for a security/hardening release — the same way v1.1.0–v1.4.0
+release, `shield` for a security/hardening release — the same way v1.1.0–v1.5.0
 were themed (see the script's `THEMES` map; add a new icon there for a release
 that doesn't fit the existing ones, rather than reusing a mismatched theme).
 
 **The banner must be committed and pushed to `main` before referencing it in
 release notes** — release notes embed it via the raw-content URL
 (`https://raw.githubusercontent.com/DrummingBird1/timetrack-extension/main/store-assets/promo/releases/v<version>.svg`),
-which only resolves once the file exists on `main`. The order for a new
-release is therefore: commit the banner (usually alongside the rest of that
-release's changes) → push → `gh release create`/`gh release edit` with the
-banner image markdown prepended to the notes body.
+which only resolves once the file exists on `main`.
+
+**Releasing** is now mostly automated. The steps for a new version `X.Y.Z`:
+
+1. Bump `version` in `extension/manifest.json`, add a `## [X.Y.Z] — date` section to
+   `CHANGELOG.md`, generate the banner (above). `docs.test.js` fails until all three
+   agree.
+2. Regenerate the store screenshots (the sidebar shows the version):
+   `node dist/tools/screenshots.mjs` (and `promo-tiles.mjs` if the UI changed).
+3. Merge to `main`, then push the tag `vX.Y.Z`. `release.yml` verifies tag == manifest
+   version and that the banner exists, runs the unit tests, builds the zip with
+   `pwsh dist/build.ps1`, composes the release notes from the CHANGELOG section
+   (`dist/tools/release-notes.mjs`, banner pinned to the tag) and runs
+   `gh release create`. It has not run on GitHub yet — watch the first run.
+4. Upload the zip to the Chrome Web Store by hand (`store-assets/STORE_LISTING.md`).
 
 ## Trello roadmap board
 
@@ -114,6 +138,21 @@ After editing code: click the **reload** icon on the extension card. For the
 service worker, use the "service worker" link on that card to open its DevTools
 and see logs. Popup/dashboard each have their own DevTools (right-click → Inspect).
 
+Dev tooling lives in `dist/` and uses **pnpm** (never npm — see the root `CLAUDE.md`):
+
+```bash
+cd dist
+pnpm install
+pnpm exec puppeteer browsers install chrome   # once — Chrome for Testing, for the E2E suite
+pnpm test            # unit + integration (node --test), ~200 tests, seconds
+pnpm typecheck       # tsc --checkJs over the extension, 0 errors expected
+pnpm test:e2e        # real extension in Chrome for Testing, ~60 tests, a couple of minutes
+```
+
+`dist/pnpm-workspace.yaml` sets `allowBuilds: puppeteer: false` (pnpm 11 otherwise
+aborts the install on puppeteer's postinstall); don't run `pnpm install` from the repo
+root — it would create a stray root `package.json`/`node_modules`.
+
 ## Architecture (data flow)
 
 ```
@@ -136,7 +175,14 @@ and see logs. Popup/dashboard each have their own DevTools (right-click → Insp
 
 The **background service worker is the only writer of tracking data.** Popup and
 dashboard read `chrome.storage.local` directly for rendering and send messages to
-the worker for actions (toggle tracking, flush, run backup, prune).
+the worker for actions (toggle tracking, flush, run backup, prune, focus control).
+
+**The UI ⇄ worker protocol lives in one file, `src/lib/messages.js`**: `MessageMap`
+types every request/response (checked by `tsc`), `sendMessage()` is the only way the
+UI sends, and `parseMessage()` is the gate the worker validates through (it also
+ignores messages from other senders). Adding a message means adding it to
+`MessageMap` + `MESSAGE_TYPES` there and a `case` in `handleMessage()`;
+`messages.test.js` fails if the two lists drift.
 
 ### The tracking engine (`background.js`)
 
@@ -153,6 +199,10 @@ the worker for actions (toggle tracking, flush, run backup, prune).
   lost if no events fire. A 60-minute `ttt_backup` alarm runs auto-backup when due.
 - Overlapping events are serialized through a tiny promise-chain mutex (`locked`)
   so a segment is never double-committed.
+- When `sessionLog` is on, each committed segment is also recorded as a visit
+  (`recordSession`, below). `checkLimits` raises the daily / per-site / weekly
+  category-budget notifications; `checkFocusSchedule` (run from the tick) starts
+  scheduled focus sessions.
 
 ## Data model
 
@@ -171,13 +221,29 @@ Supporting keys in `chrome.storage.local`:
 - `ttt_index` — sorted array of day-keys that exist (avoids scanning all storage).
 - `ttt_settings` — see `DEFAULT_SETTINGS` in `src/lib/storage.js`.
 - `ttt_meta` — `{ version, firstDay, installedAt }`.
+- `ttt_sess_<YYYY-MM-DD>` — **optional** (schema v3, only while `settings.sessionLog`
+  is on): that day's visits as `[domain, startSecond, seconds]`, adjacent segments of
+  the same site merged when the gap is ≤ `SESSION_GAP_SECONDS`. Powers the per-site
+  visit-length distribution. Not part of the day record; file export includes them by
+  default, the `storage.sync` backup does not (`exportAll({ sessions: false })` — they
+  wouldn't fit the quota).
+- `ttt_focuslog` — finished focus sessions (capped at 300), for the focus history.
+
+Schema is **v3** (`SCHEMA_VERSION`; v2 added the per-domain `dh` map, v3 the optional
+session keys). `storage.migrate()` runs on `init()`; the v3 step is intentionally a
+no-op (the new keys are simply absent until the feature is switched on).
 
 Why per-day records: each tracking commit rewrites only one small object instead
-of one giant blob, which keeps writes cheap as history grows.
+of one giant blob, which keeps writes cheap as history grows. Measured: reading three
+years of history takes ~90 ms, so pre-aggregated rollups were deliberately not built —
+revisit only if `scale.e2e.mjs` starts failing its budget.
 
 **Domains** are bucketed by registrable domain when `groupSubdomains` is on
-(`mail.google.com` → `google.com`), using a small built-in public-suffix list in
-`utils.js` (`MULTI_TLDS`). It is a heuristic, not the full PSL.
+(`mail.google.com` → `google.com`) using the real **Public Suffix List**, baked into
+`src/lib/psl.js` (generated by `dist/tools/build-psl.mjs`; refresh it every few
+months, it is a normal reviewed commit — the extension never fetches it). Because the
+private section is included, `alice.github.io` and `bob.github.io` are separate sites.
+IPv4/IPv6 addresses and single-label hosts (`localhost`) are never grouped.
 
 ## File map
 
@@ -185,22 +251,33 @@ of one giant blob, which keeps writes cheap as history grows.
 |------|----------------|
 | `manifest.json` | MV3 manifest. Permissions: storage, tabs, idle, alarms, notifications, unlimitedStorage. |
 | `background.js` | Service worker = tracking engine + message router + alarms. |
-| `src/lib/utils.js` | Pure helpers: dates/day-keys, domain extraction, duration formatting, favicons. No chrome/DOM. |
-| `src/lib/storage.js` | All `chrome.storage.local` access: settings, per-day read/write, index, prune, export/import. |
+| `src/lib/utils.js` | Pure helpers: dates/day-keys, domain extraction (`registrableDomain`), duration formatting, favicons. No chrome/DOM. |
+| `src/lib/psl.js` | **Generated** Public Suffix List rules (`dist/tools/build-psl.mjs`) — don't edit by hand. |
+| `src/lib/storage.js` | All `chrome.storage.local` access: settings (+ map-setting helpers, write lock), per-day read/write, session logs, focus log, index, prune, export/import, migrations. |
 | `src/lib/categories.js` | Category definitions + default domain→category map + `categorize()`. |
-| `src/lib/stats.js` | **Pure** analytics over day records (aggregation, categories, focus score, heatmap, streaks, trends). |
-| `src/lib/charts.js` | Dependency-free SVG charts (bar, donut, heatmap, sparkline). CSP-safe. |
-| `src/lib/backup.js` | Cloud backup: chunked `storage.sync`, custom REST endpoint, `runAutoBackup`. |
-| `src/lib/crypto.js` | Optional AES-256-GCM backup encryption (PBKDF2 key from passphrase). |
-| `src/lib/i18n.js` | Runtime six-language dictionary (he/en/ar/ru/es/fr) + `t()` + `localize()` (live language switch). |
+| `src/lib/stats.js` | **Pure** analytics over day records (aggregation, categories, focus score + weekly trend, heatmap, streaks, trends, budgets, session stats, any-range comparison). |
+| `src/lib/charts.js` | Dependency-free SVG charts (bar, donut, heatmap, sparkline). CSP-safe; gradient ids are unique per chart. |
+| `src/lib/backup.js` | Cloud backup: `storage.sync` chunked by *stored* size, custom REST endpoint, `runAutoBackup`. |
+| `src/lib/crypto.js` | Optional AES-256-GCM backup encryption (PBKDF2 key from passphrase), optionally gzipping first. |
+| `src/lib/compress.js` | gzip/gunzip via the platform's CompressionStream (size-capped on read), base64 helpers, the plaintext compressed wrapper. |
+| `src/lib/i18n.js` | Small core: `t()`, `localize()`, direction/locale tables, lazy per-language loading. |
+| `src/lib/locales/{he,en,ar,ru,es,fr}.json` | The UI strings (~380 keys each), `fetch()`ed on demand. Add keys with `dist/tools/add-strings.mjs`. |
+| `src/lib/messages.js` | The typed UI ⇄ worker protocol (`MessageMap`, `sendMessage`, `parseMessage`). |
+| `src/lib/csvimport.js` | Tolerant CSV parser/mapper for imports (aliased headers, RescueTime-style, hourly detail). |
+| `src/lib/demo.js` | Removable demo data for the welcome screen (`loadDemo` / `removeDemo`). |
 | `src/popup/*` | Toolbar popup: today total, live counter, top sites, 7-day mini chart, tracking toggle, focus session. |
-| `src/dashboard/*` | Options page: Overview / Sites / Insights / Settings tabs. |
-| `src/blocked/*` | Focus-mode block page shown when a blocked site is opened during a session. |
-| `dist/tests/*` | Node `node:test` unit + integration tests. `npm test` (run from `dist`). |
-| `dist/package.json` | Dev-only (test script + `"type":"module"`); the extension has no deps/build. |
+| `src/dashboard/dashboard.js` | Entry: tab roles & keyboard, wiring; registers handlers in `core.js`'s `actions`. |
+| `src/dashboard/core.js` | Shared state (`settings`, `currentRange`, `cache`… exported as ES live bindings with setters), `$`/`$$`, `send`, `actions` registry (avoids import cycles), modal helpers. |
+| `src/dashboard/{overview,compare,budgets,sites,siteDetail,insights,settings,settingsEditors,dataio,demo}.js` | One module per area of the Overview / Sites / Insights / Settings tabs. |
+| `src/blocked/*` | Focus-mode block page (with "allow 10 minutes"; none in strict mode). |
+| `dist/tests/*.test.js` | `node:test` unit + integration tests (`pnpm test`); `helpers/` holds the chrome.* mocks. |
+| `dist/e2e/*.e2e.mjs` | Puppeteer end-to-end tests against the real extension; `harness.mjs` launches Chrome for Testing with it loaded. |
+| `dist/tools/` | `add-strings` (add a UI string to all six locales), `build-psl`, `fixture` (deterministic synthetic history), `screenshots` + `promo-tiles` (store graphics), `release-notes` (CHANGELOG → release body). |
+| `dist/tsconfig.json`, `dist/types/` | `tsc --checkJs` setup; `chrome-storage.d.ts` fixes `storage.get()` result typing. |
+| `dist/package.json` | Dev-only (scripts + devDependencies, `"type":"module"`); the extension has no deps/build. |
 | `dist/build.ps1` | Builds `timetrack-v<version>.zip` from `extension/` (store upload). |
 | `dist/make-release-banner.mjs` | Generates a themed per-version GitHub Release banner SVG — see "READMEs and release banners". |
-| `store-assets/PRIVACY.md` / `STORE_LISTING.md` | Privacy policy + Chrome Web Store submission pack. |
+| `store-assets/PRIVACY.md` / `STORE_LISTING.md` / `BROWSER_SUPPORT.md` | Privacy policy, Chrome Web Store submission pack, Edge/Firefox notes. |
 | `icons/*` | Generated gradient clock icons (16/32/48/128). |
 
 ## Conventions & constraints
@@ -216,12 +293,27 @@ of one giant blob, which keeps writes cheap as history grows.
   goes through `storage.js`; only `background.js` *writes* tracking data.
 - **Theming:** all colors are CSS variables; charts read them via
   `getComputedStyle`. Light/dark/auto handled by `data-theme` on `<html>`.
-- **i18n:** UI text lives in `i18n.js` — six languages: `he` (default, RTL),
-  `en`, `ar` (RTL), `ru`, `es`, `fr`. In HTML use `data-i18n` / `data-i18n-ph` /
-  `data-i18n-title` and call `localize()`; in JS use `t(key, vars)`. Adding a
-  string means adding the key to **all six** language blocks — `i18n.test.js`
-  enforces this (fails the build if any language's key set or `{placeholder}`
-  tokens drift from `he`, the source language). Direction/locale come from the
+- **Accessibility is enforced, not aspirational.** axe-core runs over every screen, in
+  both themes and an RTL language (`a11y.e2e.mjs`), and `contrast.test.js` computes
+  WCAG AA ratios straight from the CSS tokens. Use the *text-safe* tokens for text
+  (`--accent-text`, `--dim`, `--faint`, …) and the plain `--accent` only for fills and
+  borders; give every control an accessible name (`data-i18n-aria` / `data-i18n-ph`,
+  or `aria-labelledby` on settings rows); keep tabs/rows/dialogs keyboard-operable
+  (modals go through `watchModals`: focus trap, Escape, focus restore). Inline
+  `<span>`s ignore `width`/`height` — progress fills need `display:block`.
+- **Types:** the code is plain JS, type-checked with `pnpm typecheck` (`tsc --checkJs`,
+  `noUnusedLocals`, 0 errors expected). Annotate with JSDoc; DOM lookups in the
+  dashboard use the `any`-typed `$`/`$$` from `core.js`.
+- **i18n:** UI text lives in `src/lib/locales/<lang>.json` — six languages: `he`
+  (default, source, RTL), `en`, `ar` (RTL), `ru`, `es`, `fr`. They are `fetch()`ed
+  lazily (the service worker can't `import()` JSON), so `setLang()` is **async** —
+  always `await` it. In HTML use `data-i18n` / `data-i18n-ph` (also becomes the
+  `aria-label`) / `data-i18n-title` / `data-i18n-aria` and call `localize()`; in JS use
+  `t(key, vars)`. **Add strings with `node dist/tools/add-strings.mjs new.json`**, which
+  writes all six files and refuses a missing language or a `{placeholder}` mismatch;
+  `i18n.test.js` fails the build if any language's key set or placeholders drift from
+  `he`, and an E2E test loads every language and fails on a raw key in the UI.
+  Direction/locale come from the
   `LANG_META` lookup (`dir()`/`locale()`) — extend that table, don't hardcode a
   he-or-not binary anywhere; the same applies to `utils.js`'s
   `weekdaysShort()`/`weekdaysFull()`/`DURATION_UNITS`, which use the same
@@ -250,31 +342,70 @@ editable in the focus panel), and the `backup` sub-object (`syncEnabled`,
 `lastBackupStatus`). When settings change from the dashboard, it sends
 `settingsChanged` so the worker re-applies the idle interval and refreshes.
 
-`categoryMap` and `siteLimits` are **plain objects**, not arrays — deleting a
-key from one requires `storage.saveSettingsKey(key, value)`, not
-`saveSettings({key: value})`. `deepMerge` (the engine behind `saveSettings`)
-only ever *adds or overwrites* keys it sees in a patch; it can't delete one,
-since the merge starts from a full copy of the old object and only touches keys
-present in the new one. Arrays (`blacklist`, `focus.blockDomains`, `pinnedSites`,
-etc.) don't have this problem — `deepMerge` replaces an array wholesale via
-`patch.slice()`. This bit two existing features (category-mapping removal,
-site-limit clearing) before being caught and fixed in v1.4.0; `saveSettingsKey`
-exists specifically to sidestep it for any future nested-object deletion.
+1.5.0 added: `sessionLog` (opt-in visit log, off by default), `categoryBudgets`
+(weekly seconds-per-category caps), and under `focus`: `strict` (no early exit /
+pause) and `schedule` (auto-start entries, fired by `checkFocusSchedule` with a
+10-minute grace window).
+
+`categoryMap`, `siteLimits` and `categoryBudgets` are **plain objects**, not arrays
+(the list is `MAP_SETTINGS`) — `deepMerge` (the engine behind `saveSettings`) only
+ever *adds or overwrites* keys it sees in a patch; it can't delete one, since the
+merge starts from a full copy of the old object and only touches keys present in the
+new one. So **`saveSettings` throws for a map key**: use
+`setSettingsMapEntry(key, entryKey, value)` / `removeSettingsMapEntry(key, entryKey)`
+(and the `…Entries` batch forms), or `saveSettingsKey(key, wholeValue)`. Arrays
+(`blacklist`, `focus.blockDomains`, `pinnedSites`, `focus.schedule`…) don't have this
+problem — `deepMerge` replaces an array wholesale via `patch.slice()`. This bit two
+features (category-mapping removal, site-limit clearing) before v1.4.0 and was made
+unrepresentable in 1.5.0.
+
+Every settings write goes through `withSettingsLock`: read-modify-write without it
+lost updates when two changes landed together (`backup.integration.test.js`:
+"concurrent settings writes…"), so don't read settings, mutate and `chrome.storage.local.set` them yourself.
 
 ## Cloud backup
 
 Two zero-infra targets plus manual file I/O:
 
 1. **`chrome.storage.sync`** (`backupToSync`/`restoreFromSync`): serializes the
-   full snapshot, splits it into ≤7 KB chunks (`ttt_sync_<n>` + `ttt_sync_meta`)
-   to respect the ~8 KB/item, ~100 KB/total sync quota. If history exceeds the
-   quota, **oldest days are trimmed** from the sync copy (local data is untouched).
+   snapshot (without session logs), **gzips it** (`compress.js`; encrypted backups gzip
+   *before* encrypting — `encryptJSON(obj, pass, { gzip: true })` sets `zip: 'gzip'` on the
+   envelope), and splits the result into chunks (`ttt_sync_<n>` + `ttt_sync_meta`) to
+   respect the 8,192-byte/item, 102,400-byte/total sync quota.
+   **The quota counts key + `JSON.stringify(value)` in UTF-8 bytes** — a JSON string
+   full of `"` roughly doubles in size once escaped, which is why chunks are sized by
+   their real *stored* size (`chunkForSync`, `SYNC_ITEM_BYTES`/`SYNC_TOTAL_BYTES`),
+   the total is verified. `daysThatFit` picks how many of the newest days fit (binary
+   search on the *compressed* size, estimated without encrypting since PBKDF2 is slow),
+   then the real packed size is checked and the day count tightened if the estimate was
+   optimistic. If history still exceeds the quota, **oldest days are left out** of the
+   sync copy (local data is untouched): ~365 days survive on the synthetic 3-year fixture,
+   up from 83 (plaintext) / 59 (encrypted) before compression. gzip only gets ~4.6× on
+   this data, so it is a year of history, not a decade.
+   The write is **all-or-nothing and non-destructive**: one `set()` overwrites the old
+   chunks and the meta, *then* leftover chunks are removed (only a quota error falls back
+   to freeing the old copy first). `meta.sha` (SHA-256 of the payload) is verified on
+   restore, because another device receives the items one by one and could otherwise read
+   a mix of two backups. Restore understands every format ever written (plain, encrypted,
+   compressed, compressed + encrypted). `sync.e2e.mjs` checks all of this against real
+   Chrome's quotas; what no local test can show is Google actually delivering the items
+   to a second signed-in device.
+   The old character-count chunking passed the mock and failed in real Chrome with
+   `kQuotaBytesPerItem` — keep the sync mock in `backup.integration.test.js` (`measure`) byte-accurate.
 2. **Custom REST endpoint** (`backupToEndpoint`): `POST` the snapshot to an
    **HTTPS-only** URL (enforced) with an optional `Authorization: Bearer <token>`.
 3. **File export/import** (`exportAll`/`importAll` in `storage.js`, wired in the
    dashboard): JSON (full, re-importable) and CSV (full or current-view rows).
    Import modes: `merge` (keeps the larger time/visits per domain/day — safe to
    re-import) or `replace` (wipe first). Import auto-detects encrypted envelopes.
+   The CSV importer (`csvimport.js`) accepts aliased headers, RescueTime-style
+   exports and optional hourly columns, and reports skipped rows.
+
+**Secrets never travel in snapshots.** `exportAll` strips `backup.passphrase` and
+`backup.endpointToken` (`stripSecrets`) from every target (file, sync, endpoint);
+`importAll` keeps this device's own credentials instead of overwriting them, and
+forces `encrypt` off when there is no passphrase (so a restore can't silently turn
+encryption into a no-op). Before 1.5.0 both were exported in clear text.
 
 **Encryption (`crypto.js`):** when `backup.encrypt` + `backup.passphrase` are set,
 the snapshot is AES-256-GCM encrypted (PBKDF2-SHA256 key) before it leaves the
@@ -299,6 +430,16 @@ at start / on each work resume) redirect any blocked tab to `src/blocked/blocked
 (a web-accessible resource, `use_dynamic_url`). The popup starts/stops sessions via
 `startFocus`/`stopFocus`/`getFocus`; `chrome.commands` also toggles focus/tracking.
 No host permissions — redirection uses the existing `tabs` API.
+
+1.5.0 additions: **strict mode** (`focus.strict`, snapshotted into the session) removes
+every escape hatch during a work phase — `stopFocus` is refused (`{refused:true}`),
+the popup hides "end", the keyboard command does nothing, and the block page shows no
+snooze. Otherwise the block page offers **"allow 10 minutes"** (`snoozeFocus` sets
+`pausedUntil`; `blockingLive` honours it and `checkFocusExpiry` resumes enforcement).
+**Scheduled sessions** (`focus.schedule`) start from the 1-minute tick
+(`checkFocusSchedule`; fired entries are deduped in `storage.session` so a worker
+restart can't double-start). Finished sessions are appended to `ttt_focuslog`
+(`logFocusSession`) and summarised by `stats.focusLogStats` on the Insights tab.
 
 ## Migrations & weekly summary
 
@@ -330,6 +471,15 @@ No host permissions — redirection uses the existing `tabs` API.
   The drill-down charts the hourly shape next to the daily timeline.
 - **Categories** (`categories.js`): defaults + user overrides via the Settings
   category editor; everything else falls back to `other`.
+- **Weekly focus-score trend / best week** (`stats.weeklyFocusScores`, `bestWeek`) and
+  the **goal-met streak** (`stats.goalStreak`, distinct from the tracking streak).
+- **Category budgets** (`stats.categorySeconds`, `budgetStatus`): weekly caps; progress
+  bars on Overview (`budgets.js`), 80% / 100% notifications from `checkLimits`.
+- **Any-range comparison** (`compare.js` → `stats.trend` + `stats.siteChanges`): the
+  Overview compares this-vs-previous period, or any two custom ranges, with the
+  biggest per-site movers.
+- **Visit-length distribution** (`stats.sessionStats` over the optional session log,
+  rendered in the site drill-down).
 
 ## Common gotchas
 
@@ -342,7 +492,14 @@ No host permissions — redirection uses the existing `tabs` API.
 - Charts need a visible (non-`display:none`) container to measure `clientWidth`;
   that's why tab panels are rendered **after** being made active. If you add a
   chart, render it from `renderCurrentTab()` for the active tab, and re-render on
-  resize/theme change via `rerenderCharts()`.
+  resize/theme change via `rerenderCharts()`. SVG ids must be unique per chart:
+  `url(#id)` resolves to the first match in the document, and a gradient inside a
+  hidden tab doesn't render (this made every later chart's bars invisible until 1.5.0).
+- **Branded Chrome ≥ 137 ignores `--load-extension`**, so the E2E suite uses *Chrome for
+  Testing* (`pnpm exec puppeteer browsers install chrome`) with `enableExtensions`.
+  The SW's in-memory `lastDomain`, and the real `chrome.idle` state of the machine
+  ("locked" when you're away), can affect tracking tests — see `tracking` in
+  `focus.e2e.mjs` for the idle-aware assertion.
 - **Site icons are generated locally** (`utils.favicon` → a `data:` SVG letter
   avatar). This is deliberate: a remote favicon service would leak every visited
   domain off-device, breaking the privacy promise. If you ever want real brand
@@ -361,53 +518,78 @@ No host permissions — redirection uses the existing `tabs` API.
 
 ## Tests
 
-From `dist/`, `npm test` (or `node --test`) runs the suite (74 cases):
+Four layers, all from `dist/` (pnpm — see "How to run"):
 
-- **Unit** (`utils.test.js`, `stats.test.js`, `i18n.test.js`) — the pure modules,
-  imported directly (includes `generateInsights`, `domainPeakHour`,
-  `domainHourly`, `firstLastVisit`, `passphraseStrength`, and cross-language
-  key/placeholder parity across all six `i18n.js` dictionaries).
+- **Unit** — `pnpm test` (`node --test`, ~190 cases, seconds). The pure modules are
+  imported directly: `utils`, `stats`, `analytics` (budgets, weekly trend, goal streak,
+  comparison), `sessions`, `csvimport`, `demo`, `psl`, `messages`, and cross-language
+  key/placeholder parity across the six locale files (`i18n.test.js`).
 - **Integration** (`backup.integration.test.js`, `tracking.integration.test.js`,
-  `focus.integration.test.js`) — exercise the real `storage.js`/`backup.js`/
-  `crypto.js` and the `background.js` tracking + focus engines against an in-memory
-  **mock of the chrome.* APIs**. The sync mock enforces Google's real quotas
-  (8 KB/item, 100 KB total); the tracking/focus mocks drive tabs/idle events and
-  the Pomodoro state machine with a controllable clock; the tracking mock also
-  records `chrome.notifications.create` calls and can fire `onButtonClicked` and
-  the `ttt_backup` alarm directly, so the 80%/100%/snooze limit-notification
-  flow and the storage-quota warning are driven end-to-end, not just unit-tested.
-  These caught a real sync-quota bug (and, in v1.4.0, the `deepMerge`
-  key-deletion bug), so keep them green when touching backup, tracking, or focus.
+  `focus.integration.test.js`) — the real `storage.js`/`backup.js`/`crypto.js` and the
+  `background.js` tracking + focus engines against an in-memory **mock of the chrome.*
+  APIs**. The sync mock enforces Google's real quotas (8,192 B/item, 102,400 B total,
+  measured as key + JSON in UTF-8 bytes); the tracking/focus mocks drive tabs/idle
+  events and the Pomodoro state machine with a controllable clock, record
+  `chrome.notifications.create` calls, and can fire `onButtonClicked` and the
+  `ttt_backup` alarm — so limit/budget notifications, snooze, scheduled focus and the
+  storage-quota warning are driven end-to-end. Keep them green when touching backup,
+  tracking or focus.
+- **Guards** — `package.test.js` (the permission set is exactly the documented one, no
+  host permissions, CSP-safe pages, every import resolves), `contrast.test.js` (WCAG AA
+  from the CSS tokens), `docs.test.js` (READMEs, site translations and privacy cards
+  in parity; manifest/CHANGELOG/banner agree on the version), `release-notes.test.js`.
+- **End-to-end** — `pnpm test:e2e` (`--test-concurrency=1`, ~60 cases, a couple of
+  minutes): Puppeteer drives the *real* extension in Chrome for Testing. `smoke`
+  (loads, popup, every tab), `dashboard` (every tab and feature: charts, sites,
+  bulk actions, settings, backup→restore, export/import, budgets, compare, demo
+  data…), `focus` (popup session, block/allow redirects, tracking, strict/snooze),
+  `scale` (3 years of synthetic history stays within time budgets), `sync` (cloud backup against real Chrome's storage.sync quotas), `a11y` (axe-core
+  on every screen in both themes and RTL, plus keyboard behaviour). When you fix a bug
+  here, add the regression test and run it against the old code to see it fail first
+  (the unique-gradient-id test was checked that way). `pnpm typecheck` is the fifth check.
 
-What tests can't cover here: DOM rendering (popup/dashboard), chart output, and
-the focus-mode tab redirect — those need the extension loaded in a real browser.
+Test data comes from `tools/fixture.mjs` (deterministic, seeded — never `Math.random`).
+
+CI (`.github/workflows/`) runs the unit tests (`test.yml`) and typecheck + E2E
+(`e2e.yml`, check name "Checks") on every PR to `main` — both ran green on the 1.5.0 PR
+(#1, Ubuntu / UTC). `release.yml` (fires on a `v*.*.*` tag) and `pages.yml` (fires on a merge to
+`main` that touches `store-assets/site/`) **have not run on GitHub yet**; they cannot be
+executed locally, so treat their first runs as part of the release.
+
+What isn't covered: a final human look at a fresh profile, other browsers (see
+`store-assets/BROWSER_SUPPORT.md`), and anything that needs real Google Sync or a real
+backup endpoint.
 
 ## Ideas / not-yet-done
 
-- Google Drive OAuth backup (see note above).
-- Extending `DEFAULT_DOMAIN_CATEGORY` (`categories.js`) and `MULTI_TLDS`
-  (`utils.js`) for domains/TLDs more common outside Israeli/US/global-English
-  usage — the UI text is now translated into all 6 languages, but the built-in
-  category defaults still skew toward he/en-market sites.
-- Scheduled focus (auto-start a session at set times / weekdays).
-- Site-table virtualization for very large histories; an onboarding tour with
-  demo data.
-- A dedicated Webtime Tracker importer (the generic CSV import covers migration
-  today, but not their native export format directly).
-- Weekly email summary (only an in-browser notification exists today).
-- Automate the `store-assets/site/` → `gh-pages` deploy (currently a manual copy
-  + push) — e.g. a GitHub Actions workflow triggered on changes to that folder.
-- Category time budgets (weekly cap per category, distinct from the existing
-  per-site/day `siteLimits`); arbitrary custom-range-vs-custom-range comparison
-  (`stats.trend()` is already generic — today's UI only ever feeds it
-  this-week-vs-last-week); a focus-score trend line + "best week"; a goal-met
-  streak distinct from the tracking streak; bulk actions on the Sites tab
-  (multi-select rows → categorize/blacklist/limit together).
+Kept in sync with the Trello board's **🔜 Next up** and **🗄️ Backlog** lists.
 
-Done in 1.2.0 (previously listed here): per-site **hourly** timeline in the
-drill-down (uses the per-domain `dh` map), and reaching the blacklist / focus
-per-domain settings from the UI. Done in 1.3.0: UI translated into Arabic,
-Russian, Spanish, and French (6 languages total); the marketing/privacy site.
-Done in 1.4.0: preview-before-restore, passphrase strength meter, merge-conflict
-counts, 80%-approaching limit warnings + snooze, first/last-visit timestamps,
-the settings search box, pinned sites, and domain rename/alias-merge.
+- **First real runs of `release.yml` and `pages.yml`** (merge PR #1, tag `v1.5.0`), then
+  the Chrome Web Store submission (the owner has a developer account) — pack in
+  `store-assets/STORE_LISTING.md`.
+- **Multi-device merge** — needs a design decision first (which device wins, how to
+  merge day records, whether `storage.sync` is the transport).
+- **A dedicated Webtime Tracker importer** — needs a real sample of their export (the
+  generic CSV import, incl. RescueTime-style files, covers migration meanwhile).
+- **Edge Add-ons listing** (same zip) and a possible **Firefox port** — see
+  `store-assets/BROWSER_SUPPORT.md`; none of it is tested.
+- Google Drive OAuth backup (see note above).
+- Extending `DEFAULT_DOMAIN_CATEGORY` (`categories.js`) for sites more common outside
+  Israeli/US/global-English usage — the UI is in six languages, but the built-in
+  category defaults still skew toward he/en-market sites.
+- Refresh `psl.js` every few months (`node dist/tools/build-psl.mjs`).
+- Deferred ideas: tags, achievements, a command palette, a weekly email summary (only
+  an in-browser notification exists today).
+
+Done in 1.2.0: per-site **hourly** timeline in the drill-down (uses the per-domain `dh`
+map), and reaching the blacklist / focus per-domain settings from the UI. Done in 1.3.0:
+UI translated into Arabic, Russian, Spanish, and French (6 languages total); the
+marketing/privacy site. Done in 1.4.0: preview-before-restore, passphrase strength
+meter, merge-conflict counts, 80%-approaching limit warnings + snooze, first/last-visit
+timestamps, the settings search box, pinned sites, and domain rename/alias-merge.
+Done in 1.5.0: see `CHANGELOG.md` — real-browser E2E + typecheck + a11y foundations,
+secret-free backups and a fixed sync quota, the full PSL, category budgets, weekly
+focus-score trend / best week / goal streak, any-range comparison, scheduled / strict /
+snoozable focus + history, opt-in session log, bulk site actions at scale, tolerant CSV
+import, demo-data onboarding, lazy locales, a typed worker protocol, and CI/release/site
+automation.

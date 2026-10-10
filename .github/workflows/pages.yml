@@ -1,0 +1,49 @@
+name: Deploy site
+
+# Publishes store-assets/site/ to the gh-pages branch (which GitHub Pages serves) whenever it
+# changes on main. This used to be a manual copy + push.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'store-assets/site/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pages-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Copy the site to the gh-pages branch
+        run: |
+          set -euo pipefail
+          site="$(mktemp -d)"
+          cp -a store-assets/site/. "$site"/
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git ls-remote --exit-code --heads origin gh-pages >/dev/null 2>&1; then
+            git fetch origin gh-pages
+            git checkout -B gh-pages origin/gh-pages
+          else
+            git checkout --orphan gh-pages
+          fi
+          git rm -rfq --ignore-unmatch .
+          cp -a "$site"/. .
+          touch .nojekyll
+          git add -A
+          if git diff --cached --quiet; then
+            echo "The site is already up to date."
+            exit 0
+          fi
+          git commit -m "Deploy site from ${GITHUB_SHA::7}"
+          git push origin gh-pages

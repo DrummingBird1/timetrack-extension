@@ -4,14 +4,19 @@
 
 import { dayKey } from './utils.js';
 
-export const SCHEMA_VERSION = 2;
+// v2: per-domain hourly map `dh`.  v3: optional per-day session logs (ttt_sess_<day>).
+// Both are additive — old records need no rewrite.
+export const SCHEMA_VERSION = 3;
 
 export const K = {
   SETTINGS: 'ttt_settings',
   INDEX: 'ttt_index',
   META: 'ttt_meta',
   day: (key) => `ttt_day_${key}`,
+  sess: (key) => `ttt_sess_${key}`,
+  FOCUS_LOG: 'ttt_focuslog',
 };
+const SESS_PREFIX = 'ttt_sess_';
 
 export const DEFAULT_SETTINGS = {
   enabled: true,
@@ -26,12 +31,14 @@ export const DEFAULT_SETTINGS = {
   weeklyGoalMinutes: 0,          // weekly focus goal (0 = off)
   dailyLimitMinutes: 0,          // total-time limit alert (0 = off)
   siteLimits: {},                // domain -> minutes/day
+  categoryBudgets: {},           // category -> minutes/week (notifies at 80% and 100%)
   notifyLimits: true,            // fire notifications when limits are hit
   weeklySummary: true,           // weekly digest notification
   categoryMap: {},               // domain -> category override
   blacklist: [],                 // domains never tracked
   pinnedSites: [],                // domains pinned to the top of the Sites table
   realFavicons: false,           // use Chrome's local _favicon icons (opt-in perm)
+  sessionLog: false,             // also record each visit's start + length (opt-in; powers session-length stats)
   focus: {
     defaultMinutes: 25,                          // suggested work length
     breakMinutes: 5,                             // Pomodoro break length
@@ -43,6 +50,8 @@ export const DEFAULT_SETTINGS = {
     blockDomains: [],                            // extra domains always blocked
     allowCategories: ['productivity', 'reference', 'communication'], // allowed in allow mode
     allowDomains: [],                            // extra domains always allowed
+    strict: false,                               // work phases cannot be ended early or have the block paused
+    schedule: [],                                // [{ days: [0-6], time: 'HH:MM', minutes }] auto-start slots
   },
   backup: {
     syncEnabled: false,          // mirror into chrome.storage.sync
@@ -71,26 +80,81 @@ export async function getSettings() {
   return deepMerge(DEFAULT_SETTINGS, r[K.SETTINGS] || {});
 }
 
-export async function saveSettings(patch) {
-  const current = await getSettings();
-  const next = deepMerge(current, patch);
+// Every settings write is read-modify-write. Serializing them stops two quick edits
+// (a toggle and a number field, say) from overwriting each other with a stale copy.
+// Code that already holds the lock must use the *Unlocked helpers — re-entering would deadlock.
+let settingsChain = /** @type {Promise<any>} */ (Promise.resolve());
+/**
+ * @template T
+ * @param {() => Promise<T>} fn
+ * @returns {Promise<T>}
+ */
+function withSettingsLock(fn) {
+  const run = settingsChain.then(fn);
+  settingsChain = run.catch(() => {});
+  return run;
+}
+
+async function writeSettingsUnlocked(next) {
   await chrome.storage.local.set({ [K.SETTINGS]: next });
   return next;
 }
 
 /**
+ * Settings whose value is a plain object used as a map (domain -> value). deepMerge
+ * can only ADD or OVERWRITE keys it sees in a patch — a patch built by deleting a key
+ * locally leaves the old key untouched in storage (arrays don't have this problem:
+ * deepMerge replaces them wholesale). That bit category-mapping removal and
+ * site-limit clearing before it was caught, so these two can no longer go through
+ * saveSettings() at all: use setSettingsMapEntry / removeSettingsMapEntry.
+ */
+export const MAP_SETTINGS = ['categoryMap', 'siteLimits', 'categoryBudgets'];
+
+export async function saveSettings(patch) {
+  const mapKey = MAP_SETTINGS.find((k) => patch && k in patch);
+  if (mapKey) {
+    throw new Error(`saveSettings() cannot edit the map setting "${mapKey}" (deepMerge can't delete keys) — use setSettingsMapEntry() / removeSettingsMapEntry()`);
+  }
+  return withSettingsLock(async () => writeSettingsUnlocked(deepMerge(await getSettings(), patch)));
+}
+
+/**
  * Replace one top-level settings key with an exact value, bypassing deepMerge's
- * add/update-only recursion for that key. Needed whenever a caller must DELETE a
- * property from a nested object (categoryMap, siteLimits) — deepMerge can only
- * ever add or overwrite keys it sees in the patch, so a patch built by locally
- * deleting a key and passing the smaller object leaves the old key untouched in
- * storage (arrays don't have this problem: deepMerge replaces them wholesale).
+ * add/update-only recursion for that key. For map settings prefer the entry helpers
+ * below; this is the escape hatch for replacing a whole value.
  */
 export async function saveSettingsKey(key, value) {
-  const current = await getSettings();
-  const next = { ...current, [key]: value };
-  await chrome.storage.local.set({ [K.SETTINGS]: next });
-  return next;
+  return withSettingsLock(async () => writeSettingsUnlocked({ ...(await getSettings()), [key]: value }));
+}
+
+async function editMapSetting(key, edit) {
+  if (!MAP_SETTINGS.includes(key)) throw new Error(`"${key}" is not a map setting (${MAP_SETTINGS.join(', ')})`);
+  return withSettingsLock(async () => {
+    const current = await getSettings();
+    const map = { ...current[key] };
+    edit(map);
+    return writeSettingsUnlocked({ ...current, [key]: map });
+  });
+}
+
+/** Add or replace one entry of a map setting (categoryMap / siteLimits). */
+export function setSettingsMapEntry(key, entryKey, value) {
+  return editMapSetting(key, (map) => { map[entryKey] = value; });
+}
+
+/** Add or replace many entries of a map setting in a single write. */
+export function setSettingsMapEntries(key, entries) {
+  return editMapSetting(key, (map) => { Object.assign(map, entries); });
+}
+
+/** Delete many entries of a map setting in a single write. */
+export function removeSettingsMapEntries(key, entryKeys) {
+  return editMapSetting(key, (map) => { for (const k of entryKeys) delete map[k]; });
+}
+
+/** Delete one entry of a map setting. Deleting a missing entry is a no-op. */
+export function removeSettingsMapEntry(key, entryKey) {
+  return editMapSetting(key, (map) => { delete map[entryKey]; });
 }
 
 export async function getIndex() {
@@ -171,32 +235,116 @@ export async function addVisit(dateKey, domain) {
   await ensureIndexed(dateKey);
 }
 
+// ---- focus session history ----
+// One entry per finished or early-ended session: { start, end, cycles, completedCycles,
+// workedMs, endedEarly }. Capped so it can never grow without bound.
+const FOCUS_LOG_MAX = 300;
+
+export async function getFocusLog() {
+  return (await chrome.storage.local.get(K.FOCUS_LOG))[K.FOCUS_LOG] || [];
+}
+
+export async function addFocusLog(entry) {
+  const list = await getFocusLog();
+  list.push(entry);
+  await chrome.storage.local.set({ [K.FOCUS_LOG]: list.slice(-FOCUS_LOG_MAX) });
+}
+
+export async function clearFocusLog() {
+  await chrome.storage.local.remove(K.FOCUS_LOG);
+}
+
+// ---- session log (opt-in) ----
+// One array per day: [domain, startSec, seconds] where startSec counts from local
+// midnight. Kept apart from the day aggregates so the always-on write path stays small.
+const SESSION_GAP_SECONDS = 5;   // segments closer than this belong to the same visit
+
+/**
+ * Record `seconds` spent on `domain` starting at `startSec`. The worker commits an
+ * open segment at least every minute, so a segment that begins where the last
+ * session for that domain ended extends it instead of starting a new one.
+ */
+export async function recordSession({ dateKey, domain, startSec, seconds }) {
+  if (!domain || !(seconds > 0)) return;
+  const key = K.sess(dateKey);
+  const list = (await chrome.storage.local.get(key))[key] || [];
+  const last = list[list.length - 1];
+  if (last && last[0] === domain && startSec - (last[1] + last[2]) <= SESSION_GAP_SECONDS && startSec >= last[1]) {
+    last[2] = Math.max(last[2], Math.round(startSec + seconds - last[1]));
+  } else {
+    list.push([domain, Math.round(startSec), Math.round(seconds)]);
+  }
+  await chrome.storage.local.set({ [key]: list });
+}
+
+/** Session logs for the given day keys; days that have none are absent from the result. */
+export async function getSessions(keys) {
+  if (!keys.length) return {};
+  const r = await chrome.storage.local.get(keys.map(K.sess));
+  const out = {};
+  for (const key of keys) if (r[K.sess(key)]) out[key] = r[K.sess(key)];
+  return out;
+}
+
+/** Delete every session log (tracked time is untouched). Returns how many days had one. */
+export async function clearSessions() {
+  const all = await chrome.storage.local.get(null);
+  const keys = Object.keys(all).filter((k) => k.startsWith(SESS_PREFIX));
+  if (keys.length) await chrome.storage.local.remove(keys);
+  return keys.length;
+}
+
 export async function pruneOld(retentionDays) {
   if (!retentionDays || retentionDays <= 0) return 0;
   const idx = await getIndex();
   const cutoff = dayKey(new Date(Date.now() - retentionDays * 86400000));
   const remove = idx.filter((k) => k < cutoff);
   if (!remove.length) return 0;
-  await chrome.storage.local.remove(remove.map(K.day));
+  await chrome.storage.local.remove([...remove.map(K.day), ...remove.map(K.sess)]);
   const kept = idx.filter((k) => k >= cutoff);
   await chrome.storage.local.set({ [K.INDEX]: kept });
   return remove.length;
 }
 
+/** Delete specific days (and their session logs), keeping the index and firstDay consistent. */
+export async function removeDays(keys) {
+  const drop = new Set(keys);
+  await chrome.storage.local.remove([...keys.map(K.day), ...keys.map(K.sess)]);
+  const kept = (await getIndex()).filter((k) => !drop.has(k));
+  await chrome.storage.local.set({ [K.INDEX]: kept });
+  await saveMeta({ firstDay: kept[0] || null });
+}
+
 export async function clearAllData() {
   const idx = await getIndex();
   await chrome.storage.local.remove(idx.map(K.day));
+  await clearSessions();
+  await clearFocusLog();
   await chrome.storage.local.set({ [K.INDEX]: [] });
   await saveMeta({ firstDay: null });
 }
 
-/** Full snapshot for export / backup. */
-export async function exportAll() {
-  const settings = await getSettings();
+/**
+ * Credentials stored in settings.backup. They live on this device only: a
+ * snapshot (file export, cloud backup, custom endpoint) must never carry them,
+ * or a plaintext export would hand the passphrase / bearer token to whoever
+ * receives the file.
+ */
+function stripSecrets(settings) {
+  return { ...settings, backup: { ...settings.backup, passphrase: '', endpointToken: '' } };
+}
+
+/**
+ * Full snapshot for export / backup (credentials removed — see stripSecrets).
+ * Session logs ride along only when there are any; the 100 KB chrome.storage.sync
+ * backup passes { sessions: false } because they would not fit.
+ */
+export async function exportAll({ sessions = true } = {}) {
+  const settings = stripSecrets(await getSettings());
   const idx = await getIndex();
   const days = await getDays(idx);
   const meta = await getMeta();
-  return {
+  const snapshot = {
     app: 'TimeTrack',
     version: SCHEMA_VERSION,
     exportedAt: Date.now(),
@@ -204,6 +352,13 @@ export async function exportAll() {
     settings,
     days,
   };
+  if (sessions) {
+    const logs = await getSessions(idx);
+    if (Object.keys(logs).length) snapshot.sessions = logs;
+  }
+  const focusLog = await getFocusLog();
+  if (focusLog.length) snapshot.focusLog = focusLog;
+  return snapshot;
 }
 
 /**
@@ -219,7 +374,18 @@ export async function importAll(snapshot, { mode = 'merge', includeSettings = tr
     throw new Error('קובץ גיבוי לא תקין');
   }
   if (includeSettings && snapshot.settings) {
-    await chrome.storage.local.set({ [K.SETTINGS]: deepMerge(DEFAULT_SETTINGS, snapshot.settings) });
+    await withSettingsLock(async () => {
+      const local = await getSettings();
+      const merged = deepMerge(DEFAULT_SETTINGS, snapshot.settings);
+      // Snapshots carry no credentials, so keep this device's own. (A legacy
+      // snapshot that still has them wins — it is the user's own data.)
+      merged.backup.passphrase = merged.backup.passphrase || local.backup.passphrase;
+      merged.backup.endpointToken = merged.backup.endpointToken || local.backup.endpointToken;
+      // "Encrypt backups" with no passphrase would be silently skipped by
+      // backup.js — turn the flag off so the UI never claims protection it lacks.
+      if (merged.backup.encrypt && !merged.backup.passphrase) merged.backup.encrypt = false;
+      await writeSettingsUnlocked(merged);
+    });
   }
   if (mode === 'replace') await clearAllData();
 
@@ -238,6 +404,24 @@ export async function importAll(snapshot, { mode = 'merge', includeSettings = tr
       domainsChanged += changed;
     }
     idx.add(key);
+  }
+  // Session logs: keep whichever side recorded more for a day, so re-importing the same
+  // file never doubles entries (the same idempotence rule as the day aggregates).
+  const incomingSessions = snapshot.sessions || {};
+  const sessionKeys = Object.keys(incomingSessions);
+  if (sessionKeys.length) {
+    const existingSessions = await getSessions(sessionKeys);
+    const total = (list) => (list || []).reduce((sum, e) => sum + (e[2] || 0), 0);
+    for (const key of sessionKeys) {
+      const keep = total(existingSessions[key]) >= total(incomingSessions[key]) ? existingSessions[key] : incomingSessions[key];
+      if (keep && keep.length) writes[K.sess(key)] = keep;
+    }
+  }
+  if (Array.isArray(snapshot.focusLog) && snapshot.focusLog.length) {
+    // union by start time, so re-importing the same file never duplicates sessions
+    const merged = new Map((await getFocusLog()).map((e) => [e.start, e]));
+    for (const e of snapshot.focusLog) merged.set(e.start, e);
+    writes[K.FOCUS_LOG] = [...merged.values()].sort((a, b) => a.start - b.start).slice(-FOCUS_LOG_MAX);
   }
   writes[K.INDEX] = [...idx].sort();
   await chrome.storage.local.set(writes);
@@ -302,6 +486,7 @@ export async function mergeDomainAlias(oldDomain, newDomain) {
   const days = await getDays(idx);
   const writes = {};
   let touched = 0;
+  const touchedKeys = [];
 
   for (const key of idx) {
     const day = days[key];
@@ -315,46 +500,37 @@ export async function mergeDomainAlias(oldDomain, newDomain) {
     delete nextDomains[oldDomain];
     writes[K.day(key)] = { ...day, domains: nextDomains };
     touched++;
+    touchedKeys.push(key);
   }
   if (touched) await chrome.storage.local.set(writes);
 
-  const settings = await getSettings();
-  if (settings.categoryMap[oldDomain] != null) {
-    const map = { ...settings.categoryMap };
-    if (map[newDomain] == null) map[newDomain] = map[oldDomain];
-    delete map[oldDomain];
-    await saveSettingsKey('categoryMap', map);
-  }
-  const freshAfterCat = await getSettings();
-  if (freshAfterCat.siteLimits[oldDomain] != null) {
-    const limits = { ...freshAfterCat.siteLimits };
-    if (limits[newDomain] == null) limits[newDomain] = limits[oldDomain];
-    delete limits[oldDomain];
-    await saveSettingsKey('siteLimits', limits);
-  }
-  const freshAfterLimits = await getSettings();
-  if (freshAfterLimits.blacklist.includes(oldDomain)) {
-    const set = new Set(freshAfterLimits.blacklist);
-    set.delete(oldDomain);
-    set.add(newDomain);
-    await saveSettings({ blacklist: [...set] });
-  }
-  const freshAfterBlacklist = await getSettings();
-  for (const listKey of ['blockDomains', 'allowDomains']) {
-    const list = freshAfterBlacklist.focus[listKey] || [];
-    if (list.includes(oldDomain)) {
-      const set = new Set(list);
-      set.delete(oldDomain);
-      set.add(newDomain);
-      await saveSettings({ focus: { [listKey]: [...set] } });
+  // Session logs name domains too; only days where the old domain had time can mention it.
+  if (touchedKeys.length) {
+    const logs = await getSessions(touchedKeys);
+    const sessionWrites = {};
+    for (const [key, list] of Object.entries(logs)) {
+      if (list.some((e) => e[0] === oldDomain)) {
+        sessionWrites[K.sess(key)] = list.map((e) => (e[0] === oldDomain ? [newDomain, e[1], e[2]] : e));
+      }
     }
+    if (Object.keys(sessionWrites).length) await chrome.storage.local.set(sessionWrites);
   }
-  if (freshAfterBlacklist.pinnedSites && freshAfterBlacklist.pinnedSites.includes(oldDomain)) {
-    const set = new Set(freshAfterBlacklist.pinnedSites);
-    set.delete(oldDomain);
-    set.add(newDomain);
-    await saveSettings({ pinnedSites: [...set] });
+
+  // Re-point every per-domain setting. An existing entry for the new domain wins.
+  const settings = await getSettings();
+  for (const mapKey of ['categoryMap', 'siteLimits']) {      // the domain-keyed maps (budgets are keyed by category)
+    if (settings[mapKey][oldDomain] == null) continue;
+    if (settings[mapKey][newDomain] == null) await setSettingsMapEntry(mapKey, newDomain, settings[mapKey][oldDomain]);
+    await removeSettingsMapEntry(mapKey, oldDomain);
   }
+  const rename = (list) => [...new Set(list.map((d) => (d === oldDomain ? newDomain : d)))];
+  const patch = {};
+  if (settings.blacklist.includes(oldDomain)) patch.blacklist = rename(settings.blacklist);
+  if ((settings.pinnedSites || []).includes(oldDomain)) patch.pinnedSites = rename(settings.pinnedSites);
+  for (const listKey of ['blockDomains', 'allowDomains']) {
+    if ((settings.focus[listKey] || []).includes(oldDomain)) (patch.focus ||= {})[listKey] = rename(settings.focus[listKey]);
+  }
+  if (Object.keys(patch).length) await saveSettings(patch);
 
   return touched;
 }
@@ -373,6 +549,9 @@ function sumDh(a = {}, b = {}) {
 const MIGRATIONS = [
   // v2 added the per-domain hourly map `dh`. It's additive and lazily populated,
   // so old day records need no rewrite — stats treat a missing `dh` as "no data".
+  // v3 added the opt-in per-day session logs (ttt_sess_<day>) and settings.sessionLog
+  // (defaults to false via DEFAULT_SETTINGS). Also additive: nothing to transform.
+  { to: 3, run: async () => {} },
 ];
 
 export async function migrate() {

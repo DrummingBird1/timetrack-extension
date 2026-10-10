@@ -6,7 +6,12 @@
 import { test, before } from 'node:test';
 import assert from 'node:assert/strict';
 
-let clock = Date.now();
+// The fake clock starts at today's local noon, not "now": tests advance it by tens of minutes, and
+// starting at 23:40 would push a visit across midnight and split it between two day records (the
+// suite used to fail when run in the last hour of the day).
+const noon = new Date();
+noon.setHours(12, 0, 0, 0);
+let clock = noon.getTime();
 const realNow = Date.now;
 Date.now = () => clock;
 
@@ -70,6 +75,7 @@ globalThis.chrome = {
   },
 };
 
+await import('./helpers/node-locales.js');   // i18n loads dictionaries via fetch(); give Node a disk loader
 const storage = await import('../../extension/src/lib/storage.js');
 const { dayKey } = await import('../../extension/src/lib/utils.js');
 function send(msg) { return new Promise((res) => { messageListener(msg, {}, res); }); }
@@ -175,7 +181,7 @@ test('daily limit fires an 80% warning then a 100%-reached notification, each on
 });
 
 test('snoozing a limit notification suppresses it for the snooze window', async () => {
-  await storage.saveSettings({ siteLimits: { 'youtube.com': 5 } }); // 300s
+  await storage.setSettingsMapEntry('siteLimits', 'youtube.com', 5); // 300s
   const today = dayKey();
   await chrome.storage.local.remove([`ttt_day_${today}`, 'ttt_index']);
   await send({ type: 'settingsChanged' });
@@ -198,7 +204,81 @@ test('snoozing a limit notification suppresses it for the snooze window', async 
   await settle();
   assert.equal(createdNotifications.filter((n) => n.id.startsWith('site:')).length, 0, 'snoozed limit should not fire');
 
-  await storage.saveSettings({ siteLimits: {} }); // restore for later tests
+  await storage.removeSettingsMapEntry('siteLimits', 'youtube.com'); // restore for later tests (the old saveSettings({siteLimits:{}}) was a silent no-op)
+});
+
+test('the session log records visits only when enabled, and one visit survives the 1-minute tick', async () => {
+  await send({ type: 'setEnabled', value: true });
+  await storage.saveSettings({ blacklist: [], notifyLimits: false, sessionLog: false });
+  await send({ type: 'settingsChanged' });
+  const today = dayKey();
+  const sessionKeys = () => [...chrome.storage.local._store.keys()].filter((k) => k.startsWith('ttt_sess_'));
+  for (const k of sessionKeys()) await chrome.storage.local.remove(k);
+
+  await send({ type: 'flush' });
+  clock += 60_000;
+  await send({ type: 'flush' });
+  assert.deepEqual(sessionKeys(), [], 'off by default: nothing is recorded');
+
+  await storage.saveSettings({ sessionLog: true });
+  await send({ type: 'settingsChanged' });
+  await send({ type: 'flush' });          // open a fresh segment under the new setting
+  for (let i = 0; i < 3; i++) { clock += 60_000; await send({ type: 'flush' }); }   // three ticks on the same site
+  const logs = (await storage.getSessions([today]))[today];
+  assert.equal(logs.length, 1, 'three contiguous ticks are one visit');
+  assert.equal(logs[0][0], 'youtube.com');
+  assert.ok(logs[0][2] >= 175 && logs[0][2] <= 181, `expected ~180s, got ${logs[0][2]}`);
+
+  activeTab.url = 'https://github.com/x';                      // switch site, then back
+  await listeners.idle._fire('active');
+  await send({ type: 'flush' });
+  clock += 30_000; await send({ type: 'flush' });
+  activeTab.url = 'https://youtube.com/watch?v=1';
+  await send({ type: 'flush' });
+  clock += 30_000; await send({ type: 'flush' });
+  const after = (await storage.getSessions([today]))[today].map((e) => e[0]);
+  assert.deepEqual(after, ['youtube.com', 'github.com', 'youtube.com'], 'each switch starts a new visit');
+  await storage.saveSettings({ sessionLog: false });
+});
+
+test('a weekly category budget fires an 80% warning then a reached notification, each once, and can be snoozed', async () => {
+  const { startOfWeek } = await import('../../extension/src/lib/utils.js');
+  await storage.saveSettings({ notifyLimits: true, dailyLimitMinutes: 0, blacklist: [], weekStart: 0 });
+  await storage.setSettingsMapEntry('categoryBudgets', 'entertainment', 10);          // youtube.com is entertainment → 600 s
+  const today = dayKey();
+  const weekKey = dayKey(startOfWeek(new Date(), 0));
+  await chrome.storage.local.remove([`ttt_day_${today}`, 'ttt_index']);
+  await send({ type: 'settingsChanged' });
+
+  await storage.addTime({ dateKey: today, domain: 'youtube.com', seconds: 500, hour: 12 });   // 83%
+  createdNotifications = [];
+  await send({ type: 'flush' });
+  await settle();
+  const warnId = `cat:${weekKey}:entertainment:80`;
+  assert.ok(createdNotifications.some((n) => n.id === warnId), 'expected the 80% category-budget warning');
+
+  await storage.addTime({ dateKey: today, domain: 'youtube.com', seconds: 150, hour: 12 });   // 108%
+  createdNotifications = [];
+  await send({ type: 'flush' });
+  await settle();
+  assert.ok(createdNotifications.some((n) => n.id === `cat:${weekKey}:entertainment`), 'expected the budget-reached notification');
+
+  createdNotifications = [];
+  await send({ type: 'flush' });
+  await settle();
+  assert.equal(createdNotifications.filter((n) => n.id.startsWith('cat:')).length, 0, 'both are deduped for the week');
+
+  // a snoozed budget stays quiet even when it would otherwise fire
+  await chrome.storage.session.remove('ttt_notified');
+  await chrome.notifications.onButtonClicked._fire(warnId, 0);
+  await settle();
+  createdNotifications = [];
+  await send({ type: 'flush' });
+  await settle();
+  assert.equal(createdNotifications.filter((n) => n.id.startsWith('cat:')).length, 0, 'snoozed budget should not fire');
+
+  await storage.removeSettingsMapEntry('categoryBudgets', 'entertainment');
+  await chrome.storage.session.remove(['ttt_notified', 'ttt_snoozed']);
 });
 
 test('a storage-quota warning fires once when local storage crosses the threshold', async () => {

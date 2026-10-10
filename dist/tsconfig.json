@@ -1,0 +1,32 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ES2022",
+    "moduleResolution": "Bundler",
+    "allowJs": true,
+    "checkJs": true,
+    "noEmit": true,
+    "strict": false,
+    "noImplicitAny": false,
+    "strictNullChecks": false,
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable",
+      "WebWorker"
+    ],
+    "types": [
+      "chrome",
+      "node"
+    ],
+    "skipLibCheck": true,
+    "noUnusedLocals": true
+  },
+  "include": [
+    "../extension/**/*.js",
+    "types/*.d.ts"
+  ],
+  "exclude": [
+    "../extension/**/node_modules"
+  ]
+}

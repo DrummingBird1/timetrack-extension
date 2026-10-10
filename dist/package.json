@@ -5,6 +5,17 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test"
-  }
+    "test": "node --test",
+    "test:e2e": "node --test --test-concurrency=1 e2e/*.e2e.mjs",
+    "fixture": "node tools/fixture.mjs",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.3.4",
+    "@types/node": "^26.6.4",
+    "axe-core": "^4.14.0",
+    "puppeteer": "^25.12.0",
+    "typescript": "^7.0.2"
+  },
+  "packageManager": "pnpm@11.18.0"
 }

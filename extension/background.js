@@ -7,14 +7,15 @@
 // trackable. State survives SW restarts via chrome.storage.session.
 
 import {
-  getSettings, saveSettings, addTime, addVisit, getDay, getDays, pruneOld,
+  getSettings, saveSettings, addTime, addVisit, recordSession, addFocusLog, getDay, getDays, pruneOld,
   saveMeta, getMeta, migrate, storageFootprint,
 } from './src/lib/storage.js';
-import { domainFromUrl, dayKey, rangeKeys, addDays, formatDuration } from './src/lib/utils.js';
+import { domainFromUrl, dayKey, rangeKeys, addDays, formatDuration, startOfWeek, keysBetween } from './src/lib/utils.js';
 import { runAutoBackup } from './src/lib/backup.js';
 import { categorize } from './src/lib/categories.js';
-import { aggregateDomains, totalTime, topSites, byCategory, focusScore } from './src/lib/stats.js';
+import { aggregateDomains, totalTime, topSites, byCategory, focusScore, categorySeconds } from './src/lib/stats.js';
 import { setLang, t } from './src/lib/i18n.js';
+import { parseMessage } from './src/lib/messages.js';
 
 const SESSION_STATE = 'ttt_state';
 const FOCUS_STATE = 'ttt_focus';
@@ -70,7 +71,8 @@ function sessionLive(focus) {
   return !!(focus && focus.active && Date.now() < focus.endsAt);
 }
 function blockingLive(focus) {
-  return sessionLive(focus) && focus.phase === 'work';
+  const paused = focus.pausedUntil && Date.now() < focus.pausedUntil;     // "allow 10 minutes" on the block page
+  return sessionLive(focus) && focus.phase === 'work' && !paused;
 }
 function isBlocked(domain, settings, focus) {
   if (!domain || !blockingLive(focus)) return false;
@@ -105,6 +107,17 @@ async function enforceAllTabs(settings, focus) {
   } catch { /* tabs permission edge */ }
 }
 
+/** Append a finished / early-ended session to the history (sessions under 30 s of work are noise). */
+async function logFocusSession(focus, endedEarly) {
+  const total = focus.totalCycles || 1;
+  const inWork = focus.phase === 'work';
+  const completedCycles = endedEarly ? (inWork ? focus.cycle || 0 : (focus.cycle || 0) + 1) : total;
+  const partialMs = endedEarly && inWork ? Math.max(0, focus.workMs - Math.max(0, focus.endsAt - Date.now())) : 0;
+  const workedMs = Math.round(completedCycles * focus.workMs + partialMs);
+  if (workedMs < 30000) return;
+  await addFocusLog({ start: focus.startedAt || Date.now(), end: Date.now(), cycles: total, completedCycles, workedMs, endedEarly });
+}
+
 function focusView(focus) {
   return {
     active: sessionLive(focus),
@@ -113,15 +126,22 @@ function focusView(focus) {
     remaining: sessionLive(focus) ? Math.max(0, (focus.endsAt - Date.now()) / 1000) : 0,
     cycle: (focus.cycle || 0) + 1,
     totalCycles: focus.totalCycles || 1,
+    strict: !!focus.strict,
+    pausedUntil: focus.pausedUntil || 0,
   };
 }
 
 /** Advance the Pomodoro state machine when a phase ends. Returns current focus. */
 async function checkFocusExpiry() {
   const focus = await loadFocus();
+  if (focus.active && focus.pausedUntil && Date.now() >= focus.pausedUntil) {
+    focus.pausedUntil = 0;                                   // the snooze is over: block again, including tabs opened meanwhile
+    await saveFocus(focus);
+    await enforceAllTabs(await getSettings(), focus);
+  }
   if (!focus.active || Date.now() < focus.endsAt) return focus;
   const settings = await getSettings();
-  setLang(settings.language || 'he');
+  await setLang(settings.language || 'he');
 
   if (focus.phase === 'work') {
     const completed = (focus.cycle || 0) + 1;      // work cycles finished so far
@@ -147,6 +167,7 @@ async function checkFocusExpiry() {
     }
     focus.active = false;
     await saveFocus(focus);
+    await logFocusSession(focus, false);
     notify(t('notif.focusComplete.title'), t('notif.focusComplete.body'));
     return focus;
   }
@@ -200,6 +221,10 @@ async function refresh() {
       if (elapsed >= 1) {
         const when = new Date(st.since);
         await addTime({ dateKey: dayKey(when), domain: st.domain, seconds: elapsed, hour: when.getHours() });
+        if (settings.sessionLog) {
+          const startSec = when.getHours() * 3600 + when.getMinutes() * 60 + when.getSeconds();
+          await recordSession({ dateKey: dayKey(when), domain: st.domain, startSec, seconds: elapsed });
+        }
       }
     }
 
@@ -221,6 +246,7 @@ async function refresh() {
     // 3) Limits / goals / focus expiry.
     await checkLimits(settings, info.domain);
     await checkFocusExpiry();
+    await checkFocusSchedule(settings);
     updateBadge(settings, counting);
   });
 }
@@ -265,7 +291,7 @@ async function setSnoozeKey(key) {
  */
 async function checkLimits(settings, domain) {
   if (!settings.notifyLimits) return;
-  setLang(settings.language || 'he');
+  await setLang(settings.language || 'he');
   const today = dayKey();
   const day = await getDay(today);
   if (!day) return;
@@ -305,6 +331,29 @@ async function checkLimits(settings, domain) {
       }
     }
   }
+
+  // Weekly category budget — only worth reading the week's days when the site being
+  // visited belongs to a budgeted category.
+  const category = domain ? categorize(domain, settings.categoryMap) : null;
+  const budgetMinutes = category ? settings.categoryBudgets?.[category] : 0;
+  if (budgetMinutes > 0) {
+    const weekStart = startOfWeek(new Date(), settings.weekStart);
+    const baseKey = `cat:${dayKey(weekStart)}:${category}`;
+    if (!(await isSnoozedKey(baseKey))) {
+      const limitSec = budgetMinutes * 60;
+      const used = categorySeconds(await getDays(keysBetween(weekStart, new Date())), settings.categoryMap)[category] || 0;
+      const vars = { c: t(`category.${category}`), n: budgetMinutes };
+      const warnKey = `${baseKey}:80`;
+      if (!set[warnKey] && used >= limitSec * 0.8 && used < limitSec) {
+        notifyLimit(warnKey, t('notif.catBudgetWarn.title'), t('notif.catBudgetWarn.body', vars));
+        await markNotified(warnKey);
+      }
+      if (!set[baseKey] && used >= limitSec) {
+        notifyLimit(baseKey, t('notif.catBudget.title'), t('notif.catBudget.body', vars));
+        await markNotified(baseKey);
+      }
+    }
+  }
 }
 
 function notify(title, message, id) {
@@ -339,7 +388,7 @@ function notifyLimit(id, title, message) {
 chrome.notifications.onButtonClicked.addListener(async (notificationId, buttonIndex) => {
   if (buttonIndex !== 0) return;
   const baseKey = notificationId.endsWith(':80') ? notificationId.slice(0, -3) : notificationId;
-  if (baseKey.startsWith('daily:') || baseKey.startsWith('site:')) {
+  if (baseKey.startsWith('daily:') || baseKey.startsWith('site:') || baseKey.startsWith('cat:')) {
     await setSnoozeKey(baseKey);
     try { chrome.notifications.clear(notificationId); } catch { /* already gone */ }
   }
@@ -352,7 +401,7 @@ async function maybeStorageWarning(settings) {
   if (Date.now() - (meta.lastStorageWarning || 0) < 7 * 86400000) return;
   const bytes = await storageFootprint();
   if (bytes < STORAGE_WARN_BYTES) return;
-  setLang(settings.language || 'he');
+  await setLang(settings.language || 'he');
   notify(t('notif.storageWarn.title'), t('notif.storageWarn.body', { v: `${(bytes / (1024 * 1024)).toFixed(0)} MB` }));
   await saveMeta({ lastStorageWarning: Date.now() });
 }
@@ -412,7 +461,7 @@ async function maybeWeeklySummary() {
   if (new Date().getDay() !== settings.weekStart) return;
   const meta = await getMeta();
   if (Date.now() - (meta.lastWeeklySummary || 0) < 6 * 86400000) return;
-  setLang(settings.language || 'he');
+  await setLang(settings.language || 'he');
 
   const keys = rangeKeys(7, addDays(new Date(), -1)); // previous 7 days
   const days = await getDays(keys);
@@ -481,11 +530,14 @@ chrome.runtime.onInstalled.addListener(async (details) => {
 
 // ---- messaging (popup + dashboard) ----
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  if (sender && sender.id !== chrome.runtime.id) return false;   // only this extension's own pages
   handleMessage(msg).then(sendResponse).catch((e) => sendResponse({ error: e.message }));
   return true; // async
 });
 
-async function handleMessage(msg) {
+async function handleMessage(raw) {
+  const msg = parseMessage(raw);
+  if (!msg) return { ok: false, unknown: true };
   switch (msg.type) {
     case 'getLive': {
       // Read-only: report the current segment without committing. Time is
@@ -540,12 +592,49 @@ async function handleMessage(msg) {
     }
     case 'stopFocus': {
       const focus = await loadFocus();
+      if (sessionLive(focus) && focus.strict && focus.phase === 'work') return { active: true, refused: true };
+      if (sessionLive(focus)) await logFocusSession(focus, true);
       focus.active = false;
       await saveFocus(focus);
       return { active: false };
     }
+    case 'snoozeFocus': {
+      const focus = await loadFocus();
+      if (!sessionLive(focus) || focus.phase !== 'work' || focus.strict) return { ...focusView(focus), refused: true };
+      const minutes = Math.max(1, Math.min(30, msg.minutes || 10));
+      focus.pausedUntil = Date.now() + minutes * 60000;
+      await saveFocus(focus);
+      return focusView(focus);
+    }
     default:
       return { ok: false, unknown: true };
+  }
+}
+
+// Auto-start sessions at their scheduled weekday + time. A slot fires if its time passed
+// within the last 10 minutes (the worker may sleep between ticks) and has not fired today.
+const SCHEDULE_FIRED = 'ttt_sched_fired';
+const SCHEDULE_GRACE_MS = 10 * 60 * 1000;
+async function checkFocusSchedule(settings) {
+  const schedule = settings.focus.schedule || [];
+  if (!schedule.length) return;
+  if (sessionLive(await loadFocus())) return;
+  const now = new Date();
+  const today = dayKey(now);
+  const stored = (await chrome.storage.session.get(SCHEDULE_FIRED))[SCHEDULE_FIRED] || {};
+  const fired = stored.day === today ? stored : { day: today, slots: {} };
+  for (let i = 0; i < schedule.length; i++) {
+    const slot = schedule[i];
+    if (!slot || !Array.isArray(slot.days) || !slot.days.includes(now.getDay())) continue;
+    const [h, m] = String(slot.time).split(':').map(Number);
+    if (!Number.isFinite(h) || !Number.isFinite(m)) continue;
+    const late = now.getTime() - new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m).getTime();
+    const id = i + '@' + slot.time;
+    if (late < 0 || late > SCHEDULE_GRACE_MS || fired.slots[id]) continue;
+    fired.slots[id] = true;
+    await chrome.storage.session.set({ [SCHEDULE_FIRED]: fired });
+    await startFocusSession(slot.minutes);
+    return;
   }
 }
 
@@ -568,10 +657,13 @@ async function startFocusSession(minutesArg) {
     blockDomains: f.blockDomains || [],
     allowCategories: f.allowCategories || [],
     allowDomains: f.allowDomains || [],
+    strict: !!f.strict,
+    pausedUntil: 0,
+    startedAt: Date.now(),
   };
   await saveFocus(focus);
   await enforceAllTabs(settings, focus);
-  setLang(settings.language || 'he');
+  await setLang(settings.language || 'he');
   const cyc = focus.totalCycles > 1 ? t('notif.focusStart.cycles', { n: focus.totalCycles }) : '';
   notify(t('notif.focusStart.title'), t('notif.focusStart.body', { m: workMin, cyc }));
   return focusView(focus);
@@ -584,14 +676,19 @@ chrome.commands.onCommand.addListener(async (command) => {
     const next = await saveSettings({ enabled: !settings.enabled });
     await refresh();
     updateBadge(next, false);
-    setLang(next.language || 'he');
+    await setLang(next.language || 'he');
     notify('TimeTrack', next.enabled ? t('notif.trackOn') : t('notif.trackOff'));
   } else if (command === 'start-focus') {
     const focus = await loadFocus();
     if (sessionLive(focus)) {
+      await setLang((await getSettings()).language || 'he');
+      if (focus.strict && focus.phase === 'work') {
+        notify('TimeTrack', t('blocked.strict'));
+        return;
+      }
+      await logFocusSession(focus, true);
       focus.active = false;
       await saveFocus(focus);
-      setLang((await getSettings()).language || 'he');
       notify('TimeTrack', t('notif.focusEndedCmd'));
     } else await startFocusSession();
   } else if (command === 'open-dashboard') {

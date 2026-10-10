@@ -46,6 +46,13 @@ Une extension Chrome moderne qui mesure le temps actif que vous passez sur chaqu
 - **Export/import** — JSON (sauvegarde complète) et CSV (tout, ou seulement la vue actuelle).
 - **Six langues** — hébreu, anglais, arabe, russe, espagnol et français, avec changement en direct.
 - **Confidentialité** — aucune permission `host`, aucun suivi externe, aucun appel réseau involontaire (les icônes sont générées localement), suppression automatique des anciennes données.
+- **Budgets hebdomadaires par catégorie** — plafonnez le temps par catégorie chaque semaine, avec des barres de progression dans la Vue d'ensemble et des alertes à 80 % et 100 %.
+- **Plus d'analyses** — tendance hebdomadaire du score de concentration avec votre meilleure semaine, série d'objectifs atteints, et comparaison de deux périodes au choix avec les plus grands changements par site.
+- **Sessions de concentration plus malignes** — démarrage automatique planifié, mode strict sans sortie anticipée, option « pause de 10 minutes » sur la page de blocage et historique des sessions.
+- **Journal des visites optionnel** — désactivé par défaut : enregistre l'heure de début et la durée de chaque visite pour voir combien de temps durent vos visites sur un site. Il reste sur votre appareil.
+- **Pensé pour les gros historiques** — des milliers de sites s'affichent instantanément ; sélectionnez-en plusieurs pour les catégoriser, les limiter, les épingler ou arrêter de les suivre d'un coup.
+- **Import CSV souple et données de démo** — importez des CSV TimeTrack ou de type RescueTime, ou essayez le tableau de bord avec des données de démo supprimables en un clic.
+- **Accessible** — navigation au clavier, étiquettes pour lecteurs d'écran et contraste de texte AA, vérifiés automatiquement avec axe-core.
 
 ## 🚀 Installation
 
@@ -67,15 +74,19 @@ Cliquer sur l'icône ouvre une popup rapide ; le bouton « Ouvrir le tableau de 
 
 ## 🔧 Développement
 
-Aucune étape de build, aucune dépendance — du JavaScript modulaire pur. La suite de tests (74 cas) s'exécute depuis `dist` :
+Aucune étape de build ni dépendance dans l'extension elle-même — du JavaScript modulaire pur. Les outils de développement sont dans `dist` (tests unitaires, d'intégration, en navigateur réel et d'accessibilité, plus une vérification des types) :
 
 ```bash
 cd dist
-npm test               # node --test (no external dependencies)
-pwsh build.ps1          # builds the upload zip from extension/
+pnpm test                                    # unit + integration tests (no browser needed)
+pnpm install                                 # dev tooling: Puppeteer, TypeScript, axe-core
+pnpm typecheck                               # tsc --checkJs over the extension
+pnpm exec puppeteer browsers install chrome  # one-time: download Chrome for Testing
+pnpm test:e2e                                # real-browser tests
+pwsh build.ps1                               # builds the upload zip from extension/
 ```
 
-Pour l'architecture, le modèle de données et une carte complète des fichiers, voir **[CLAUDE.md](CLAUDE.md)**.
+Pour l'architecture, le modèle de données et la carte des fichiers, voir **[CLAUDE.md](CLAUDE.md)** ; pour contribuer (ou ajouter une langue), voir **[CONTRIBUTING.md](CONTRIBUTING.md)**.
 
 ## 📁 Structure
 
@@ -84,6 +95,7 @@ extension/               ← the shippable extension (load/upload this folder)
   manifest.json          — extension config (MV3)
   background.js          — the tracking engine (service worker)
   src/lib/                — shared logic (storage, stats, charts, backup, crypto, i18n)
+  src/lib/locales/        — UI languages (JSON, one file each)
   src/popup/               — the quick popup
   src/dashboard/            — the full dashboard
   src/blocked/              — the focus-mode block page

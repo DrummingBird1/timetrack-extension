@@ -162,21 +162,59 @@ test('summarizeSnapshot reports day range, total time, and site count', () => {
   assert.deepEqual(storage.summarizeSnapshot({ days: {} }), { dayCount: 0, firstDay: null, lastDay: null, totalSeconds: 0, siteCount: 0 });
 });
 
-// ---------- settings key deletion (real bug: deepMerge can't delete nested keys) ----------
-test('saveSettingsKey actually deletes a key from a nested object (saveSettings cannot)', async () => {
-  await storage.saveSettings({ categoryMap: { 'a.com': 'social', 'b.com': 'news' } });
-  // Reproduce the bug: building a patch with the key already removed locally and
-  // passing it through saveSettings (deepMerge) leaves the old key untouched,
-  // because deepMerge only ever adds/overwrites keys it sees in the patch.
-  const afterBrokenPattern = { ...(await storage.getSettings()).categoryMap };
-  delete afterBrokenPattern['a.com'];
-  const viaSaveSettings = await storage.saveSettings({ categoryMap: afterBrokenPattern });
-  assert.ok('a.com' in viaSaveSettings.categoryMap, 'documents the deepMerge limitation this test guards against');
+// ---------- map settings (deepMerge can add/overwrite keys but never delete them) ----------
+test('map settings are edited with set/removeSettingsMapEntry, and removal really deletes', async () => {
+  await storage.setSettingsMapEntry('categoryMap', 'a.com', 'social');
+  await storage.setSettingsMapEntry('categoryMap', 'b.com', 'news');
+  let s = await storage.getSettings();
+  assert.deepEqual(s.categoryMap, { 'a.com': 'social', 'b.com': 'news' });
 
-  // saveSettingsKey does a full top-level replace, so deletion actually works.
-  const viaSaveSettingsKey = await storage.saveSettingsKey('categoryMap', afterBrokenPattern);
-  assert.ok(!('a.com' in viaSaveSettingsKey.categoryMap), 'a.com should be gone');
-  assert.equal(viaSaveSettingsKey.categoryMap['b.com'], 'news', 'other keys are preserved');
+  s = await storage.removeSettingsMapEntry('categoryMap', 'a.com');
+  assert.ok(!('a.com' in s.categoryMap), 'a.com should be gone from storage, not just from the returned object');
+  assert.equal(s.categoryMap['b.com'], 'news', 'other keys are preserved');
+  assert.ok(!('a.com' in (await storage.getSettings()).categoryMap), 'and it stays gone after a fresh read');
+
+  await storage.setSettingsMapEntry('siteLimits', 'x.com', 30);
+  assert.equal((await storage.removeSettingsMapEntry('siteLimits', 'x.com')).siteLimits['x.com'], undefined);
+  assert.equal((await storage.removeSettingsMapEntry('siteLimits', 'never-set.com')).siteLimits['never-set.com'], undefined, 'removing a missing key is a no-op');
+});
+
+test('batch helpers set and remove many map entries in one go', async () => {
+  const many = Object.fromEntries(Array.from({ length: 500 }, (_, i) => [`site${i}.com`, 'news']));
+  let s = await storage.setSettingsMapEntries('categoryMap', many);
+  assert.equal(Object.keys(s.categoryMap).length, 500);
+  s = await storage.removeSettingsMapEntries('categoryMap', ['site0.com', 'site1.com', 'not-there.com']);
+  assert.equal(Object.keys(s.categoryMap).length, 498);
+  assert.ok(!('site0.com' in (await storage.getSettings()).categoryMap));
+  await storage.removeSettingsMapEntries('categoryMap', Object.keys(many));
+  assert.deepEqual((await storage.getSettings()).categoryMap, {});
+});
+
+test('saveSettings refuses map settings, so the deepMerge deletion bug cannot be reintroduced', async () => {
+  await assert.rejects(() => storage.saveSettings({ categoryMap: { 'a.com': 'news' } }), /categoryMap.*removeSettingsMapEntry/s);
+  await assert.rejects(() => storage.saveSettings({ siteLimits: {} }), /siteLimits/);
+  await assert.rejects(() => storage.setSettingsMapEntry('notAMap', 'k', 1), /not a map setting/);
+  await storage.saveSettings({ blacklist: ['ok.com'] });   // other keys are unaffected
+});
+
+test('concurrent settings writes do not overwrite each other (read-modify-write is serialized)', async () => {
+  await Promise.all([
+    storage.saveSettings({ theme: 'dark' }),
+    storage.saveSettings({ idleSeconds: 90 }),
+    storage.saveSettings({ focus: { cycles: 3 } }),
+    storage.saveSettings({ backup: { autoIntervalHours: 6 } }),
+    storage.setSettingsMapEntry('categoryMap', 'p.com', 'news'),
+    storage.setSettingsMapEntry('siteLimits', 'q.com', 15),
+    storage.saveSettings({ weekStart: 1 }),
+  ]);
+  const s = await storage.getSettings();
+  assert.equal(s.theme, 'dark');
+  assert.equal(s.idleSeconds, 90);
+  assert.equal(s.focus.cycles, 3);
+  assert.equal(s.backup.autoIntervalHours, 6);
+  assert.equal(s.categoryMap['p.com'], 'news');
+  assert.equal(s.siteLimits['q.com'], 15);
+  assert.equal(s.weekStart, 1);
 });
 
 // ---------- domain alias-merge ----------
@@ -186,11 +224,9 @@ test('mergeDomainAlias sums (not max-merges) two distinct domains across the ful
   await storage.addTime({ dateKey: '2025-06-01', domain: 'new-brand.com', seconds: 100, hour: 10 });
   await storage.addVisit('2025-06-01', 'new-brand.com');
   await storage.addTime({ dateKey: '2025-06-02', domain: 'old-brand.com', seconds: 50, hour: 8 });
-  await storage.saveSettings({
-    categoryMap: { 'old-brand.com': 'productivity' },
-    siteLimits: { 'old-brand.com': 30 },
-    blacklist: ['unrelated.com'],
-  });
+  await storage.setSettingsMapEntry('categoryMap', 'old-brand.com', 'productivity');
+  await storage.setSettingsMapEntry('siteLimits', 'old-brand.com', 30);
+  await storage.saveSettings({ blacklist: ['unrelated.com'] });
 
   const touched = await storage.mergeDomainAlias('old-brand.com', 'new-brand.com');
   assert.equal(touched, 2); // 06-01 and 06-02 both had old-brand.com
@@ -236,25 +272,30 @@ test('backupToSync → restoreFromSync round-trips (plaintext)', async () => {
 });
 
 test('large history stays within the 100 KB sync quota (trims oldest)', async () => {
-  await seed(600, 6); // well over 100 KB serialized
-  const localDaysBefore = (await storage.getIndex()).length;
-  assert.equal(localDaysBefore, 600);
+  // Distinct values per day so it does not compress to nothing: 3 years of realistic browsing.
+  const snapshot = buildSnapshot({ days: 1100, seed: 5, endDate: new Date(2026, 5, 1) });
+  const dayCount = Object.keys(snapshot.days).length;      // the fixture skips days with no activity
+  await storage.importAll(snapshot, { mode: 'replace', includeSettings: false });
+  assert.equal((await storage.getIndex()).length, dayCount);
 
   const r = await backup.backupToSync(); // must NOT throw a quota error
   assert.ok(r.trimmed > 0, 'expected oldest days to be trimmed for sync');
+  assert.equal(r.days + r.trimmed, dayCount);
 
   let total = 0;
   for (const [k, v] of chrome.storage.sync._store) total += k.length + JSON.stringify(v).length;
   assert.ok(total <= QUOTA_BYTES_SYNC, `sync total ${total}B exceeds quota`);
 
   // local data is untouched by trimming
-  assert.equal((await storage.getIndex()).length, 600);
+  assert.equal((await storage.getIndex()).length, dayCount);
 
-  // restore brings back the (trimmed) set, newest days survive
+  // restore brings back the (trimmed) set, and it is the NEWEST days that survive
   await storage.clearAllData();
   const res = await backup.restoreFromSync({ mode: 'replace' });
-  assert.ok(res.days > 0 && res.days < 600);
-  assert.ok(await storage.getDay('2026-08-23') || true); // newest-ish survives
+  assert.equal(res.days, r.days);
+  assert.ok(res.days > 0 && res.days < dayCount);
+  const index = await storage.getIndex();
+  assert.equal(index[index.length - 1], '2026-06-01');
 });
 
 test('encrypted sync backup is ciphertext and restores with passphrase', async () => {
@@ -395,4 +436,246 @@ test('a malformed encrypted envelope (bad salt) fails gracefully, not with a raw
   const env = await crypto.encryptJSON({ x: 1 }, 'pw');
   const malformed = { ...env, salt: 'not-valid-base64!!!' };
   await assert.rejects(() => crypto.decryptJSON(malformed, 'pw'), /סיסמת הפענוח שגויה או שהקובץ פגום/);
+});
+
+// ---------- secrets never leave the device inside a snapshot ----------
+test('exportAll never includes the backup passphrase or endpoint token', async () => {
+  await seed(2);
+  await storage.saveSettings({ backup: { encrypt: true, passphrase: 'correct horse battery', endpointToken: 'tok_secret_123', endpointUrl: 'https://example.com/x' } });
+  const snap = await storage.exportAll();
+  const text = JSON.stringify(snap);
+  assert.ok(!text.includes('correct horse battery'), 'passphrase leaked into the export');
+  assert.ok(!text.includes('tok_secret_123'), 'endpoint token leaked into the export');
+  assert.equal(snap.settings.backup.endpointUrl, 'https://example.com/x', 'non-secret backup settings must still be exported');
+});
+
+test('a plaintext cloud backup does not contain the passphrase either', async () => {
+  await seed(2);
+  // encrypt is OFF but a passphrase is still stored — the old code leaked it in the clear.
+  await storage.saveSettings({ backup: { encrypt: false, passphrase: 'leftover-passphrase' } });
+  await backup.backupToSync();
+  const all = await chrome.storage.sync.get(null);
+  assert.ok(!JSON.stringify(all).includes('leftover-passphrase'), 'passphrase leaked into chrome.storage.sync');
+});
+
+test('restoring a snapshot keeps this device\'s local passphrase and endpoint token', async () => {
+  await seed(2);
+  await storage.saveSettings({ backup: { encrypt: true, passphrase: 'local-pass', endpointToken: 'local-token' } });
+  const snap = await storage.exportAll(); // secrets stripped
+  await storage.importAll(snap, { mode: 'replace' });
+  const s = await storage.getSettings();
+  assert.equal(s.backup.passphrase, 'local-pass');
+  assert.equal(s.backup.endpointToken, 'local-token');
+  assert.equal(s.backup.encrypt, true);
+});
+
+test('restoring "encrypt: on" onto a device with no passphrase turns encryption off instead of silently skipping it', async () => {
+  await seed(2);
+  await storage.saveSettings({ backup: { encrypt: true, passphrase: 'p' } });
+  const snap = await storage.exportAll();
+  installChrome(); // a brand-new device: no local passphrase
+  await storage.importAll(snap, { mode: 'replace' });
+  const s = await storage.getSettings();
+  assert.equal(s.backup.passphrase, '');
+  assert.equal(s.backup.encrypt, false, 'encrypt must not stay on without a passphrase — the UI would claim protection that is not applied');
+});
+
+test('an old snapshot that still carries secrets can be restored (backward compatible)', async () => {
+  const legacy = { app: 'TimeTrack', version: 2, days: {}, settings: { backup: { encrypt: true, passphrase: 'old-pass', endpointToken: 'old-token' } } };
+  await storage.importAll(legacy, { mode: 'merge' });
+  const s = await storage.getSettings();
+  assert.equal(s.backup.passphrase, 'old-pass');
+  assert.equal(s.backup.endpointToken, 'old-token');
+});
+
+// ---------- realistic data: the quota maths must count JSON escaping ----------
+// chrome.storage.sync measures key + JSON.stringify(value). Every `"` in a chunk of
+// serialized JSON becomes `\"`, so a chunk of N characters can cost far more than N
+// bytes. Hand-rolled test data had too few quotes to notice; real histories (lots of
+// quoted domain / hour keys) blow the 8 KB per-item limit in a real browser.
+const { buildSnapshot } = await import('../tools/fixture.mjs');
+
+for (const encrypt of [false, true]) {
+  test(`cloud backup of a realistic 1-year history fits the sync quotas (${encrypt ? 'encrypted' : 'plaintext'})`, async () => {
+    await storage.importAll(buildSnapshot({ days: 365, seed: 11, endDate: new Date(2026, 5, 1) }), { mode: 'replace', includeSettings: false });
+    if (encrypt) await storage.saveSettings({ backup: { encrypt: true, passphrase: 'a-reasonably-long-passphrase' } });
+    const localBefore = (await storage.getIndex()).length;
+
+    const r = await backup.backupToSync();           // must not throw a per-item / total quota error
+    assert.ok(r.chunks >= 1);
+    assert.equal((await storage.getIndex()).length, localBefore, 'local history untouched');
+
+    const all = await chrome.storage.sync.get(null);
+    let total = 0;
+    for (const [k, v] of Object.entries(all)) {
+      const size = k.length + JSON.stringify(v).length;
+      assert.ok(size <= QUOTA_BYTES_PER_ITEM, `item ${k} is ${size}B, over the ${QUOTA_BYTES_PER_ITEM}B per-item quota`);
+      total += size;
+    }
+    assert.ok(total <= QUOTA_BYTES_SYNC, `sync total ${total}B over the ${QUOTA_BYTES_SYNC}B quota`);
+
+    // and it must restore: the newest days survive, nothing is corrupted by the chunking
+    const peek = await backup.peekSync();
+    assert.ok(peek.dayCount > 30, `only ${peek.dayCount} days survived`);
+    assert.equal(peek.lastDay, '2026-06-01');
+  });
+}
+
+test('a non-ASCII history chunks by UTF-8 bytes, not characters', async () => {
+  const days = {};
+  for (let d = 1; d <= 28; d++) {
+    const key = `2026-02-${String(d).padStart(2, '0')}`;
+    const domains = {};
+    for (let i = 0; i < 40; i++) domains[`אתר-מספר-${i}.example.co.il`] = { t: 100 + i, v: 1, dh: { 9: 100 + i } };
+    days[key] = { domains, hours: new Array(24).fill(0) };
+  }
+  await storage.importAll({ app: 'TimeTrack', version: 2, days }, { mode: 'replace', includeSettings: false });
+  await backup.backupToSync();
+  for (const [k, v] of Object.entries(await chrome.storage.sync.get(null))) {
+    const bytes = new TextEncoder().encode(k + JSON.stringify(v)).length;
+    assert.ok(bytes <= QUOTA_BYTES_PER_ITEM, `${k} is ${bytes} UTF-8 bytes`);
+  }
+});
+
+// ---------- compressed sync backups ----------
+// The sync copy is gzip-compressed (and, when enabled, encrypted AFTER compressing — ciphertext does
+// not compress). Real histories keep ~4-5x more days than the uncompressed format did.
+const syncMetaAndRaw = () => {
+  const meta = chrome.storage.sync._store.get('ttt_sync_meta');
+  let raw = '';
+  for (let i = 0; i < meta.chunks; i++) raw += chrome.storage.sync._store.get(`ttt_sync_${i}`);
+  return { meta, raw };
+};
+
+for (const encrypt of [false, true]) {
+  test(`compressed sync backup keeps over a year of a realistic history and restores it exactly (${encrypt ? 'encrypted' : 'plaintext'})`, async () => {
+    const snapshot = buildSnapshot({ days: 1031, seed: 7, endDate: new Date(2026, 5, 1) });
+    await storage.importAll(snapshot, { mode: 'replace', includeSettings: false });
+    if (encrypt) await storage.saveSettings({ backup: { encrypt: true, passphrase: 'a-reasonably-long-passphrase' } });
+
+    const r = await backup.backupToSync();
+    // Before compression this kept only ~80 of these 1,031 days.
+    const total = Object.keys(snapshot.days).length;
+    assert.ok(total > 900);
+    assert.ok(r.days >= 300, `only ${r.days} of ${total} days fit`);
+    assert.equal(r.days + r.trimmed, total);
+    assert.ok(r.bytes < r.rawBytes / 2, `payload ${r.bytes}B vs raw ${r.rawBytes}B — compression did nothing`);
+
+    const { meta, raw } = syncMetaAndRaw();
+    assert.equal(meta.gzip, true);
+    assert.equal(meta.days, r.days);
+    assert.equal(typeof meta.sha, 'string');
+    const stored = JSON.parse(raw);
+    if (encrypt) { assert.equal(stored.enc, 'aes-256-gcm'); assert.equal(stored.zip, 'gzip'); assert.ok(!raw.includes('example')); }
+    else assert.equal(stored.zip, 'gzip');
+
+    // wipe the device and restore: every surviving day must be exactly what was backed up
+    await storage.clearAllData();
+    if (encrypt) await storage.saveSettings({ backup: { passphrase: '' } });   // a fresh device: passphrase typed in at restore
+    const res = await backup.restoreFromSync({ mode: 'replace', passphrase: encrypt ? 'a-reasonably-long-passphrase' : undefined });
+    assert.equal(res.days, r.days);
+    const index = await storage.getIndex();
+    assert.equal(index.length, r.days);
+    assert.equal(index[index.length - 1], '2026-06-01');
+    for (const key of [index[0], index[Math.floor(index.length / 2)], index[index.length - 1]]) {
+      assert.deepEqual(await storage.getDay(key), snapshot.days[key], `${key} came back different`);
+    }
+  });
+}
+
+test('a one-year history is no longer trimmed at all', async () => {
+  const snapshot = buildSnapshot({ days: 365, seed: 11, endDate: new Date(2026, 5, 1) });
+  await storage.importAll(snapshot, { mode: 'replace', includeSettings: false });
+  const r = await backup.backupToSync();
+  assert.equal(r.trimmed, 0);
+  assert.equal((await backup.peekSync()).dayCount, Object.keys(snapshot.days).length);
+});
+
+test('backups written by older versions (uncompressed plain / encrypted) still restore', async () => {
+  await seed(6);
+  const snapshot = await storage.exportAll({ sessions: false });
+  const before = await storage.getDay('2025-01-03');
+  const writeLegacy = async (payload) => {
+    chrome.storage.sync._store.clear();
+    const chunks = JSON.stringify(payload).match(/[\s\S]{1,3000}/g);
+    chunks.forEach((c, i) => chrome.storage.sync._store.set(`ttt_sync_${i}`, c));
+    // the old meta had no gzip / sha fields
+    chrome.storage.sync._store.set('ttt_sync_meta', { chunks: chunks.length, ts: 1, trimmed: 0, encrypted: !!payload.enc });
+  };
+
+  await writeLegacy(snapshot);
+  await storage.clearAllData();
+  assert.equal((await backup.restoreFromSync({ mode: 'replace' })).days, 6);
+  assert.deepEqual(await storage.getDay('2025-01-03'), before);
+
+  await writeLegacy(await crypto.encryptJSON(snapshot, 'old-passphrase'));     // no `zip` field
+  await storage.clearAllData();
+  assert.equal((await backup.restoreFromSync({ mode: 'replace', passphrase: 'old-passphrase' })).days, 6);
+  assert.deepEqual(await storage.getDay('2025-01-03'), before);
+});
+
+test('a restore that catches a half-synced backup (chunks from two different backups) fails with a friendly retry message', async () => {
+  await storage.importAll(buildSnapshot({ days: 365, seed: 11, endDate: new Date(2026, 5, 1) }), { mode: 'replace', includeSettings: false });
+  await backup.backupToSync();
+  const first = new Map(chrome.storage.sync._store);
+  await storage.addTime({ dateKey: '2026-06-01', domain: 'changed.example', seconds: 500, hour: 10 });
+  await backup.backupToSync();
+  // another device has received the new meta but is still holding the OLD copy of the last chunk
+  const lastNew = chrome.storage.sync._store.get('ttt_sync_meta').chunks - 1;
+  const lastOld = first.get('ttt_sync_meta').chunks - 1;
+  assert.notEqual(first.get(`ttt_sync_${lastOld}`), chrome.storage.sync._store.get(`ttt_sync_${lastNew}`), 'precondition: the two backups differ in their tail');
+  chrome.storage.sync._store.set(`ttt_sync_${lastNew}`, first.get(`ttt_sync_${lastOld}`));
+  await assert.rejects(() => backup.restoreFromSync({ mode: 'replace' }), /הסנכרון עדיין לא הסתיים|פגום/);
+});
+
+test('a failed backup never costs the user the previous one', async () => {
+  await seed(5);
+  await backup.backupToSync();
+  const good = new Map(chrome.storage.sync._store);
+
+  await seed(6);
+  const realSet = chrome.storage.sync.set.bind(chrome.storage.sync);
+  chrome.storage.sync.set = async () => { throw new Error('MAX_WRITE_OPERATIONS_PER_MINUTE exceeded'); };
+  await assert.rejects(() => backup.backupToSync(), /MAX_WRITE_OPERATIONS/);
+  chrome.storage.sync.set = realSet;
+
+  assert.deepEqual([...chrome.storage.sync._store], [...good], 'the old backup must be untouched');
+  await storage.clearAllData();
+  assert.equal((await backup.restoreFromSync({ mode: 'replace' })).days, 5);
+});
+
+test('when the old and new copies do not fit the quota together, the old one is released and the backup still succeeds', async () => {
+  await seed(5);
+  await backup.backupToSync();
+  await seed(6);
+  const realSet = chrome.storage.sync.set.bind(chrome.storage.sync);
+  let calls = 0;
+  chrome.storage.sync.set = async (o) => { if (calls++ === 0) throw new Error('QUOTA_BYTES quota exceeded'); return realSet(o); };
+  const r = await backup.backupToSync();
+  assert.equal(calls, 2);
+  assert.equal(r.days, 6);
+  assert.equal((await backup.peekSync()).dayCount, 6);
+});
+
+test('chunks left over from a bigger earlier backup are removed', async () => {
+  await storage.importAll(buildSnapshot({ days: 365, seed: 11, endDate: new Date(2026, 5, 1) }), { mode: 'replace', includeSettings: false });
+  const big = await backup.backupToSync();
+  await storage.clearAllData();
+  await seed(3);
+  const small = await backup.backupToSync();
+  assert.ok(small.chunks < big.chunks);
+  const keys = [...chrome.storage.sync._store.keys()].filter((k) => k.startsWith('ttt_sync_') && k !== 'ttt_sync_meta');
+  assert.equal(keys.length, small.chunks, 'stale chunks would waste the sync quota');
+});
+
+test('a corrupted compressed payload fails with the friendly "corrupted backup" message', async () => {
+  await seed(3);
+  await backup.backupToSync();
+  const meta = chrome.storage.sync._store.get('ttt_sync_meta');
+  delete meta.sha;                                                   // skip the checksum so the decoder is what notices
+  const raw = syncMetaAndRaw().raw.replace(/"data":"[^"]{20}/, '"data":"AAAAAAAAAAAAAAAAAAAA');
+  chrome.storage.sync._store.set('ttt_sync_0', raw);
+  for (let i = 1; i < meta.chunks; i++) chrome.storage.sync._store.delete(`ttt_sync_${i}`);
+  meta.chunks = 1;
+  await assert.rejects(() => backup.restoreFromSync({ mode: 'replace' }), /פגום/);
 });
