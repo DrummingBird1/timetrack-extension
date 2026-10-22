@@ -223,6 +223,7 @@ test('settings: category mappings can be added and removed (deepMerge deletion r
   await page.click('#catAdd');
   await waitFor(async () => (await ext.getSettings()).categoryMap['example.org'] === 'news', { message: 'mapping saved' });
   assert.equal(await count('#catList .cat-chip'), 1);
+  await page.waitForSelector('#catList .cat-chip .x');
   await page.click('#catList .cat-chip .x');
   await waitFor(async () => !('example.org' in (await ext.getSettings()).categoryMap), { message: 'mapping removed from storage' });
 });
@@ -232,12 +233,14 @@ test('settings: untracked sites and focus domain lists can be added and removed'
   await page.type('#blacklistDomain', 'tracker.example.com');
   await page.click('#blacklistAdd');
   await waitFor(async () => (await ext.getSettings()).blacklist.includes('tracker.example.com'));
+  await page.waitForSelector('#blacklistList .cat-chip .x');
   await page.click('#blacklistList .cat-chip .x');
   await waitFor(async () => !(await ext.getSettings()).blacklist.includes('tracker.example.com'));
 
   await page.type('#focusBlockDomainInput', 'distraction.example.com');
   await page.click('#focusBlockDomainAdd');
   await waitFor(async () => (await ext.getSettings()).focus.blockDomains.includes('distraction.example.com'));
+  await page.waitForSelector('#focusBlockDomains .cat-chip .x');
   await page.click('#focusBlockDomains .cat-chip .x');
   await waitFor(async () => !(await ext.getSettings()).focus.blockDomains.includes('distraction.example.com'));
 });
@@ -411,6 +414,7 @@ test('category budgets: add in Settings, progress shows on Overview, remove hide
   assert.match(await text('#budgetPanel .cb-time'), /\d+%/);
 
   await openTab('settings');
+  await page.waitForSelector('#budgetList .cat-chip .x');
   await page.click('#budgetList .cat-chip .x');
   await waitFor(async () => !('entertainment' in (await ext.getSettings()).categoryBudgets), { message: 'budget removed from storage' });
   await openTab('overview');
@@ -479,6 +483,7 @@ test('settings: strict mode toggle and scheduled focus sessions', async () => {
   assert.deepEqual(slot, { days: [1, 3], time: '08:30', minutes: 45 });
   assert.equal(await count('#scheduleList .cat-chip'), 1);
 
+  await page.waitForSelector('#scheduleList .cat-chip .x');
   await page.click('#scheduleList .cat-chip .x');
   await waitFor(async () => (await ext.getSettings()).focus.schedule.length === 0, { message: 'schedule removed' });
 });
