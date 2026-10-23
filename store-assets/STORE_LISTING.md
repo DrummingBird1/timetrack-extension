@@ -2,7 +2,8 @@
 
 Everything you need to paste into the Developer Dashboard, plus the answers the
 review form expects. Store-listing text can be entered per language in the
-dashboard (no manifest changes needed). Current release: **1.5.0**.
+dashboard (no manifest changes needed). Current release: **1.6.0** (1.5.0 is already in
+the Store).
 
 ---
 
@@ -93,7 +94,7 @@ dashboard (no manifest changes needed). Current release: **1.5.0**.
 | `favicon` *(optional)* | Requested **only at runtime** if the user turns on "Real site icons". Displays site icons from Chrome's **local** favicon cache (`_favicon/`) instead of the generated letter avatars. No network requests and no extra data access; off by default, and removed when the user turns it off. |
 | `web_accessible_resources` (block page) | During a focus session, redirect a blocked tab to the extension's own block page. Uses `use_dynamic_url`, so sites cannot probe for the extension. |
 
-1.5.0 adds **no new permissions** (enforced by `dist/tests/package.test.js`).
+1.5.0 and 1.6.0 add **no new permissions** (enforced by `dist/tests/package.test.js`).
 
 ---
 
@@ -145,7 +146,7 @@ Upload `screenshots/he/*` to the Hebrew listing and `screenshots/en/*` to the En
       accessibility (axe-core). A final manual smoke test of a fresh profile is still wise.
 - [x] Host the privacy policy publicly — https://drummingbird1.github.io/timetrack-extension/
 - [x] Screenshots and promo graphics captured / generated (section 5).
-- [x] `version` in `extension/manifest.json` is **1.5.0**; `CHANGELOG.md` and the
+- [x] `version` in `extension/manifest.json` is **1.6.0**; `CHANGELOG.md` and the
       release banner are in place.
 - [x] Merge `v2-foundations` into `main` (this also redeploys the site so the live
       privacy policy matches 1.5.0).
@@ -156,7 +157,10 @@ Upload `screenshots/he/*` to the Hebrew listing and `screenshots/en/*` to the En
       [GitHub Release](https://github.com/DrummingBird1/timetrack-extension/releases/tag/v1.5.0)
       (its 45 files are identical to `extension/`). Upload that zip — or build the same one
       with `pwsh dist/build.ps1` → `dist/timetrack-v1.5.0.zip`.
-- [ ] **Upload the zip** in the Developer Dashboard (items above are all ready).
+- [x] **Upload the zip** in the Developer Dashboard — 1.5.0 is in the Store.
+- [ ] **1.6.0:** merge the release PR to `main`, push the tag `v1.6.0`, then upload that
+      Release's `timetrack-v1.6.0.zip`. The release changes no permissions and no stored or
+      transmitted data, so the permission justifications and data disclosures are unchanged.
 - [ ] Bump `version` for every later upload.
 
 ### Already hardened

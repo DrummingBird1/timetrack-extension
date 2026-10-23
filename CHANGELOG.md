@@ -4,6 +4,36 @@ All notable changes to TimeTrack are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/); this project uses
 [Semantic Versioning](https://semver.org/).
 
+## [1.6.0] — 2026-10-23
+
+Smarter defaults for the sites people actually visit, in all six UI languages. The
+built-in category table was written for Hebrew/English-market sites, so a Russian, Spanish,
+French or Arabic user saw most of their browsing under "Other". No new permissions, no change
+to what is stored or where it can go (the privacy policy is unchanged).
+
+### Added
+- **472 more built-in site categories (93 → 565)**: news outlets, banks, shops, marketplaces,
+  streaming and social networks common in Israel, Spanish- and French-speaking countries,
+  Russia and the Arab world, plus more global sites (reference, developer and AI tools,
+  messaging, gaming). Your own category overrides still win over every default.
+- `categories.test.js`: guards the table's shape (valid categories, no silently duplicated
+  keys) and pins the subdomain keys that can't match (below) so new ones can't slip in.
+
+### Fixed
+- **Some built-in categories could never match.** With the default "group subdomains"
+  setting the tracker stores only the registrable domain (`chat.openai.com` is stored as
+  `openai.com`), but 13 defaults were keyed by subdomain. `openai.com` and `mozilla.org`
+  now have their own entries, so ChatGPT's legacy host and MDN are categorized. Gmail, Docs,
+  Drive, Meet and Teams still show under "Other" with grouping on, on purpose: `google.com`
+  is Gmail, Docs and Search at once, so there is no single honest category for it.
+
+### Changed
+- **The Public Suffix List is refreshed** (list version 2026-10-22), so newly added
+  hosting suffixes group correctly.
+- Categories are applied when stats are computed, so the extra defaults also re-categorize
+  your existing history: sites that used to be "Other" can now count as shopping or social
+  (distracting) or as productivity, which can move the focus score a little.
+
 ## [1.5.0] — 2026-10-10
 
 A foundations-first release: a real-browser test suite that immediately exposed several

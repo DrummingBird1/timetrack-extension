@@ -12,7 +12,7 @@ cloud backup, and data export.
 All data lives **locally** in `chrome.storage.local`. Nothing is sent anywhere
 unless the user explicitly enables a backup target. The UI is available in six
 languages (Hebrew is the default and the source language; Hebrew and Arabic are RTL).
-Current version: **1.5.0** (see `CHANGELOG.md`).
+Current version: **1.6.0** (see `CHANGELOG.md`).
 
 ## Repository layout
 
@@ -87,8 +87,8 @@ node dist/make-release-banner.mjs <version> <themeKey> "<tagline>"
 This writes `store-assets/promo/releases/v<version>.svg`. Pick (or add) a
 `themeKey` in that script that reflects what the release actually shipped —
 e.g. `cloud` for a backup-focused release, `globe` for a languages/i18n
-release, `shield` for a security/hardening release — the same way v1.1.0–v1.5.0
-were themed (see the script's `THEMES` map; add a new icon there for a release
+release, `shield` for a security/hardening release, `tag` for a categories release —
+the same way v1.1.0–v1.6.0 were themed (see the script's `THEMES` map; add a new icon there for a release
 that doesn't fit the existing ones, rather than reusing a mismatched theme).
 
 **The banner must be committed and pushed to `main` before referencing it in
@@ -523,7 +523,7 @@ Four layers, all from `dist/` (pnpm — see "How to run"):
 
 - **Unit** — `pnpm test` (`node --test`, ~190 cases, seconds). The pure modules are
   imported directly: `utils`, `stats`, `analytics` (budgets, weekly trend, goal streak,
-  comparison), `sessions`, `csvimport`, `demo`, `psl`, `messages`, and cross-language
+  comparison), `sessions`, `csvimport`, `demo`, `psl`, `categories`, `messages`, and cross-language
   key/placeholder parity across the six locale files (`i18n.test.js`).
 - **Integration** (`backup.integration.test.js`, `tracking.integration.test.js`,
   `focus.integration.test.js`) — the real `storage.js`/`backup.js`/`crypto.js` and the
@@ -565,8 +565,8 @@ backup endpoint.
 
 Kept in sync with the Trello board's **🔜 Next up** and **🗄️ Backlog** lists.
 
-- **Chrome Web Store submission** of `timetrack-v1.5.0.zip` (the owner has a developer
-  account) — pack in `store-assets/STORE_LISTING.md`.
+- **Chrome Web Store submission** of `timetrack-v1.6.0.zip` (1.5.0 is already in the
+  Store; the owner has a developer account) — pack in `store-assets/STORE_LISTING.md`.
 - **Multi-device merge** — needs a design decision first (which device wins, how to
   merge day records, whether `storage.sync` is the transport).
 - **A dedicated Webtime Tracker importer** — needs a real sample of their export (the
@@ -574,10 +574,16 @@ Kept in sync with the Trello board's **🔜 Next up** and **🗄️ Backlog** li
 - **Edge Add-ons listing** (same zip) and a possible **Firefox port** — see
   `store-assets/BROWSER_SUPPORT.md`; none of it is tested.
 - Google Drive OAuth backup (see note above).
-- Extending `DEFAULT_DOMAIN_CATEGORY` (`categories.js`) for sites more common outside
-  Israeli/US/global-English usage — the UI is in six languages, but the built-in
-  category defaults still skew toward he/en-market sites.
-- Refresh `psl.js` every few months (`node dist/tools/build-psl.mjs`).
+- **Multi-product hosts** (`google.com` = Gmail + Docs + Search, `microsoft.com`,
+  `office.com`) fall under "Other" when subdomains are grouped, and a category map can't
+  split them. Fixing it means keeping the subdomain for a short built-in list of such hosts
+  — which changes the stored domain keys (and so splits existing history), so it needs a
+  design decision first.
+- Keep extending `DEFAULT_DOMAIN_CATEGORY` (`categories.js`) as sites turn up under "Other";
+  1.6.0 took it from 93 to 565 entries. Keys must be registrable domains
+  (`categories.test.js` enforces it).
+- Refresh `psl.js` every few months (`node dist/tools/build-psl.mjs`); last refreshed in
+  1.6.0 (list version 2026-10-22).
 - Deferred ideas: tags, achievements, a command palette, a weekly email summary (only
   an in-browser notification exists today).
 
@@ -592,4 +598,5 @@ secret-free backups and a fixed sync quota, the full PSL, category budgets, week
 focus-score trend / best week / goal streak, any-range comparison, scheduled / strict /
 snoozable focus + history, opt-in session log, bulk site actions at scale, tolerant CSV
 import, demo-data onboarding, lazy locales, a typed worker protocol, and CI/release/site
-automation.
+automation. Done in 1.6.0: 472 more built-in site categories for the he/es/fr/ru/ar
+markets (plus the registrable-domain fix for subdomain-keyed defaults) and a refreshed PSL.
