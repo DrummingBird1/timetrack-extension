@@ -37,146 +37,117 @@ them there; `docs.test.js` fails if this list and those files disagree.
 
 ### Detailed description
 
+Plain text: the Store's description box has no Markdown. Ready-to-paste copies, one file per
+language, are in [`listing-text/`](listing-text/). They are generated from this section with
+`node dist/tools/listing-text.mjs`, and `docs.test.js` fails if they go stale.
+
 **English**
 
-> TimeTrack measures how much time you actually spend on each website — privacy-
-> first and local-first. All data stays on your device; nothing is sent anywhere
-> unless you turn on a backup you control.
+> TimeTrack measures how much time you actually spend on each website — privacy-first and local-first. All data stays on your device; nothing is sent anywhere unless you turn on a backup you control.
 >
-> • Accurate active-time tracking (pauses when you're idle)
-> • Smart category breakdown + a 0–100 focus score, with a weekly trend and your best week
-> • Weekday × hour heatmap, trends, and a comparison of any two date ranges
+> • Accurate active-time tracking: only focused, non-idle time counts (optionally also while audio plays)
+> • Smart categories: hundreds of popular sites in every supported language are sorted for you, and every category is editable — plus a 0–100 focus score with a weekly trend and your best week
+> • Weekday × hour heatmap, plain-language weekly insights, and a comparison of any two date ranges
 > • Per-site drill-down with daily and hourly timelines (and an optional visit log)
-> • Daily & weekly goals, per-site limits, weekly category budgets, and a weekly summary
-> • Focus mode (Pomodoro) — block distracting categories or sites, or allow-list only
->   what you need; schedule sessions, use strict mode, or take a 10-minute pass
-> • Sites tab built for large histories, with bulk actions (categorize, limit, pin, untrack)
+> • Daily & weekly goals, per-site limits, weekly category budgets, 80% warnings and a weekly summary
+> • Focus mode (Pomodoro): block distracting categories or sites, or allow only what you need; schedule sessions, use strict mode, or take a 10-minute pass
+> • Sites tab built for large histories: search all of it, pin sites, merge a renamed site's history, and categorize, limit or untrack many sites at once
 > • Import from CSV (including RescueTime-style exports); export JSON/CSV any time
-> • Encrypted cloud backup with a restore preview before you commit
-> • Fully keyboard- and screen-reader-accessible; light/dark themes
-> • Six languages — Hebrew, English, Arabic, Russian, Spanish, French
+> • Cloud backup to your Google account or your own HTTPS server, with optional AES-256 encryption and a restore preview
+> • Keyboard shortcuts, keyboard and screen-reader accessibility, light and dark themes
+> • Six languages with live switching: Hebrew, English, Arabic, Russian, Spanish, French (right-to-left supported)
 >
-> No external dependencies, no remote code, no analytics, no third-party trackers.
-> Site icons are generated locally so no domain you visit ever leaves your device.
+> No external dependencies, no remote code, no analytics, no third-party trackers. Site icons are generated locally, so no domain you visit ever leaves your device. Old data is deleted automatically after a period you choose.
 
 **עברית**
 
-> TimeTrack מודד כמה זמן אתה באמת מבלה בכל אתר — בגישה שמכבדת פרטיות ושומרת הכל
-> מקומית. כל הנתונים נשארים במכשיר שלך; שום דבר לא נשלח לשום מקום אלא אם תפעיל
-> גיבוי שאתה שולט בו.
+> TimeTrack מודד כמה זמן אתה באמת מבלה בכל אתר — בגישה שמכבדת פרטיות ושומרת הכל מקומית. כל הנתונים נשארים במכשיר שלך; שום דבר לא נשלח לשום מקום אלא אם תפעיל גיבוי שאתה שולט בו.
 >
-> • מעקב זמן פעיל מדויק (משהה אוטומטית בחוסר פעילות)
-> • פילוח קטגוריות חכם + ציון פוקוס 0–100, עם מגמה שבועית והשבוע הטוב ביותר שלך
-> • מפת חום יום×שעה, מגמות והשוואה בין כל שני טווחי תאריכים
+> • מעקב זמן פעיל מדויק: נספר רק זמן שבו החלון בפוקוס ואתה לא במצב חוסר פעילות (ואופציונלית גם בזמן שמתנגן שמע)
+> • קטגוריות חכמות: מאות אתרים פופולריים בכל אחת מהשפות הנתמכות ממוינים בשבילך, וכל קטגוריה ניתנת לעריכה — בנוסף ציון פוקוס 0–100 עם מגמה שבועית והשבוע הטוב ביותר שלך
+> • מפת חום יום×שעה, תובנות שבועיות בשפה פשוטה והשוואה בין כל שני טווחי תאריכים
 > • פירוט לכל אתר עם ציר זמן יומי ושעתי (ויומן ביקורים אופציונלי)
-> • יעדים יומיים ושבועיים, מגבלות לכל אתר, תקציבים שבועיים לקטגוריות וסיכום שבועי
-> • מצב פוקוס (Pomodoro) — חסימת קטגוריות או אתרים, או רשימת היתר בלבד; סשנים
->   מתוזמנים, מצב קפדני או הפסקה של 10 דקות
-> • לשונית אתרים שמותאמת להיסטוריה גדולה, עם פעולות מרוכזות (קטגוריה, מגבלה, הצמדה, אי-מעקב)
+> • יעדים יומיים ושבועיים, מגבלות לכל אתר, תקציבים שבועיים לקטגוריות, התראות ב-80% וסיכום שבועי
+> • מצב פוקוס (Pomodoro): חסימת קטגוריות או אתרים מסיחים, או רשימת היתר בלבד; סשנים מתוזמנים, מצב קפדני או הפסקה של 10 דקות
+> • לשונית אתרים שמותאמת להיסטוריה גדולה: חיפוש בכל ההיסטוריה, הצמדת אתרים, איחוד ההיסטוריה של אתר ששינה שם, וקטגוריה, מגבלה או אי-מעקב למספר אתרים בבת אחת
 > • ייבוא מ-CSV (כולל קבצי ייצוא בסגנון RescueTime) וייצוא JSON/CSV בכל עת
-> • גיבוי ענן מוצפן עם תצוגה מקדימה לפני שחזור
-> • נגיש במלואו למקלדת ולקוראי מסך; ערכות נושא בהיר/כהה
-> • שש שפות — עברית, אנגלית, ערבית, רוסית, ספרדית, צרפתית
+> • גיבוי ענן לחשבון Google שלך או לשרת HTTPS משלך, עם הצפנת AES-256 אופציונלית ותצוגה מקדימה לפני שחזור
+> • קיצורי מקלדת, נגישות למקלדת ולקוראי מסך, ערכות נושא בהיר וכהה
+> • שש שפות עם החלפה חיה: עברית, אנגלית, ערבית, רוסית, ספרדית, צרפתית (כולל כתיבה מימין לשמאל)
 >
-> ללא תלויות חיצוניות, ללא קוד מרוחק, ללא אנליטיקס וללא מעקב צד-שלישי.
+> ללא תלויות חיצוניות, ללא קוד מרוחק, ללא אנליטיקס וללא מעקב צד-שלישי. סמלי האתרים נוצרים מקומית, כך שאף דומיין שאתה מבקר בו לא עוזב את המכשיר. נתונים ישנים נמחקים אוטומטית אחרי תקופה שאתה קובע.
 
 **العربية**
 
-> يقيس TimeTrack الوقت الذي تقضيه فعليًا في كل موقع، مع إعطاء الأولوية للخصوصية
-> والتخزين المحلي. تبقى جميع البيانات على جهازك، ولا يُرسل أي شيء إلى أي جهة إلا إذا
-> فعّلتَ نسخًا احتياطيًا تتحكم به أنت.
+> يقيس TimeTrack الوقت الذي تقضيه فعليًا في كل موقع، مع إعطاء الأولوية للخصوصية والتخزين المحلي. تبقى جميع البيانات على جهازك، ولا يُرسل أي شيء إلى أي جهة إلا إذا فعّلتَ نسخًا احتياطيًا تتحكم به أنت.
 >
-> • تتبّع دقيق للوقت الفعلي (يتوقف تلقائيًا عند عدم النشاط)
-> • تصنيف ذكي للفئات + درجة تركيز من 0 إلى 100، مع اتجاه أسبوعي وأفضل أسبوع لديك
-> • خريطة حرارية لأيام الأسبوع × الساعات، واتجاهات، ومقارنة بين أي فترتين زمنيتين
+> • تتبّع دقيق للوقت الفعلي: يُحتسب فقط الوقت الذي تكون فيه النافذة في المقدمة ولا تكون خاملًا (واختياريًا أثناء تشغيل الصوت أيضًا)
+> • تصنيفات ذكية: مئات المواقع الشائعة في كل لغة مدعومة مصنّفة لك مسبقًا، وكل تصنيف قابل للتعديل — إضافةً إلى درجة تركيز من 0 إلى 100 مع اتجاه أسبوعي وأفضل أسبوع لديك
+> • خريطة حرارية لأيام الأسبوع × الساعات، ورؤى أسبوعية بلغة بسيطة، ومقارنة بين أي فترتين زمنيتين
 > • تفاصيل لكل موقع مع مخططات زمنية يومية وبالساعة (وسجل زيارات اختياري)
-> • أهداف يومية وأسبوعية، وحدود لكل موقع، وميزانيات أسبوعية للتصنيفات، وملخص أسبوعي
-> • وضع التركيز (Pomodoro) — احجب التصنيفات أو المواقع المشتّتة، أو اسمح فقط بما تحتاجه؛
->   جدولة الجلسات، أو الوضع الصارم، أو استراحة لمدة 10 دقائق
-> • تبويب مواقع مصمم للسجلات الكبيرة، مع إجراءات جماعية (تصنيف، حد، تثبيت، إيقاف التتبع)
+> • أهداف يومية وأسبوعية، وحدود لكل موقع، وميزانيات أسبوعية للتصنيفات، وتنبيهات عند 80%، وملخص أسبوعي
+> • وضع التركيز (Pomodoro): احجب التصنيفات أو المواقع المشتّتة، أو اسمح فقط بما تحتاجه؛ جدولة الجلسات، أو الوضع الصارم، أو استراحة لمدة 10 دقائق
+> • تبويب مواقع مصمم للسجلات الكبيرة: بحث في كل السجل، وتثبيت المواقع، ودمج سجل موقع غيّر اسمه، وتصنيف عدة مواقع أو تحديد حد لها أو إيقاف تتبعها دفعة واحدة
 > • استيراد من CSV (بما في ذلك ملفات التصدير بنمط RescueTime) وتصدير JSON/CSV في أي وقت
-> • نسخ احتياطي سحابي مشفّر مع معاينة قبل الاستعادة
-> • متاح بالكامل للوحة المفاتيح وقارئات الشاشة؛ سمتان فاتحة وداكنة
-> • ست لغات — العبرية والإنجليزية والعربية والروسية والإسبانية والفرنسية
+> • نسخ احتياطي سحابي إلى حساب Google أو إلى خادم HTTPS خاص بك، مع تشفير AES-256 اختياري ومعاينة قبل الاستعادة
+> • اختصارات لوحة المفاتيح، وإتاحة للوحة المفاتيح وقارئات الشاشة، وسمتان فاتحة وداكنة
+> • ست لغات مع تبديل فوري: العبرية والإنجليزية والعربية والروسية والإسبانية والفرنسية (مع دعم الكتابة من اليمين إلى اليسار)
 >
-> بلا تبعيات خارجية، وبلا شيفرة بعيدة، وبلا تحليلات، وبلا متتبّعات من أطراف ثالثة.
-> تُنشأ أيقونات المواقع محليًا، فلا يغادر أي نطاق تزوره جهازك.
+> بلا تبعيات خارجية، وبلا شيفرة بعيدة، وبلا تحليلات، وبلا متتبّعات من أطراف ثالثة. تُنشأ أيقونات المواقع محليًا، فلا يغادر أي نطاق تزوره جهازك. تُحذف البيانات القديمة تلقائيًا بعد المدة التي تحددها.
 
 **Русский**
 
-> TimeTrack измеряет, сколько времени вы действительно проводите на каждом сайте, —
-> с приоритетом приватности и локального хранения. Все данные остаются на вашем
-> устройстве; ничего никуда не отправляется, пока вы сами не включите резервное
-> копирование, которое вы контролируете.
+> TimeTrack измеряет, сколько времени вы действительно проводите на каждом сайте, — с приоритетом приватности и локального хранения. Все данные остаются на вашем устройстве; ничего никуда не отправляется, пока вы сами не включите резервное копирование, которое вы контролируете.
 >
-> • Точный учёт активного времени (автоматически ставится на паузу, когда вы бездействуете)
-> • Умная разбивка по категориям + индекс фокуса от 0 до 100, с недельным трендом и лучшей неделей
-> • Тепловая карта «день недели × час», тренды и сравнение любых двух периодов
+> • Точный учёт активного времени: считается только время, когда окно в фокусе и вы не бездействуете (по желанию — и пока играет звук)
+> • Умные категории: сотни популярных сайтов на каждом из поддерживаемых языков уже разложены по категориям, и любую категорию можно изменить — плюс индекс фокуса от 0 до 100 с недельным трендом и лучшей неделей
+> • Тепловая карта «день недели × час», недельные выводы простым языком и сравнение любых двух периодов
 > • Детализация по каждому сайту с суточной и почасовой шкалой (и необязательным журналом визитов)
-> • Дневные и недельные цели, лимиты для сайтов, недельные бюджеты по категориям и недельная сводка
-> • Режим фокуса (Pomodoro): блокируйте отвлекающие категории или сайты либо разрешите только
->   нужное; расписание сессий, строгий режим или 10-минутная передышка
-> • Вкладка «Сайты» для больших историй с массовыми действиями (категория, лимит, закрепление,
->   прекращение учёта)
+> • Дневные и недельные цели, лимиты для сайтов, недельные бюджеты по категориям, предупреждения на 80 % и недельная сводка
+> • Режим фокуса (Pomodoro): блокируйте отвлекающие категории или сайты либо разрешите только нужное; расписание сессий, строгий режим или 10-минутная передышка
+> • Вкладка «Сайты» для больших историй: поиск по всей истории, закрепление сайтов, объединение истории переименованного сайта, а также массовое назначение категории, лимита или отключение учёта
 > • Импорт из CSV (включая экспорт в стиле RescueTime), экспорт в JSON/CSV в любой момент
-> • Зашифрованное облачное резервное копирование с предпросмотром перед восстановлением
-> • Полная доступность с клавиатуры и для программ чтения с экрана; светлая и тёмная темы
-> • Шесть языков: иврит, английский, арабский, русский, испанский, французский
+> • Облачное резервное копирование в аккаунт Google или на ваш HTTPS-сервер, с необязательным шифрованием AES-256 и предпросмотром перед восстановлением
+> • Горячие клавиши, доступность с клавиатуры и для программ чтения с экрана, светлая и тёмная темы
+> • Шесть языков с мгновенным переключением: иврит, английский, арабский, русский, испанский, французский (с поддержкой письма справа налево)
 >
-> Без внешних зависимостей, без удалённого кода, без аналитики и сторонних трекеров.
-> Значки сайтов создаются локально, поэтому ни один посещённый вами домен не покидает
-> ваше устройство.
+> Без внешних зависимостей, без удалённого кода, без аналитики и сторонних трекеров. Значки сайтов создаются локально, поэтому ни один посещённый вами домен не покидает ваше устройство. Старые данные автоматически удаляются через выбранный вами срок.
 
 **Español**
 
-> TimeTrack mide cuánto tiempo dedica realmente a cada sitio web, con la privacidad y el
-> almacenamiento local por delante. Todos los datos permanecen en su dispositivo; no se
-> envía nada a ningún sitio a menos que active una copia de seguridad que usted controla.
+> TimeTrack mide cuánto tiempo dedica realmente a cada sitio web, con la privacidad y el almacenamiento local por delante. Todos los datos permanecen en su dispositivo; no se envía nada a ningún sitio a menos que active una copia de seguridad que usted controla.
 >
-> • Seguimiento preciso del tiempo activo (se pausa cuando está inactivo)
-> • Desglose inteligente por categorías + una puntuación de enfoque de 0 a 100, con
->   tendencia semanal y su mejor semana
-> • Mapa de calor día de la semana × hora, tendencias y comparación de dos rangos de fechas cualesquiera
+> • Seguimiento preciso del tiempo activo: solo cuenta el tiempo con la ventana en primer plano y sin inactividad (opcionalmente, también mientras suena audio)
+> • Categorías inteligentes: cientos de sitios populares en cada idioma compatible ya vienen clasificados, y cada categoría se puede editar — además de una puntuación de enfoque de 0 a 100 con tendencia semanal y su mejor semana
+> • Mapa de calor día de la semana × hora, resúmenes semanales en lenguaje sencillo y comparación de dos rangos de fechas cualesquiera
 > • Detalle por sitio con líneas de tiempo diarias y por hora (y un registro de visitas opcional)
-> • Objetivos diarios y semanales, límites por sitio, presupuestos semanales por categoría
->   y resumen semanal
-> • Modo concentración (Pomodoro): bloquee categorías o sitios que distraen, o permita solo
->   lo que necesita; programe sesiones, use el modo estricto o tómese un descanso de 10 minutos
-> • Pestaña de sitios pensada para historiales grandes, con acciones masivas (categorizar,
->   limitar, fijar, dejar de seguir)
+> • Objetivos diarios y semanales, límites por sitio, presupuestos semanales por categoría, avisos al 80 % y resumen semanal
+> • Modo concentración (Pomodoro): bloquee categorías o sitios que distraen, o permita solo lo que necesita; programe sesiones, use el modo estricto o tómese un descanso de 10 minutos
+> • Pestaña de sitios pensada para historiales grandes: búsqueda en todo el historial, sitios fijados, fusión del historial de un sitio que cambió de nombre y acciones masivas (categorizar, limitar o dejar de seguir)
 > • Importación desde CSV (incluidas exportaciones al estilo RescueTime) y exportación a JSON/CSV en cualquier momento
-> • Copia de seguridad cifrada en la nube con vista previa antes de restaurar
-> • Totalmente accesible con teclado y lector de pantalla; temas claro y oscuro
-> • Seis idiomas: hebreo, inglés, árabe, ruso, español y francés
+> • Copia de seguridad en la nube en su cuenta de Google o en su propio servidor HTTPS, con cifrado AES-256 opcional y vista previa antes de restaurar
+> • Atajos de teclado, accesibilidad para teclado y lectores de pantalla, temas claro y oscuro
+> • Seis idiomas con cambio en vivo: hebreo, inglés, árabe, ruso, español y francés (con compatibilidad de derecha a izquierda)
 >
-> Sin dependencias externas, sin código remoto, sin analíticas y sin rastreadores de terceros.
-> Los iconos de los sitios se generan localmente, así que ningún dominio que visite sale de su dispositivo.
+> Sin dependencias externas, sin código remoto, sin analíticas y sin rastreadores de terceros. Los iconos de los sitios se generan localmente, así que ningún dominio que visite sale de su dispositivo. Los datos antiguos se eliminan automáticamente pasado el plazo que usted elija.
 
 **Français**
 
-> TimeTrack mesure le temps que vous passez réellement sur chaque site web, en plaçant la
-> confidentialité et le stockage local au premier plan. Toutes les données restent sur votre
-> appareil ; rien n'est envoyé nulle part, sauf si vous activez une sauvegarde que vous contrôlez.
+> TimeTrack mesure le temps que vous passez réellement sur chaque site web, en plaçant la confidentialité et le stockage local au premier plan. Toutes les données restent sur votre appareil ; rien n'est envoyé nulle part, sauf si vous activez une sauvegarde que vous contrôlez.
 >
-> • Suivi précis du temps actif (se met en pause lorsque vous êtes inactif)
-> • Répartition intelligente par catégorie + un score de concentration de 0 à 100, avec
->   tendance hebdomadaire et votre meilleure semaine
-> • Carte de chaleur jour de la semaine × heure, tendances et comparaison de deux périodes au choix
+> • Suivi précis du temps actif : seul compte le temps où la fenêtre est active et où vous n'êtes pas inactif (en option, aussi pendant la lecture audio)
+> • Catégories intelligentes : des centaines de sites populaires dans chaque langue prise en charge sont déjà classés, et chaque catégorie est modifiable — ainsi qu'un score de concentration de 0 à 100 avec tendance hebdomadaire et votre meilleure semaine
+> • Carte de chaleur jour de la semaine × heure, analyses hebdomadaires en langage clair et comparaison de deux périodes au choix
 > • Détail par site avec chronologies quotidienne et horaire (et un journal des visites facultatif)
-> • Objectifs quotidiens et hebdomadaires, limites par site, budgets hebdomadaires par catégorie
->   et résumé hebdomadaire
-> • Mode concentration (Pomodoro) : bloquez les catégories ou les sites qui distraient, ou
->   n'autorisez que l'essentiel ; planifiez des sessions, utilisez le mode strict ou accordez-vous
->   une pause de 10 minutes
-> • Onglet Sites conçu pour les gros historiques, avec des actions groupées (catégoriser,
->   limiter, épingler, ne plus suivre)
+> • Objectifs quotidiens et hebdomadaires, limites par site, budgets hebdomadaires par catégorie, alertes à 80 % et résumé hebdomadaire
+> • Mode concentration (Pomodoro) : bloquez les catégories ou les sites qui distraient, ou n'autorisez que l'essentiel ; planifiez des sessions, utilisez le mode strict ou accordez-vous une pause de 10 minutes
+> • Onglet Sites conçu pour les gros historiques : recherche dans tout l'historique, sites épinglés, fusion de l'historique d'un site renommé et actions groupées (catégoriser, limiter, ne plus suivre)
 > • Import depuis CSV (y compris les exports de type RescueTime) et export JSON/CSV à tout moment
-> • Sauvegarde cloud chiffrée avec aperçu avant restauration
-> • Entièrement accessible au clavier et aux lecteurs d'écran ; thèmes clair et sombre
-> • Six langues : hébreu, anglais, arabe, russe, espagnol, français
+> • Sauvegarde cloud sur votre compte Google ou votre propre serveur HTTPS, avec chiffrement AES-256 facultatif et aperçu avant restauration
+> • Raccourcis clavier, accessibilité au clavier et aux lecteurs d'écran, thèmes clair et sombre
+> • Six langues avec changement à la volée : hébreu, anglais, arabe, russe, espagnol, français (écriture de droite à gauche prise en charge)
 >
-> Sans dépendances externes, sans code distant, sans analytique et sans traceurs tiers.
-> Les icônes des sites sont générées localement : aucun domaine que vous visitez ne quitte votre appareil.
+> Sans dépendances externes, sans code distant, sans analytique et sans traceurs tiers. Les icônes des sites sont générées localement : aucun domaine que vous visitez ne quitte votre appareil. Les anciennes données sont supprimées automatiquement après la durée de votre choix.
 
 ---
 
@@ -267,6 +238,9 @@ Upload `screenshots/he/*` to the Hebrew listing and `screenshots/en/*` to the En
 - [ ] **1.6.0:** merge the release PR to `main`, push the tag `v1.6.0`, then upload that
       Release's `timetrack-v1.6.0.zip`. The release changes no permissions and no stored or
       transmitted data, so the permission justifications and data disclosures are unchanged.
+- [ ] **1.6.0 listing:** in the dashboard's Store listing tab, set the default language to
+      English, add Hebrew, Arabic, Russian, Spanish and French from the language dropdown, and
+      paste each language's `listing-text/description-<lang>.txt` into its Description box.
 - [ ] Bump `version` for every later upload.
 
 ### Already hardened

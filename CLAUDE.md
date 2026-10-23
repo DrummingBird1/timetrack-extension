@@ -25,12 +25,14 @@ Four top-level folders, plus `.github/` and root docs (`README*.md`, `CHANGELOG.
 - **`store-assets/`** — everything for the Chrome Web Store listing itself:
   `PRIVACY.md`, `STORE_LISTING.md`, `BROWSER_SUPPORT.md` (Edge/Firefox notes — not
   tested), `promo/` (promo graphics + per-release banners), `screenshots/` (he/en
-  committed, generated), and `site/` (the marketing website source, deployed to the
-  `gh-pages` branch — see below).
+  committed, generated), `listing-text/` (one paste-ready plain-text description per
+  language, generated from `STORE_LISTING.md`), and `site/` (the marketing website
+  source, deployed to the `gh-pages` branch — see below).
 - **`dist/`** — dev tooling and build output: the test suites (`tests/` unit +
   integration, `e2e/` real-browser), `tools/` (generators, see the file map),
-  `package.json`, `tsconfig.json`, `build.ps1`, and the zip(s) it produces
-  (`timetrack-v<version>.zip`, gitignored). Despite the name, nothing here ships
+  `package.json`, `tsconfig.json`, `build.ps1`, and the zip it produces
+  (`timetrack-v<version>.zip`, gitignored; zips of earlier versions are moved to
+  `archive/old-builds/` by the next build). Despite the name, nothing here ships
   inside the extension — `build.ps1` zips `extension/`'s contents only.
 - **`.github/`** — CI (`workflows/`: `test.yml`, `e2e.yml` named "Checks", `release.yml`,
   `pages.yml`), issue forms and the PR template.
@@ -274,10 +276,10 @@ IPv4/IPv6 addresses and single-label hosts (`localhost`) are never grouped.
 | `src/blocked/*` | Focus-mode block page (with "allow 10 minutes"; none in strict mode). |
 | `dist/tests/*.test.js` | `node:test` unit + integration tests (`pnpm test`); `helpers/` holds the chrome.* mocks. |
 | `dist/e2e/*.e2e.mjs` | Puppeteer end-to-end tests against the real extension; `harness.mjs` launches Chrome for Testing with it loaded. |
-| `dist/tools/` | `add-strings` (add a UI string to all six locales), `build-psl`, `fixture` (deterministic synthetic history), `screenshots` + `promo-tiles` (store graphics), `release-notes` (CHANGELOG → release body). |
+| `dist/tools/` | `add-strings` (add a UI string to all six locales), `build-psl`, `fixture` (deterministic synthetic history), `screenshots` + `promo-tiles` (store graphics), `release-notes` (CHANGELOG → release body), `listing-text` (STORE_LISTING.md descriptions → `store-assets/listing-text/*.txt`). |
 | `dist/tsconfig.json`, `dist/types/` | `tsc --checkJs` setup; `chrome-storage.d.ts` fixes `storage.get()` result typing. |
 | `dist/package.json` | Dev-only (scripts + devDependencies, `"type":"module"`); the extension has no deps/build. |
-| `dist/build.ps1` | Builds `timetrack-v<version>.zip` from `extension/` (store upload). |
+| `dist/build.ps1` | Builds `timetrack-v<version>.zip` from `extension/` (store upload) and moves earlier versions' zips to `archive/old-builds/`. |
 | `dist/make-release-banner.mjs` | Generates a themed per-version GitHub Release banner SVG — see "READMEs and release banners". |
 | `store-assets/PRIVACY.md` / `STORE_LISTING.md` / `BROWSER_SUPPORT.md` | Privacy policy, Chrome Web Store submission pack, Edge/Firefox notes. |
 | `icons/*` | Generated gradient clock icons (16/32/48/128). |

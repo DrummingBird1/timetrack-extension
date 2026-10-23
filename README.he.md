@@ -117,6 +117,7 @@ pwsh build.ps1                               # יוצר zip להעלאה מתו�
 ```
 extension/               ← ההפצה (טוענים/מעלים לחנות את התיקייה הזו)
   manifest.json          — הגדרות התוסף (MV3)
+  _locales/              — שם, תיאור ותוויות קיצורים בכל שפה (לרישום בחנות)
   background.js          — מנוע המעקב (service worker)
   src/lib/               — לוגיקה משותפת (storage, stats, charts, backup, crypto, i18n)
   src/lib/locales/       — שפות הממשק (JSON, קובץ לכל שפה)

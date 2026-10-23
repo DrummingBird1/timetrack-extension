@@ -1,0 +1,15 @@
+TimeTrack mesure le temps que vous passez réellement sur chaque site web, en plaçant la confidentialité et le stockage local au premier plan. Toutes les données restent sur votre appareil ; rien n'est envoyé nulle part, sauf si vous activez une sauvegarde que vous contrôlez.
+
+• Suivi précis du temps actif : seul compte le temps où la fenêtre est active et où vous n'êtes pas inactif (en option, aussi pendant la lecture audio)
+• Catégories intelligentes : des centaines de sites populaires dans chaque langue prise en charge sont déjà classés, et chaque catégorie est modifiable — ainsi qu'un score de concentration de 0 à 100 avec tendance hebdomadaire et votre meilleure semaine
+• Carte de chaleur jour de la semaine × heure, analyses hebdomadaires en langage clair et comparaison de deux périodes au choix
+• Détail par site avec chronologies quotidienne et horaire (et un journal des visites facultatif)
+• Objectifs quotidiens et hebdomadaires, limites par site, budgets hebdomadaires par catégorie, alertes à 80 % et résumé hebdomadaire
+• Mode concentration (Pomodoro) : bloquez les catégories ou les sites qui distraient, ou n'autorisez que l'essentiel ; planifiez des sessions, utilisez le mode strict ou accordez-vous une pause de 10 minutes
+• Onglet Sites conçu pour les gros historiques : recherche dans tout l'historique, sites épinglés, fusion de l'historique d'un site renommé et actions groupées (catégoriser, limiter, ne plus suivre)
+• Import depuis CSV (y compris les exports de type RescueTime) et export JSON/CSV à tout moment
+• Sauvegarde cloud sur votre compte Google ou votre propre serveur HTTPS, avec chiffrement AES-256 facultatif et aperçu avant restauration
+• Raccourcis clavier, accessibilité au clavier et aux lecteurs d'écran, thèmes clair et sombre
+• Six langues avec changement à la volée : hébreu, anglais, arabe, russe, espagnol, français (écriture de droite à gauche prise en charge)
+
+Sans dépendances externes, sans code distant, sans analytique et sans traceurs tiers. Les icônes des sites sont générées localement : aucun domaine que vous visitez ne quitte votre appareil. Les anciennes données sont supprimées automatiquement après la durée de votre choix.

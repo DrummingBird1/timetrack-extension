@@ -93,6 +93,7 @@ Para la arquitectura, el modelo de datos y un mapa completo de archivos, consult
 ```
 extension/               ← la extensión distribuible (cargue/suba esta carpeta)
   manifest.json          — configuración de la extensión (MV3)
+  _locales/              — nombre, descripción y atajos en cada idioma (ficha de la tienda)
   background.js          — el motor de seguimiento (service worker)
   src/lib/                — lógica compartida (almacenamiento, estadísticas, gráficos, copia de seguridad, cifrado, i18n)
   src/lib/locales/        — idiomas de la interfaz (JSON, uno por idioma)

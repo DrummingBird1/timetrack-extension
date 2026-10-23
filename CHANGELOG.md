@@ -19,6 +19,9 @@ can now be translated too. No new permissions, no change to what is stored or wh
   for languages the package ships, which is why it offered none before. The store pack
   (`STORE_LISTING.md`) now has a detailed description in all six languages (Arabic, Russian,
   Spanish and French are new). The in-app UI is unchanged: it still switches language live.
+- **Paste-ready store descriptions:** `store-assets/listing-text/description-<lang>.txt`, one
+  plain-text file per language, generated from `STORE_LISTING.md` by
+  `dist/tools/listing-text.mjs` (and checked for staleness by `docs.test.js`).
 - Tests that keep this honest: `package.test.js` checks every `__MSG_` key exists in every
   language and that `_locales` covers the same languages as the UI; `docs.test.js` checks the
   store pack's short descriptions equal the packaged ones; the smoke E2E launches Chrome once
@@ -39,6 +42,13 @@ can now be translated too. No new permissions, no change to what is stored or wh
   is Gmail, Docs and Search at once, so there is no single honest category for it.
 
 ### Changed
+- **The store description now matches what the extension does today** in all six languages:
+  it was missing keyboard shortcuts, searching all history, merging a renamed site's history,
+  the 80% warnings, optional counting while audio plays and the automatic data deletion, and it
+  said "encrypted cloud backup" although encryption is an opt-in setting (it now says
+  "optional AES-256 encryption").
+- `dist/build.ps1` moves the zips of earlier versions to `archive/old-builds/` when it builds
+  a new one, instead of leaving them in `dist/`.
 - **The name Chrome shows is now English by default** (it was Hebrew-only): browsers set to
   Hebrew, Arabic, Russian, Spanish or French get that language, every other browser language
   gets the English name and description. The Hebrew description is the store-listing one.

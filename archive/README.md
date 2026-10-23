@@ -9,8 +9,10 @@ Superseded assets, kept for reference — not part of the current release.
 - `promo/` — the original promo tile (440×280) and marquee (1400×560), replaced
   by the promotional graphics generated for the v1.3 marketing site
   (`store-assets/promo/`).
-- `old-builds/` — extension zips from earlier releases (v1.0.0–v1.2.0). Not
-  git-tracked (build output), moved here purely for local tidiness.
+- `old-builds/` — extension zips from earlier releases. Not git-tracked (build
+  output), kept here purely for local tidiness: `dist/build.ps1` moves the zip of
+  every earlier version here each time it builds a new one. The official copy of
+  each release is the zip attached to its GitHub Release.
 
 Git history for the moved files is preserved — `git log --follow` on any file
 here shows its full history from before the move.
