@@ -27,12 +27,13 @@ export async function waitFor(fn, { timeout = 8000, interval = 50, message = 'co
   }
 }
 
-export async function launch() {
+/** `lang` sets the browser's own UI language (--lang), which is what picks the manifest's _locales folder. */
+export async function launch({ lang } = {}) {
   const browser = await puppeteer.launch({
     headless: true,
     pipe: true,
     enableExtensions: [EXT_PATH],
-    args: ['--no-sandbox', '--no-first-run', '--window-size=1400,900'],
+    args: ['--no-sandbox', '--no-first-run', '--window-size=1400,900', ...(lang ? [`--lang=${lang}`] : [])],
   });
 
   const swTarget = await browser.waitForTarget(

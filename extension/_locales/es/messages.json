@@ -1,0 +1,22 @@
+{
+  "appName": {
+    "message": "TimeTrack — Rastreador de tiempo de navegación",
+    "description": "Extension name shown in the Chrome Web Store and chrome://extensions (max 75 characters)."
+  },
+  "appDescription": {
+    "message": "Mide tu tiempo activo por sitio: análisis, presupuestos, modo concentración y copia cifrada. Privado y local, sin cuenta.",
+    "description": "Short description shown in the Chrome Web Store (max 132 characters). Keep in sync with store-assets/STORE_LISTING.md."
+  },
+  "cmdToggleTracking": {
+    "message": "Activar / pausar el seguimiento",
+    "description": "Keyboard shortcut label on chrome://extensions/shortcuts."
+  },
+  "cmdStartFocus": {
+    "message": "Iniciar / finalizar sesión de enfoque",
+    "description": "Keyboard shortcut label on chrome://extensions/shortcuts."
+  },
+  "cmdOpenDashboard": {
+    "message": "Abrir el panel de control",
+    "description": "Keyboard shortcut label on chrome://extensions/shortcuts."
+  }
+}

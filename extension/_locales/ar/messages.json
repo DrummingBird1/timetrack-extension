@@ -1,0 +1,22 @@
+{
+  "appName": {
+    "message": "TimeTrack — متتبع وقت التصفح",
+    "description": "Extension name shown in the Chrome Web Store and chrome://extensions (max 75 characters)."
+  },
+  "appDescription": {
+    "message": "تتبّع وقت التصفح الفعلي لكل موقع — تحليلات وميزانيات ووضع تركيز ونسخ احتياطي مشفّر. خاص ومحلي، بلا حساب.",
+    "description": "Short description shown in the Chrome Web Store (max 132 characters). Keep in sync with store-assets/STORE_LISTING.md."
+  },
+  "cmdToggleTracking": {
+    "message": "تشغيل / إيقاف التتبع مؤقتًا",
+    "description": "Keyboard shortcut label on chrome://extensions/shortcuts."
+  },
+  "cmdStartFocus": {
+    "message": "بدء / إنهاء جلسة تركيز",
+    "description": "Keyboard shortcut label on chrome://extensions/shortcuts."
+  },
+  "cmdOpenDashboard": {
+    "message": "فتح لوحة التحكم",
+    "description": "Keyboard shortcut label on chrome://extensions/shortcuts."
+  }
+}

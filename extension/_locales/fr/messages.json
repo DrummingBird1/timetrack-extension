@@ -1,0 +1,22 @@
+{
+  "appName": {
+    "message": "TimeTrack — Suivi du temps de navigation",
+    "description": "Extension name shown in the Chrome Web Store and chrome://extensions (max 75 characters)."
+  },
+  "appDescription": {
+    "message": "Mesurez votre temps actif par site : analyses, budgets, mode concentration et sauvegarde chiffrée. Privé, local, sans compte.",
+    "description": "Short description shown in the Chrome Web Store (max 132 characters). Keep in sync with store-assets/STORE_LISTING.md."
+  },
+  "cmdToggleTracking": {
+    "message": "Activer / mettre en pause le suivi",
+    "description": "Keyboard shortcut label on chrome://extensions/shortcuts."
+  },
+  "cmdStartFocus": {
+    "message": "Démarrer / terminer une session de concentration",
+    "description": "Keyboard shortcut label on chrome://extensions/shortcuts."
+  },
+  "cmdOpenDashboard": {
+    "message": "Ouvrir le tableau de bord",
+    "description": "Keyboard shortcut label on chrome://extensions/shortcuts."
+  }
+}

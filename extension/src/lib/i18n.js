@@ -1,6 +1,7 @@
 // Runtime internationalization. Unlike chrome.i18n / _locales (which is locked to
 // the browser UI locale), this lets the user switch language live from settings.
-// Hebrew is the source/fallback language.
+// Hebrew is the source/fallback language. (The manifest's own strings — name, description,
+// shortcut labels — do use _locales; see extension/_locales and package.test.js.)
 //
 // Each language is a flat JSON dictionary in ./locales/<lang>.json, loaded on demand
 // with fetch(): only the ACTIVE language is read (the service worker cold-starts on

@@ -9,16 +9,24 @@ the Store).
 
 ## 1. Basic listing
 
-- **Name:** TimeTrack — Smart Browsing Time Tracker
+- **Name:** TimeTrack — Smart Browsing Time Tracker (`appName`, translated in
+  `extension/_locales/<lang>/messages.json`)
 - **Category:** Productivity
-- **Default language:** Hebrew (add English as an additional listing locale; the
-  short descriptions below cover all six UI languages)
+- **Default language:** English — it matches `default_locale` in the manifest. Then add
+  Hebrew, Arabic, Russian, Spanish and French as listing languages: the dashboard only
+  offers languages that exist under `extension/_locales/`, and each one needs its own
+  detailed description (below). Screenshots can be localized per language too:
+  `screenshots/he/*` for Hebrew, `screenshots/en/*` for the others.
 - **Website / support:** https://github.com/DrummingBird1/timetrack-extension
 - **Privacy policy URL:** https://drummingbird1.github.io/timetrack-extension/ ✅ **live**
   (hosted on GitHub Pages; contains no personal data). It must be redeployed
   (merge to `main` → `pages.yml`) so it matches the 1.5.0 policy text before you submit.
 
 ### Short description (≤132 chars)
+
+The Store takes the title and this summary from the package, not from a dashboard field:
+they are `appName` / `appDescription` in `extension/_locales/<lang>/messages.json`. Edit
+them there; `docs.test.js` fails if this list and those files disagree.
 
 - **EN (113):** Track active time per site — analytics, budgets, focus mode & encrypted backup. Private, local-first, no account.
 - **HE (97):** מעקב זמן גלישה פעיל לכל אתר — ניתוח חכם, תקציבים, מצב פוקוס וגיבוי מוצפן. פרטי ומקומי, ללא חשבון.
@@ -71,6 +79,104 @@ the Store).
 > • שש שפות — עברית, אנגלית, ערבית, רוסית, ספרדית, צרפתית
 >
 > ללא תלויות חיצוניות, ללא קוד מרוחק, ללא אנליטיקס וללא מעקב צד-שלישי.
+
+**العربية**
+
+> يقيس TimeTrack الوقت الذي تقضيه فعليًا في كل موقع، مع إعطاء الأولوية للخصوصية
+> والتخزين المحلي. تبقى جميع البيانات على جهازك، ولا يُرسل أي شيء إلى أي جهة إلا إذا
+> فعّلتَ نسخًا احتياطيًا تتحكم به أنت.
+>
+> • تتبّع دقيق للوقت الفعلي (يتوقف تلقائيًا عند عدم النشاط)
+> • تصنيف ذكي للفئات + درجة تركيز من 0 إلى 100، مع اتجاه أسبوعي وأفضل أسبوع لديك
+> • خريطة حرارية لأيام الأسبوع × الساعات، واتجاهات، ومقارنة بين أي فترتين زمنيتين
+> • تفاصيل لكل موقع مع مخططات زمنية يومية وبالساعة (وسجل زيارات اختياري)
+> • أهداف يومية وأسبوعية، وحدود لكل موقع، وميزانيات أسبوعية للتصنيفات، وملخص أسبوعي
+> • وضع التركيز (Pomodoro) — احجب التصنيفات أو المواقع المشتّتة، أو اسمح فقط بما تحتاجه؛
+>   جدولة الجلسات، أو الوضع الصارم، أو استراحة لمدة 10 دقائق
+> • تبويب مواقع مصمم للسجلات الكبيرة، مع إجراءات جماعية (تصنيف، حد، تثبيت، إيقاف التتبع)
+> • استيراد من CSV (بما في ذلك ملفات التصدير بنمط RescueTime) وتصدير JSON/CSV في أي وقت
+> • نسخ احتياطي سحابي مشفّر مع معاينة قبل الاستعادة
+> • متاح بالكامل للوحة المفاتيح وقارئات الشاشة؛ سمتان فاتحة وداكنة
+> • ست لغات — العبرية والإنجليزية والعربية والروسية والإسبانية والفرنسية
+>
+> بلا تبعيات خارجية، وبلا شيفرة بعيدة، وبلا تحليلات، وبلا متتبّعات من أطراف ثالثة.
+> تُنشأ أيقونات المواقع محليًا، فلا يغادر أي نطاق تزوره جهازك.
+
+**Русский**
+
+> TimeTrack измеряет, сколько времени вы действительно проводите на каждом сайте, —
+> с приоритетом приватности и локального хранения. Все данные остаются на вашем
+> устройстве; ничего никуда не отправляется, пока вы сами не включите резервное
+> копирование, которое вы контролируете.
+>
+> • Точный учёт активного времени (автоматически ставится на паузу, когда вы бездействуете)
+> • Умная разбивка по категориям + индекс фокуса от 0 до 100, с недельным трендом и лучшей неделей
+> • Тепловая карта «день недели × час», тренды и сравнение любых двух периодов
+> • Детализация по каждому сайту с суточной и почасовой шкалой (и необязательным журналом визитов)
+> • Дневные и недельные цели, лимиты для сайтов, недельные бюджеты по категориям и недельная сводка
+> • Режим фокуса (Pomodoro): блокируйте отвлекающие категории или сайты либо разрешите только
+>   нужное; расписание сессий, строгий режим или 10-минутная передышка
+> • Вкладка «Сайты» для больших историй с массовыми действиями (категория, лимит, закрепление,
+>   прекращение учёта)
+> • Импорт из CSV (включая экспорт в стиле RescueTime), экспорт в JSON/CSV в любой момент
+> • Зашифрованное облачное резервное копирование с предпросмотром перед восстановлением
+> • Полная доступность с клавиатуры и для программ чтения с экрана; светлая и тёмная темы
+> • Шесть языков: иврит, английский, арабский, русский, испанский, французский
+>
+> Без внешних зависимостей, без удалённого кода, без аналитики и сторонних трекеров.
+> Значки сайтов создаются локально, поэтому ни один посещённый вами домен не покидает
+> ваше устройство.
+
+**Español**
+
+> TimeTrack mide cuánto tiempo dedica realmente a cada sitio web, con la privacidad y el
+> almacenamiento local por delante. Todos los datos permanecen en su dispositivo; no se
+> envía nada a ningún sitio a menos que active una copia de seguridad que usted controla.
+>
+> • Seguimiento preciso del tiempo activo (se pausa cuando está inactivo)
+> • Desglose inteligente por categorías + una puntuación de enfoque de 0 a 100, con
+>   tendencia semanal y su mejor semana
+> • Mapa de calor día de la semana × hora, tendencias y comparación de dos rangos de fechas cualesquiera
+> • Detalle por sitio con líneas de tiempo diarias y por hora (y un registro de visitas opcional)
+> • Objetivos diarios y semanales, límites por sitio, presupuestos semanales por categoría
+>   y resumen semanal
+> • Modo concentración (Pomodoro): bloquee categorías o sitios que distraen, o permita solo
+>   lo que necesita; programe sesiones, use el modo estricto o tómese un descanso de 10 minutos
+> • Pestaña de sitios pensada para historiales grandes, con acciones masivas (categorizar,
+>   limitar, fijar, dejar de seguir)
+> • Importación desde CSV (incluidas exportaciones al estilo RescueTime) y exportación a JSON/CSV en cualquier momento
+> • Copia de seguridad cifrada en la nube con vista previa antes de restaurar
+> • Totalmente accesible con teclado y lector de pantalla; temas claro y oscuro
+> • Seis idiomas: hebreo, inglés, árabe, ruso, español y francés
+>
+> Sin dependencias externas, sin código remoto, sin analíticas y sin rastreadores de terceros.
+> Los iconos de los sitios se generan localmente, así que ningún dominio que visite sale de su dispositivo.
+
+**Français**
+
+> TimeTrack mesure le temps que vous passez réellement sur chaque site web, en plaçant la
+> confidentialité et le stockage local au premier plan. Toutes les données restent sur votre
+> appareil ; rien n'est envoyé nulle part, sauf si vous activez une sauvegarde que vous contrôlez.
+>
+> • Suivi précis du temps actif (se met en pause lorsque vous êtes inactif)
+> • Répartition intelligente par catégorie + un score de concentration de 0 à 100, avec
+>   tendance hebdomadaire et votre meilleure semaine
+> • Carte de chaleur jour de la semaine × heure, tendances et comparaison de deux périodes au choix
+> • Détail par site avec chronologies quotidienne et horaire (et un journal des visites facultatif)
+> • Objectifs quotidiens et hebdomadaires, limites par site, budgets hebdomadaires par catégorie
+>   et résumé hebdomadaire
+> • Mode concentration (Pomodoro) : bloquez les catégories ou les sites qui distraient, ou
+>   n'autorisez que l'essentiel ; planifiez des sessions, utilisez le mode strict ou accordez-vous
+>   une pause de 10 minutes
+> • Onglet Sites conçu pour les gros historiques, avec des actions groupées (catégoriser,
+>   limiter, épingler, ne plus suivre)
+> • Import depuis CSV (y compris les exports de type RescueTime) et export JSON/CSV à tout moment
+> • Sauvegarde cloud chiffrée avec aperçu avant restauration
+> • Entièrement accessible au clavier et aux lecteurs d'écran ; thèmes clair et sombre
+> • Six langues : hébreu, anglais, arabe, russe, espagnol, français
+>
+> Sans dépendances externes, sans code distant, sans analytique et sans traceurs tiers.
+> Les icônes des sites sont générées localement : aucun domaine que vous visitez ne quitte votre appareil.
 
 ---
 
@@ -167,9 +273,11 @@ Upload `screenshots/he/*` to the Hebrew listing and `screenshots/en/*` to the En
 
 - `web_accessible_resources` uses `"use_dynamic_url": true`; the focus-mode redirect
   is covered by `dist/e2e/focus.e2e.mjs`.
-- Install-warning strings are not localized via `_locales` (the in-app UI switches
-  language at runtime). Optional, if you want the store to show the manifest
-  name/description per locale.
+- The manifest's name, description and shortcut labels are localized through
+  `extension/_locales/` (six languages, `default_locale` is `en`), which is also what lets
+  the dashboard offer a per-language listing. The in-app UI is separate: it switches language
+  at runtime from `src/lib/locales/`, because `chrome.i18n` is locked to the browser language.
+  `package.test.js` keeps the two language sets identical.
 
 ### Other browsers
 

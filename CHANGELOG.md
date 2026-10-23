@@ -8,10 +8,21 @@ Format follows [Keep a Changelog](https://keepachangelog.com/); this project use
 
 Smarter defaults for the sites people actually visit, in all six UI languages. The
 built-in category table was written for Hebrew/English-market sites, so a Russian, Spanish,
-French or Arabic user saw most of their browsing under "Other". No new permissions, no change
-to what is stored or where it can go (the privacy policy is unchanged).
+French or Arabic user saw most of their browsing under "Other". The Chrome Web Store listing
+can now be translated too. No new permissions, no change to what is stored or where it can go
+(the privacy policy is unchanged).
 
 ### Added
+- **The extension's name, description and shortcut labels are localized** through Chrome's
+  `_locales` (he, en, ar, ru, es, fr; `default_locale` is `en`). Chrome shows them in the
+  browser's own language, and the Chrome Web Store dashboard only offers a per-language listing
+  for languages the package ships, which is why it offered none before. The store pack
+  (`STORE_LISTING.md`) now has a detailed description in all six languages (Arabic, Russian,
+  Spanish and French are new). The in-app UI is unchanged: it still switches language live.
+- Tests that keep this honest: `package.test.js` checks every `__MSG_` key exists in every
+  language and that `_locales` covers the same languages as the UI; `docs.test.js` checks the
+  store pack's short descriptions equal the packaged ones; the smoke E2E launches Chrome once
+  per UI language and checks the resolved name, description and shortcut labels.
 - **472 more built-in site categories (93 → 565)**: news outlets, banks, shops, marketplaces,
   streaming and social networks common in Israel, Spanish- and French-speaking countries,
   Russia and the Arab world, plus more global sites (reference, developer and AI tools,
@@ -28,6 +39,9 @@ to what is stored or where it can go (the privacy policy is unchanged).
   is Gmail, Docs and Search at once, so there is no single honest category for it.
 
 ### Changed
+- **The name Chrome shows is now English by default** (it was Hebrew-only): browsers set to
+  Hebrew, Arabic, Russian, Spanish or French get that language, every other browser language
+  gets the English name and description. The Hebrew description is the store-listing one.
 - **The Public Suffix List is refreshed** (list version 2026-10-22), so newly added
   hosting suffixes group correctly.
 - Categories are applied when stats are computed, so the extra defaults also re-categorize

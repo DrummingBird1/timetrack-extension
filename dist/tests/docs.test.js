@@ -85,6 +85,28 @@ test('PRIVACY.md lists the same data categories in Hebrew and English', () => {
   assert.equal(bullets(he), bullets(en));
 });
 
+// ----------------------------------------------------------------- store listing pack
+test('STORE_LISTING.md: short descriptions equal the packaged ones, and all six languages have a detailed description', () => {
+  const listing = read('store-assets/STORE_LISTING.md');
+  const shortStart = listing.indexOf('### Short description');
+  const detailedStart = listing.indexOf('### Detailed description');
+  const short = [...listing.slice(shortStart, detailedStart).matchAll(/^- \*\*([A-Z]{2}) \((\d+)\):\*\* (.+)$/gm)];
+  assert.deepEqual(short.map((m) => m[1].toLowerCase()).sort(), [...LANGS].sort());
+  for (const [, code, count, text] of short) {
+    const lang = code.toLowerCase();
+    const { appDescription } = JSON.parse(read(`extension/_locales/${lang}/messages.json`));
+    assert.equal(text, appDescription.message, `${lang}: STORE_LISTING.md and _locales/${lang}/messages.json disagree on the short description`);
+    assert.equal(Number(count), [...text].length, `${lang}: the character count label is wrong`);
+  }
+
+  const detailed = listing.slice(detailedStart, listing.indexOf('\n---', detailedStart));
+  const blocks = detailed.split(/^\*\*(.+)\*\*$/m).slice(1);
+  const byName = Object.fromEntries(blocks.filter((_, i) => i % 2 === 0).map((name, i) => [name, blocks[i * 2 + 1]]));
+  assert.deepEqual(Object.keys(byName), ['English', 'עברית', 'العربية', 'Русский', 'Español', 'Français']);
+  const bullets = (text) => (text.match(/^> • /gm) || []).length;
+  for (const [name, text] of Object.entries(byName)) assert.equal(bullets(text), bullets(byName.English), `${name}: feature bullets differ from the English description`);
+});
+
 // -------------------------------------------------------------------- release metadata
 test('manifest, CHANGELOG and the release banner agree on the current version', () => {
   const { version } = JSON.parse(read('extension/manifest.json'));

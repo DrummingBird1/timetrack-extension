@@ -1,0 +1,22 @@
+{
+  "appName": {
+    "message": "TimeTrack — מעקב זמן גלישה",
+    "description": "Extension name shown in the Chrome Web Store and chrome://extensions (max 75 characters)."
+  },
+  "appDescription": {
+    "message": "מעקב זמן גלישה פעיל לכל אתר — ניתוח חכם, תקציבים, מצב פוקוס וגיבוי מוצפן. פרטי ומקומי, ללא חשבון.",
+    "description": "Short description shown in the Chrome Web Store (max 132 characters). Keep in sync with store-assets/STORE_LISTING.md."
+  },
+  "cmdToggleTracking": {
+    "message": "הפעל / השהה מעקב",
+    "description": "Keyboard shortcut label on chrome://extensions/shortcuts."
+  },
+  "cmdStartFocus": {
+    "message": "התחל / סיים סשן פוקוס",
+    "description": "Keyboard shortcut label on chrome://extensions/shortcuts."
+  },
+  "cmdOpenDashboard": {
+    "message": "פתח את לוח הבקרה",
+    "description": "Keyboard shortcut label on chrome://extensions/shortcuts."
+  }
+}

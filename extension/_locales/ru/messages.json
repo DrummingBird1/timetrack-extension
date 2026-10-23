@@ -1,0 +1,22 @@
+{
+  "appName": {
+    "message": "TimeTrack — учёт времени в браузере",
+    "description": "Extension name shown in the Chrome Web Store and chrome://extensions (max 75 characters)."
+  },
+  "appDescription": {
+    "message": "Учёт активного времени на сайтах: аналитика, бюджеты, режим фокуса и шифрованный бэкап. Приватно, локально, без аккаунта.",
+    "description": "Short description shown in the Chrome Web Store (max 132 characters). Keep in sync with store-assets/STORE_LISTING.md."
+  },
+  "cmdToggleTracking": {
+    "message": "Включить / приостановить отслеживание",
+    "description": "Keyboard shortcut label on chrome://extensions/shortcuts."
+  },
+  "cmdStartFocus": {
+    "message": "Начать / завершить сессию фокусировки",
+    "description": "Keyboard shortcut label on chrome://extensions/shortcuts."
+  },
+  "cmdOpenDashboard": {
+    "message": "Открыть панель управления",
+    "description": "Keyboard shortcut label on chrome://extensions/shortcuts."
+  }
+}

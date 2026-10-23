@@ -21,7 +21,7 @@ Four top-level folders, plus `.github/` and root docs (`README*.md`, `CHANGELOG.
 
 - **`extension/`** — the shippable extension (this is what you load-unpacked and
   zip for the store). Self-contained: `manifest.json`, `background.js`, `icons/`,
-  `src/`.
+  `_locales/`, `src/`.
 - **`store-assets/`** — everything for the Chrome Web Store listing itself:
   `PRIVACY.md`, `STORE_LISTING.md`, `BROWSER_SUPPORT.md` (Edge/Firefox notes — not
   tested), `promo/` (promo graphics + per-release banners), `screenshots/` (he/en
@@ -250,7 +250,8 @@ IPv4/IPv6 addresses and single-label hosts (`localhost`) are never grouped.
 
 | File | Responsibility |
 |------|----------------|
-| `manifest.json` | MV3 manifest. Permissions: storage, tabs, idle, alarms, notifications, unlimitedStorage. |
+| `manifest.json` | MV3 manifest. Permissions: storage, tabs, idle, alarms, notifications, unlimitedStorage. Name, description and shortcut labels are `__MSG_…__` keys. |
+| `_locales/{he,en,ar,ru,es,fr}/messages.json` | Chrome's manifest localization (5 keys each): the store title/summary and shortcut labels. Not the in-app UI strings. |
 | `background.js` | Service worker = tracking engine + message router + alarms. |
 | `src/lib/utils.js` | Pure helpers: dates/day-keys, domain extraction (`registrableDomain`), duration formatting, favicons. No chrome/DOM. |
 | `src/lib/psl.js` | **Generated** Public Suffix List rules (`dist/tools/build-psl.mjs`) — don't edit by hand. |
@@ -319,6 +320,13 @@ IPv4/IPv6 addresses and single-label hosts (`localhost`) are never grouped.
   he-or-not binary anywhere; the same applies to `utils.js`'s
   `weekdaysShort()`/`weekdaysFull()`/`DURATION_UNITS`, which use the same
   per-language lookup pattern. `setLang()` also flips `formatDuration` units.
+  **Manifest strings are separate:** the extension's name, description and shortcut labels
+  use Chrome's `_locales/<lang>/messages.json` (`__MSG_…__` in `manifest.json`,
+  `default_locale: "en"`), which follows the *browser* language, not the in-app setting.
+  The Web Store dashboard only offers a per-language listing for languages that exist
+  there, and takes the title and short description from these files. A new UI language
+  needs a `_locales` folder too (`package.test.js` fails otherwise); keep the short
+  descriptions equal to `store-assets/STORE_LISTING.md` (`docs.test.js`).
   When setting `document.documentElement.lang` from settings, use
   `i18n.getLang()` (the normalized/fallback-applied value), not
   `settings.language` directly — three UI entry points do this correctly now
@@ -541,7 +549,7 @@ Four layers, all from `dist/` (pnpm — see "How to run"):
   in parity; manifest/CHANGELOG/banner agree on the version), `release-notes.test.js`.
 - **End-to-end** — `pnpm test:e2e` (`--test-concurrency=1`, ~60 cases, a couple of
   minutes): Puppeteer drives the *real* extension in Chrome for Testing. `smoke`
-  (loads, popup, every tab), `dashboard` (every tab and feature: charts, sites,
+  (loads, manifest localized in every browser language, popup, every tab), `dashboard` (every tab and feature: charts, sites,
   bulk actions, settings, backup→restore, export/import, budgets, compare, demo
   data…), `focus` (popup session, block/allow redirects, tracking, strict/snooze),
   `scale` (3 years of synthetic history stays within time budgets), `sync` (cloud backup against real Chrome's storage.sync quotas), `a11y` (axe-core
@@ -599,4 +607,5 @@ focus-score trend / best week / goal streak, any-range comparison, scheduled / s
 snoozable focus + history, opt-in session log, bulk site actions at scale, tolerant CSV
 import, demo-data onboarding, lazy locales, a typed worker protocol, and CI/release/site
 automation. Done in 1.6.0: 472 more built-in site categories for the he/es/fr/ru/ar
-markets (plus the registrable-domain fix for subdomain-keyed defaults) and a refreshed PSL.
+markets (plus the registrable-domain fix for subdomain-keyed defaults), a refreshed PSL,
+and a translatable store listing (`_locales` + detailed descriptions in all six languages).

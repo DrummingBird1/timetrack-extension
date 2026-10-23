@@ -1,8 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "TimeTrack — מעקב זמן גלישה",
+  "name": "__MSG_appName__",
   "version": "1.6.0",
-  "description": "מעקב חכם אחר זמן הגלישה שלך באתרים, עם פילוח מעמיק, יעדים, מצב פוקוס, גיבוי בענן וייצוא נתונים.",
+  "description": "__MSG_appDescription__",
+  "default_locale": "en",
   "minimum_chrome_version": "111",
   "permissions": [
     "storage",
@@ -36,15 +37,15 @@
   "commands": {
     "toggle-tracking": {
       "suggested_key": { "default": "Alt+Shift+T" },
-      "description": "הפעל / השהה מעקב"
+      "description": "__MSG_cmdToggleTracking__"
     },
     "start-focus": {
       "suggested_key": { "default": "Alt+Shift+F" },
-      "description": "התחל / סיים סשן פוקוס"
+      "description": "__MSG_cmdStartFocus__"
     },
     "open-dashboard": {
       "suggested_key": { "default": "Alt+Shift+D" },
-      "description": "פתח את לוח הבקרה"
+      "description": "__MSG_cmdOpenDashboard__"
     }
   },
   "web_accessible_resources": [
