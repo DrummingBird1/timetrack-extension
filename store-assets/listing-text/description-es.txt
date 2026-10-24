@@ -1,0 +1,15 @@
+TimeTrack mide cuánto tiempo dedica realmente a cada sitio web, con la privacidad y el almacenamiento local por delante. Todos los datos permanecen en su dispositivo; no se envía nada a ningún sitio a menos que active una copia de seguridad que usted controla.
+
+• Seguimiento preciso del tiempo activo: solo cuenta el tiempo con la ventana en primer plano y sin inactividad (opcionalmente, también mientras suena audio)
+• Categorías inteligentes: cientos de sitios populares en cada idioma compatible ya vienen clasificados, y cada categoría se puede editar — además de una puntuación de enfoque de 0 a 100 con tendencia semanal y su mejor semana
+• Mapa de calor día de la semana × hora, resúmenes semanales en lenguaje sencillo y comparación de dos rangos de fechas cualesquiera
+• Detalle por sitio con líneas de tiempo diarias y por hora (y un registro de visitas opcional)
+• Objetivos diarios y semanales, límites por sitio, presupuestos semanales por categoría, avisos al 80 % y resumen semanal
+• Modo concentración (Pomodoro): bloquee categorías o sitios que distraen, o permita solo lo que necesita; programe sesiones, use el modo estricto o tómese un descanso de 10 minutos
+• Pestaña de sitios pensada para historiales grandes: búsqueda en todo el historial, sitios fijados, fusión del historial de un sitio que cambió de nombre y acciones masivas (categorizar, limitar o dejar de seguir)
+• Importación desde CSV (incluidas exportaciones al estilo RescueTime) y exportación a JSON/CSV en cualquier momento
+• Copia de seguridad en la nube en su cuenta de Google o en su propio servidor HTTPS, con cifrado AES-256 opcional y vista previa antes de restaurar
+• Atajos de teclado, accesibilidad para teclado y lectores de pantalla, temas claro y oscuro
+• Seis idiomas con cambio en vivo: hebreo, inglés, árabe, ruso, español y francés (con compatibilidad de derecha a izquierda)
+
+Sin dependencias externas, sin código remoto, sin analíticas y sin rastreadores de terceros. Los iconos de los sitios se generan localmente, así que ningún dominio que visite sale de su dispositivo. Los datos antiguos se eliminan automáticamente pasado el plazo que usted elija.

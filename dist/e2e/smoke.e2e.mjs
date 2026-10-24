@@ -17,6 +17,26 @@ test('the extension loads and its service worker answers messages', async () => 
   assert.equal(await ext.run(() => chrome.runtime.getManifest().version), manifest.version);
 });
 
+test('the manifest name, description and shortcut labels follow the browser language through _locales', async () => {
+  // One browser per language: Chrome picks the _locales folder from its own UI language.
+  for (const lang of ['he', 'en', 'ar', 'ru', 'es', 'fr']) {
+    const probe = await launch({ lang });
+    try {
+      const table = JSON.parse(fs.readFileSync(path.join(EXT_PATH, '_locales', lang, 'messages.json'), 'utf8'));
+      const running = await probe.run(() => {
+        const m = chrome.runtime.getManifest();
+        return { name: m.name, description: m.description, commands: Object.values(m.commands).map((c) => c.description) };
+      });
+      assert.equal(running.name, table.appName.message, `${lang}: name`);
+      assert.equal(running.description, table.appDescription.message, `${lang}: description`);
+      // Chrome returns the commands in its own order, so compare as sets.
+      assert.deepEqual([...running.commands].sort(), [table.cmdToggleTracking.message, table.cmdStartFocus.message, table.cmdOpenDashboard.message].sort(), `${lang}: shortcut labels`);
+    } finally {
+      await probe.close();
+    }
+  }
+});
+
 test('popup renders on an empty profile without errors', async () => {
   const popup = await ext.openPage('src/popup/popup.html');
   await popup.waitForSelector('#todayTotal');

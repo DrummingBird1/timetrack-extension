@@ -1,0 +1,15 @@
+TimeTrack measures how much time you actually spend on each website — privacy-first and local-first. All data stays on your device; nothing is sent anywhere unless you turn on a backup you control.
+
+• Accurate active-time tracking: only focused, non-idle time counts (optionally also while audio plays)
+• Smart categories: hundreds of popular sites in every supported language are sorted for you, and every category is editable — plus a 0–100 focus score with a weekly trend and your best week
+• Weekday × hour heatmap, plain-language weekly insights, and a comparison of any two date ranges
+• Per-site drill-down with daily and hourly timelines (and an optional visit log)
+• Daily & weekly goals, per-site limits, weekly category budgets, 80% warnings and a weekly summary
+• Focus mode (Pomodoro): block distracting categories or sites, or allow only what you need; schedule sessions, use strict mode, or take a 10-minute pass
+• Sites tab built for large histories: search all of it, pin sites, merge a renamed site's history, and categorize, limit or untrack many sites at once
+• Import from CSV (including RescueTime-style exports); export JSON/CSV any time
+• Cloud backup to your Google account or your own HTTPS server, with optional AES-256 encryption and a restore preview
+• Keyboard shortcuts, keyboard and screen-reader accessibility, light and dark themes
+• Six languages with live switching: Hebrew, English, Arabic, Russian, Spanish, French (right-to-left supported)
+
+No external dependencies, no remote code, no analytics, no third-party trackers. Site icons are generated locally, so no domain you visit ever leaves your device. Old data is deleted automatically after a period you choose.

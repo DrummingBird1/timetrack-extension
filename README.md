@@ -134,6 +134,7 @@ For architecture, the data model, and a full file map, see **[CLAUDE.md](CLAUDE.
 ```
 extension/               ← the shippable extension (load/upload this folder)
   manifest.json          — extension config (MV3)
+  _locales/              — name, description and shortcut labels per language (Web Store listing)
   background.js          — the tracking engine (service worker)
   src/lib/                — shared logic (storage, stats, charts, backup, crypto, i18n)
   src/lib/locales/        — UI languages (JSON, one file each)

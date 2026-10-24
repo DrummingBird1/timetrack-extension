@@ -12,7 +12,7 @@ cloud backup, and data export.
 All data lives **locally** in `chrome.storage.local`. Nothing is sent anywhere
 unless the user explicitly enables a backup target. The UI is available in six
 languages (Hebrew is the default and the source language; Hebrew and Arabic are RTL).
-Current version: **1.5.0** (see `CHANGELOG.md`).
+Current version: **1.6.0** (see `CHANGELOG.md`).
 
 ## Repository layout
 
@@ -21,16 +21,18 @@ Four top-level folders, plus `.github/` and root docs (`README*.md`, `CHANGELOG.
 
 - **`extension/`** — the shippable extension (this is what you load-unpacked and
   zip for the store). Self-contained: `manifest.json`, `background.js`, `icons/`,
-  `src/`.
+  `_locales/`, `src/`.
 - **`store-assets/`** — everything for the Chrome Web Store listing itself:
   `PRIVACY.md`, `STORE_LISTING.md`, `BROWSER_SUPPORT.md` (Edge/Firefox notes — not
   tested), `promo/` (promo graphics + per-release banners), `screenshots/` (he/en
-  committed, generated), and `site/` (the marketing website source, deployed to the
-  `gh-pages` branch — see below).
+  committed, generated), `listing-text/` (one paste-ready plain-text description per
+  language, generated from `STORE_LISTING.md`), and `site/` (the marketing website
+  source, deployed to the `gh-pages` branch — see below).
 - **`dist/`** — dev tooling and build output: the test suites (`tests/` unit +
   integration, `e2e/` real-browser), `tools/` (generators, see the file map),
-  `package.json`, `tsconfig.json`, `build.ps1`, and the zip(s) it produces
-  (`timetrack-v<version>.zip`, gitignored). Despite the name, nothing here ships
+  `package.json`, `tsconfig.json`, `build.ps1`, and the zip it produces
+  (`timetrack-v<version>.zip`, gitignored; zips of earlier versions are moved to
+  `archive/old-builds/` by the next build). Despite the name, nothing here ships
   inside the extension — `build.ps1` zips `extension/`'s contents only.
 - **`.github/`** — CI (`workflows/`: `test.yml`, `e2e.yml` named "Checks", `release.yml`,
   `pages.yml`), issue forms and the PR template.
@@ -87,8 +89,8 @@ node dist/make-release-banner.mjs <version> <themeKey> "<tagline>"
 This writes `store-assets/promo/releases/v<version>.svg`. Pick (or add) a
 `themeKey` in that script that reflects what the release actually shipped —
 e.g. `cloud` for a backup-focused release, `globe` for a languages/i18n
-release, `shield` for a security/hardening release — the same way v1.1.0–v1.5.0
-were themed (see the script's `THEMES` map; add a new icon there for a release
+release, `shield` for a security/hardening release, `tag` for a categories release —
+the same way v1.1.0–v1.6.0 were themed (see the script's `THEMES` map; add a new icon there for a release
 that doesn't fit the existing ones, rather than reusing a mismatched theme).
 
 **The banner must be committed and pushed to `main` before referencing it in
@@ -250,7 +252,8 @@ IPv4/IPv6 addresses and single-label hosts (`localhost`) are never grouped.
 
 | File | Responsibility |
 |------|----------------|
-| `manifest.json` | MV3 manifest. Permissions: storage, tabs, idle, alarms, notifications, unlimitedStorage. |
+| `manifest.json` | MV3 manifest. Permissions: storage, tabs, idle, alarms, notifications, unlimitedStorage. Name, description and shortcut labels are `__MSG_…__` keys. |
+| `_locales/{he,en,ar,ru,es,fr}/messages.json` | Chrome's manifest localization (5 keys each): the store title/summary and shortcut labels. Not the in-app UI strings. |
 | `background.js` | Service worker = tracking engine + message router + alarms. |
 | `src/lib/utils.js` | Pure helpers: dates/day-keys, domain extraction (`registrableDomain`), duration formatting, favicons. No chrome/DOM. |
 | `src/lib/psl.js` | **Generated** Public Suffix List rules (`dist/tools/build-psl.mjs`) — don't edit by hand. |
@@ -273,10 +276,10 @@ IPv4/IPv6 addresses and single-label hosts (`localhost`) are never grouped.
 | `src/blocked/*` | Focus-mode block page (with "allow 10 minutes"; none in strict mode). |
 | `dist/tests/*.test.js` | `node:test` unit + integration tests (`pnpm test`); `helpers/` holds the chrome.* mocks. |
 | `dist/e2e/*.e2e.mjs` | Puppeteer end-to-end tests against the real extension; `harness.mjs` launches Chrome for Testing with it loaded. |
-| `dist/tools/` | `add-strings` (add a UI string to all six locales), `build-psl`, `fixture` (deterministic synthetic history), `screenshots` + `promo-tiles` (store graphics), `release-notes` (CHANGELOG → release body). |
+| `dist/tools/` | `add-strings` (add a UI string to all six locales), `build-psl`, `fixture` (deterministic synthetic history), `screenshots` + `promo-tiles` (store graphics), `release-notes` (CHANGELOG → release body), `listing-text` (STORE_LISTING.md descriptions → `store-assets/listing-text/*.txt`). |
 | `dist/tsconfig.json`, `dist/types/` | `tsc --checkJs` setup; `chrome-storage.d.ts` fixes `storage.get()` result typing. |
 | `dist/package.json` | Dev-only (scripts + devDependencies, `"type":"module"`); the extension has no deps/build. |
-| `dist/build.ps1` | Builds `timetrack-v<version>.zip` from `extension/` (store upload). |
+| `dist/build.ps1` | Builds `timetrack-v<version>.zip` from `extension/` (store upload) and moves earlier versions' zips to `archive/old-builds/`. |
 | `dist/make-release-banner.mjs` | Generates a themed per-version GitHub Release banner SVG — see "READMEs and release banners". |
 | `store-assets/PRIVACY.md` / `STORE_LISTING.md` / `BROWSER_SUPPORT.md` | Privacy policy, Chrome Web Store submission pack, Edge/Firefox notes. |
 | `icons/*` | Generated gradient clock icons (16/32/48/128). |
@@ -319,6 +322,13 @@ IPv4/IPv6 addresses and single-label hosts (`localhost`) are never grouped.
   he-or-not binary anywhere; the same applies to `utils.js`'s
   `weekdaysShort()`/`weekdaysFull()`/`DURATION_UNITS`, which use the same
   per-language lookup pattern. `setLang()` also flips `formatDuration` units.
+  **Manifest strings are separate:** the extension's name, description and shortcut labels
+  use Chrome's `_locales/<lang>/messages.json` (`__MSG_…__` in `manifest.json`,
+  `default_locale: "en"`), which follows the *browser* language, not the in-app setting.
+  The Web Store dashboard only offers a per-language listing for languages that exist
+  there, and takes the title and short description from these files. A new UI language
+  needs a `_locales` folder too (`package.test.js` fails otherwise); keep the short
+  descriptions equal to `store-assets/STORE_LISTING.md` (`docs.test.js`).
   When setting `document.documentElement.lang` from settings, use
   `i18n.getLang()` (the normalized/fallback-applied value), not
   `settings.language` directly — three UI entry points do this correctly now
@@ -523,7 +533,7 @@ Four layers, all from `dist/` (pnpm — see "How to run"):
 
 - **Unit** — `pnpm test` (`node --test`, ~190 cases, seconds). The pure modules are
   imported directly: `utils`, `stats`, `analytics` (budgets, weekly trend, goal streak,
-  comparison), `sessions`, `csvimport`, `demo`, `psl`, `messages`, and cross-language
+  comparison), `sessions`, `csvimport`, `demo`, `psl`, `categories`, `messages`, and cross-language
   key/placeholder parity across the six locale files (`i18n.test.js`).
 - **Integration** (`backup.integration.test.js`, `tracking.integration.test.js`,
   `focus.integration.test.js`) — the real `storage.js`/`backup.js`/`crypto.js` and the
@@ -541,7 +551,7 @@ Four layers, all from `dist/` (pnpm — see "How to run"):
   in parity; manifest/CHANGELOG/banner agree on the version), `release-notes.test.js`.
 - **End-to-end** — `pnpm test:e2e` (`--test-concurrency=1`, ~60 cases, a couple of
   minutes): Puppeteer drives the *real* extension in Chrome for Testing. `smoke`
-  (loads, popup, every tab), `dashboard` (every tab and feature: charts, sites,
+  (loads, manifest localized in every browser language, popup, every tab), `dashboard` (every tab and feature: charts, sites,
   bulk actions, settings, backup→restore, export/import, budgets, compare, demo
   data…), `focus` (popup session, block/allow redirects, tracking, strict/snooze),
   `scale` (3 years of synthetic history stays within time budgets), `sync` (cloud backup against real Chrome's storage.sync quotas), `a11y` (axe-core
@@ -565,8 +575,8 @@ backup endpoint.
 
 Kept in sync with the Trello board's **🔜 Next up** and **🗄️ Backlog** lists.
 
-- **Chrome Web Store submission** of `timetrack-v1.5.0.zip` (the owner has a developer
-  account) — pack in `store-assets/STORE_LISTING.md`.
+- **Chrome Web Store submission** of `timetrack-v1.6.0.zip` (1.5.0 is already in the
+  Store; the owner has a developer account) — pack in `store-assets/STORE_LISTING.md`.
 - **Multi-device merge** — needs a design decision first (which device wins, how to
   merge day records, whether `storage.sync` is the transport).
 - **A dedicated Webtime Tracker importer** — needs a real sample of their export (the
@@ -574,10 +584,16 @@ Kept in sync with the Trello board's **🔜 Next up** and **🗄️ Backlog** li
 - **Edge Add-ons listing** (same zip) and a possible **Firefox port** — see
   `store-assets/BROWSER_SUPPORT.md`; none of it is tested.
 - Google Drive OAuth backup (see note above).
-- Extending `DEFAULT_DOMAIN_CATEGORY` (`categories.js`) for sites more common outside
-  Israeli/US/global-English usage — the UI is in six languages, but the built-in
-  category defaults still skew toward he/en-market sites.
-- Refresh `psl.js` every few months (`node dist/tools/build-psl.mjs`).
+- **Multi-product hosts** (`google.com` = Gmail + Docs + Search, `microsoft.com`,
+  `office.com`) fall under "Other" when subdomains are grouped, and a category map can't
+  split them. Fixing it means keeping the subdomain for a short built-in list of such hosts
+  — which changes the stored domain keys (and so splits existing history), so it needs a
+  design decision first.
+- Keep extending `DEFAULT_DOMAIN_CATEGORY` (`categories.js`) as sites turn up under "Other";
+  1.6.0 took it from 93 to 565 entries. Keys must be registrable domains
+  (`categories.test.js` enforces it).
+- Refresh `psl.js` every few months (`node dist/tools/build-psl.mjs`); last refreshed in
+  1.6.0 (list version 2026-10-22).
 - Deferred ideas: tags, achievements, a command palette, a weekly email summary (only
   an in-browser notification exists today).
 
@@ -592,4 +608,6 @@ secret-free backups and a fixed sync quota, the full PSL, category budgets, week
 focus-score trend / best week / goal streak, any-range comparison, scheduled / strict /
 snoozable focus + history, opt-in session log, bulk site actions at scale, tolerant CSV
 import, demo-data onboarding, lazy locales, a typed worker protocol, and CI/release/site
-automation.
+automation. Done in 1.6.0: 472 more built-in site categories for the he/es/fr/ru/ar
+markets (plus the registrable-domain fix for subdomain-keyed defaults), a refreshed PSL,
+and a translatable store listing (`_locales` + detailed descriptions in all six languages).

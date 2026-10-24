@@ -1,0 +1,22 @@
+{
+  "appName": {
+    "message": "TimeTrack — Smart Browsing Time Tracker",
+    "description": "Extension name shown in the Chrome Web Store and chrome://extensions (max 75 characters)."
+  },
+  "appDescription": {
+    "message": "Track active time per site — analytics, budgets, focus mode & encrypted backup. Private, local-first, no account.",
+    "description": "Short description shown in the Chrome Web Store (max 132 characters). Keep in sync with store-assets/STORE_LISTING.md."
+  },
+  "cmdToggleTracking": {
+    "message": "Start / pause tracking",
+    "description": "Keyboard shortcut label on chrome://extensions/shortcuts."
+  },
+  "cmdStartFocus": {
+    "message": "Start / end a focus session",
+    "description": "Keyboard shortcut label on chrome://extensions/shortcuts."
+  },
+  "cmdOpenDashboard": {
+    "message": "Open the dashboard",
+    "description": "Keyboard shortcut label on chrome://extensions/shortcuts."
+  }
+}

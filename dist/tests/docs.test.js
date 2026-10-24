@@ -7,8 +7,9 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { buildListingTexts } from '../tools/listing-text.mjs';
 
-const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '../..');
+const root =path.join(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const read = (rel) => fs.readFileSync(path.join(root, rel), 'utf8').replace(/\r\n/g, '\n');
 const LANGS = ['he', 'en', 'ar', 'ru', 'es', 'fr'];
 const README = { en: 'README.md', he: 'README.he.md', ar: 'README.ar.md', ru: 'README.ru.md', es: 'README.es.md', fr: 'README.fr.md' };
@@ -83,6 +84,39 @@ test('PRIVACY.md lists the same data categories in Hebrew and English', () => {
   };
   assert.ok(bullets(en) >= 4, 'the English "what data is collected" list looks too short');
   assert.equal(bullets(he), bullets(en));
+});
+
+// ----------------------------------------------------------------- store listing pack
+test('STORE_LISTING.md: short descriptions equal the packaged ones, and all six languages have a detailed description', () => {
+  const listing = read('store-assets/STORE_LISTING.md');
+  const shortStart = listing.indexOf('### Short description');
+  const detailedStart = listing.indexOf('### Detailed description');
+  const short = [...listing.slice(shortStart, detailedStart).matchAll(/^- \*\*([A-Z]{2}) \((\d+)\):\*\* (.+)$/gm)];
+  assert.deepEqual(short.map((m) => m[1].toLowerCase()).sort(), [...LANGS].sort());
+  for (const [, code, count, text] of short) {
+    const lang = code.toLowerCase();
+    const { appDescription } = JSON.parse(read(`extension/_locales/${lang}/messages.json`));
+    assert.equal(text, appDescription.message, `${lang}: STORE_LISTING.md and _locales/${lang}/messages.json disagree on the short description`);
+    assert.equal(Number(count), [...text].length, `${lang}: the character count label is wrong`);
+  }
+
+  const detailed = listing.slice(detailedStart, listing.indexOf('\n---', detailedStart));
+  const blocks = detailed.split(/^\*\*(.+)\*\*$/m).slice(1);
+  const byName = Object.fromEntries(blocks.filter((_, i) => i % 2 === 0).map((name, i) => [name, blocks[i * 2 + 1]]));
+  assert.deepEqual(Object.keys(byName), ['English', 'עברית', 'العربية', 'Русский', 'Español', 'Français']);
+  const bullets = (text) => (text.match(/^> • /gm) || []).length;
+  for (const [name, text] of Object.entries(byName)) assert.equal(bullets(text), bullets(byName.English), `${name}: feature bullets differ from the English description`);
+});
+
+test('store-assets/listing-text/ has an up-to-date, paste-ready description for every language', () => {
+  const texts = buildListingTexts(read('store-assets/STORE_LISTING.md'));
+  assert.deepEqual(Object.keys(texts).sort(), [...LANGS].sort());
+  for (const [lang, text] of Object.entries(texts)) {
+    const file = `store-assets/listing-text/description-${lang}.txt`;
+    assert.equal(read(file), text, `${file} is stale — run: node dist/tools/listing-text.mjs`);
+    assert.doesNotMatch(text, /^>|\*\*/m, `${lang}: Markdown leaked into the plain-text description`);
+    assert.ok([...text].length <= 16000, `${lang}: the Store's description limit is 16,000 characters`);
+  }
 });
 
 // -------------------------------------------------------------------- release metadata

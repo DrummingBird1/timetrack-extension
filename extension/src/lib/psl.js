@@ -2,13 +2,13 @@
 //
 // Public Suffix List (https://publicsuffix.org/), (c) the PSL authors, licensed under
 // the Mozilla Public License 2.0 (https://mozilla.org/MPL/2.0/).
-// List version: 2026-10-07_07-28-19_UTC
-// List commit:  3929462652695bad04f0a27afb600974014a3c8b
+// List version: 2026-10-22_08-36-41_UTC
+// List commit:  8437e5262f13305f94087abe699b4fe2be1d1de8
 //
 // One rule per line: "a.b" = suffix, "*.a.b" = wildcard, "!x.a.b" = exception.
 // Single-label rules are omitted (the PSL's implicit "*" default covers them).
 
-export const PSL_VERSION = "2026-10-07_07-28-19_UTC";
+export const PSL_VERSION = "2026-10-22_08-36-41_UTC";
 export const PSL_RULES = `
 !city.kawasaki.jp
 !city.kitakyushu.jp
@@ -42,6 +42,7 @@ export const PSL_RULES = `
 *.airflow.ap-southeast-3.on.aws
 *.airflow.ap-southeast-4.on.aws
 *.airflow.ap-southeast-5.on.aws
+*.airflow.ap-southeast-7.on.aws
 *.airflow.ca-central-1.on.aws
 *.airflow.ca-west-1.on.aws
 *.airflow.cn-north-1.on.amazonwebservices.com.cn
@@ -328,6 +329,7 @@ export const PSL_RULES = `
 *.yokohama.jp
 *.zerops.app
 *.zerops.zone
+*.ztna-dingtalk.com
 0.bg
 0am.jp
 0g0.jp
@@ -585,7 +587,6 @@ aland.fi
 alessandria.it
 alesund.no
 algard.no
-aliases121.com
 alibabacloudcs.com
 alp1.ae.flow.ch
 alstahaug.no
@@ -1691,6 +1692,28 @@ conf.au
 conf.lv
 conference.aero
 conn.uk
+consent-portal.bedrock-agentcore.ap-northeast-1.amazonaws.com
+consent-portal.bedrock-agentcore.ap-northeast-2.amazonaws.com
+consent-portal.bedrock-agentcore.ap-south-1.amazonaws.com
+consent-portal.bedrock-agentcore.ap-south-2.amazonaws.com
+consent-portal.bedrock-agentcore.ap-southeast-1.amazonaws.com
+consent-portal.bedrock-agentcore.ap-southeast-2.amazonaws.com
+consent-portal.bedrock-agentcore.ap-southeast-5.amazonaws.com
+consent-portal.bedrock-agentcore.ap-southeast-7.amazonaws.com
+consent-portal.bedrock-agentcore.ca-central-1.amazonaws.com
+consent-portal.bedrock-agentcore.eu-central-1.amazonaws.com
+consent-portal.bedrock-agentcore.eu-north-1.amazonaws.com
+consent-portal.bedrock-agentcore.eu-south-1.amazonaws.com
+consent-portal.bedrock-agentcore.eu-south-2.amazonaws.com
+consent-portal.bedrock-agentcore.eu-west-1.amazonaws.com
+consent-portal.bedrock-agentcore.eu-west-2.amazonaws.com
+consent-portal.bedrock-agentcore.eu-west-3.amazonaws.com
+consent-portal.bedrock-agentcore.sa-east-1.amazonaws.com
+consent-portal.bedrock-agentcore.us-east-1.amazonaws.com
+consent-portal.bedrock-agentcore.us-east-2.amazonaws.com
+consent-portal.bedrock-agentcore.us-gov-west-1.amazonaws.com
+consent-portal.bedrock-agentcore.us-west-1.amazonaws.com
+consent-portal.bedrock-agentcore.us-west-2.amazonaws.com
 consulado.st
 consultant.aero
 consulting.aero
@@ -1816,6 +1839,7 @@ ddnssec.de
 de.com
 de.cool
 de.eu.org
+de.object.ncloudstorage.com
 de.trendhosting.cloud
 de.us
 de5.net
@@ -2790,7 +2814,6 @@ girly.jp
 giske.no
 git-pages.rit.edu
 git-repos.de
-gitapp.si
 gitbook.io
 github.app
 github.io
@@ -3840,8 +3863,14 @@ jouwweb.site
 joyo.kyoto.jp
 jozi.biz
 jp.eu.org
+jp.jp4.object.ncpstorage.com
+jp.jp4.object.private.ncpstorage.com
+jp.jp5.object.ncpstorage.com
+jp.jp5.object.private.ncpstorage.com
 jp.net
 jp.ngrok.io
+jp.object.ncpstorage.com
+jp.object.private.ncpstorage.com
 jpn.com
 jpn.org
 js.cn
@@ -4160,7 +4189,6 @@ klepp.no
 klodzko.pl
 km.ua
 kmpsp.gov.pl
-knightpoint.systems
 knowsitall.info
 knx-server.net
 kobayashi.miyazaki.jp
@@ -4227,9 +4255,27 @@ kozagawa.wakayama.jp
 kozaki.chiba.jp
 kozow.com
 kppsp.gov.pl
+kr-naver-dev.ncloudstorage.com
+kr-naver-dev.website.ncloudstorage.com
+kr-naver.ncloudstorage.com
+kr-naver.website.ncloudstorage.com
+kr-private.gov-ncloudstorage.com
+kr-private.ncloudstorage.com
 kr.eu.org
+kr.gov-ncloudstorage.com
 kr.it
+kr.ncloudstorage.com
+kr.object.fin-ncloudstorage.com
+kr.object.gov-ncloudstorage.com
+kr.object.ncloudstorage.com
+kr.object.ncpstorage.com
+kr.object.private.fin-ncloudstorage.com
+kr.object.private.gov-ncloudstorage.com
+kr.object.private.ncloudstorage.com
+kr.object.private.ncpstorage.com
+kr.objectstorage.ncloud.com
 kr.ua
+kr.website.ncloudstorage.com
 kraanghke.no
 kragero.no
 krakow.pl
@@ -4241,6 +4287,8 @@ kristiansund.no
 krodsherad.no
 krokstadelva.no
 kropyvnytskyi.ua
+krs.object.gov-ncloudstorage.com
+krs.object.private.gov-ncloudstorage.com
 krym.ua
 ks.ua
 ks.us
@@ -6059,7 +6107,6 @@ ownprovider.com
 ox.rs
 oxa.cloud
 oy.lc
-oya.to
 oyabe.toyama.jp
 oyama.tochigi.jp
 oyamazaki.kyoto.jp
@@ -6134,7 +6181,6 @@ per.nf
 perma.jp
 perso.ht
 perso.tn
-perspecta.cloud
 perugia.it
 pesaro-urbino.it
 pesarourbino.it
@@ -6705,6 +6751,7 @@ s3-website-ap-northeast-1.amazonaws.com
 s3-website-ap-southeast-1.amazonaws.com
 s3-website-ap-southeast-2.amazonaws.com
 s3-website-eu-west-1.amazonaws.com
+s3-website-jp.object.ncpstorage.com
 s3-website-sa-east-1.amazonaws.com
 s3-website-us-east-1.amazonaws.com
 s3-website-us-gov-west-1.amazonaws.com
@@ -6726,6 +6773,7 @@ s3-website.ca-central-1.amazonaws.com
 s3-website.ca-west-1.amazonaws.com
 s3-website.cn-north-1.amazonaws.com.cn
 s3-website.cn-northwest-1.amazonaws.com.cn
+s3-website.de.object.ncloudstorage.com
 s3-website.dualstack.af-south-1.amazonaws.com
 s3-website.dualstack.ap-northeast-1.amazonaws.com
 s3-website.dualstack.ap-northeast-2.amazonaws.com
@@ -6765,17 +6813,23 @@ s3-website.eu-west-2.amazonaws.com
 s3-website.eu-west-3.amazonaws.com
 s3-website.fr-par.scw.cloud
 s3-website.il-central-1.amazonaws.com
+s3-website.kr.object.fin-ncloudstorage.com
+s3-website.kr.object.gov-ncloudstorage.com
+s3-website.kr.object.ncloudstorage.com
+s3-website.krs.object.gov-ncloudstorage.com
 s3-website.me-central-1.amazonaws.com
 s3-website.me-south-1.amazonaws.com
 s3-website.nl-ams.scw.cloud
 s3-website.pl-waw.scw.cloud
 s3-website.sa-east-1.amazonaws.com
+s3-website.sg.object.ncloudstorage.com
 s3-website.us-east-1.amazonaws.com
 s3-website.us-east-2.amazonaws.com
 s3-website.us-gov-east-1.amazonaws.com
 s3-website.us-gov-west-1.amazonaws.com
 s3-website.us-west-1.amazonaws.com
 s3-website.us-west-2.amazonaws.com
+s3-website.us.object.ncloudstorage.com
 s3.af-south-1.amazonaws.com
 s3.amazonaws.com
 s3.ap-east-1.amazonaws.com
@@ -7096,6 +7150,9 @@ sex.hu
 sex.pl
 sf.no
 sg-1.paas.massivegrid.net
+sg.object.ncloudstorage.com
+sg.object.private.ncloudstorage.com
+sg.objectstorage.ncloud.com
 sh.cn
 shacknet.nu
 shakotan.hokkaido.jp
@@ -7810,6 +7867,7 @@ transfer-webapp-fips.us-gov-east-1.on.aws
 transfer-webapp-fips.us-gov-west-1.on.aws
 transfer-webapp.af-south-1.on.aws
 transfer-webapp.ap-east-1.on.aws
+transfer-webapp.ap-east-2.on.aws
 transfer-webapp.ap-northeast-1.on.aws
 transfer-webapp.ap-northeast-2.on.aws
 transfer-webapp.ap-northeast-3.on.aws
@@ -7820,6 +7878,7 @@ transfer-webapp.ap-southeast-2.on.aws
 transfer-webapp.ap-southeast-3.on.aws
 transfer-webapp.ap-southeast-4.on.aws
 transfer-webapp.ap-southeast-5.on.aws
+transfer-webapp.ap-southeast-6.on.aws
 transfer-webapp.ap-southeast-7.on.aws
 transfer-webapp.ca-central-1.on.aws
 transfer-webapp.ca-west-1.on.aws
@@ -7833,6 +7892,7 @@ transfer-webapp.eu-south-2.on.aws
 transfer-webapp.eu-west-1.on.aws
 transfer-webapp.eu-west-2.on.aws
 transfer-webapp.eu-west-3.on.aws
+transfer-webapp.eusc-de-east-1.on.amazonwebservices.eu
 transfer-webapp.il-central-1.on.aws
 transfer-webapp.me-central-1.on.aws
 transfer-webapp.me-south-1.on.aws
@@ -8074,6 +8134,7 @@ us.gov.pl
 us.in
 us.kg
 us.ngrok.io
+us.object.ncloudstorage.com
 us.org
 us.platform.sh
 us.reclaim.cloud

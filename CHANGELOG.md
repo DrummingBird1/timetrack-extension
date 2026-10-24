@@ -4,6 +4,60 @@ All notable changes to TimeTrack are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/); this project uses
 [Semantic Versioning](https://semver.org/).
 
+## [1.6.0] — 2026-10-23
+
+Smarter defaults for the sites people actually visit, in all six UI languages. The
+built-in category table was written for Hebrew/English-market sites, so a Russian, Spanish,
+French or Arabic user saw most of their browsing under "Other". The Chrome Web Store listing
+can now be translated too. No new permissions, no change to what is stored or where it can go
+(the privacy policy is unchanged).
+
+### Added
+- **The extension's name, description and shortcut labels are localized** through Chrome's
+  `_locales` (he, en, ar, ru, es, fr; `default_locale` is `en`). Chrome shows them in the
+  browser's own language, and the Chrome Web Store dashboard only offers a per-language listing
+  for languages the package ships, which is why it offered none before. The store pack
+  (`STORE_LISTING.md`) now has a detailed description in all six languages (Arabic, Russian,
+  Spanish and French are new). The in-app UI is unchanged: it still switches language live.
+- **Paste-ready store descriptions:** `store-assets/listing-text/description-<lang>.txt`, one
+  plain-text file per language, generated from `STORE_LISTING.md` by
+  `dist/tools/listing-text.mjs` (and checked for staleness by `docs.test.js`).
+- Tests that keep this honest: `package.test.js` checks every `__MSG_` key exists in every
+  language and that `_locales` covers the same languages as the UI; `docs.test.js` checks the
+  store pack's short descriptions equal the packaged ones; the smoke E2E launches Chrome once
+  per UI language and checks the resolved name, description and shortcut labels.
+- **472 more built-in site categories (93 → 565)**: news outlets, banks, shops, marketplaces,
+  streaming and social networks common in Israel, Spanish- and French-speaking countries,
+  Russia and the Arab world, plus more global sites (reference, developer and AI tools,
+  messaging, gaming). Your own category overrides still win over every default.
+- `categories.test.js`: guards the table's shape (valid categories, no silently duplicated
+  keys) and pins the subdomain keys that can't match (below) so new ones can't slip in.
+
+### Fixed
+- **Some built-in categories could never match.** With the default "group subdomains"
+  setting the tracker stores only the registrable domain (`chat.openai.com` is stored as
+  `openai.com`), but 13 defaults were keyed by subdomain. `openai.com` and `mozilla.org`
+  now have their own entries, so ChatGPT's legacy host and MDN are categorized. Gmail, Docs,
+  Drive, Meet and Teams still show under "Other" with grouping on, on purpose: `google.com`
+  is Gmail, Docs and Search at once, so there is no single honest category for it.
+
+### Changed
+- **The store description now matches what the extension does today** in all six languages:
+  it was missing keyboard shortcuts, searching all history, merging a renamed site's history,
+  the 80% warnings, optional counting while audio plays and the automatic data deletion, and it
+  said "encrypted cloud backup" although encryption is an opt-in setting (it now says
+  "optional AES-256 encryption").
+- `dist/build.ps1` moves the zips of earlier versions to `archive/old-builds/` when it builds
+  a new one, instead of leaving them in `dist/`.
+- **The name Chrome shows is now English by default** (it was Hebrew-only): browsers set to
+  Hebrew, Arabic, Russian, Spanish or French get that language, every other browser language
+  gets the English name and description. The Hebrew description is the store-listing one.
+- **The Public Suffix List is refreshed** (list version 2026-10-22), so newly added
+  hosting suffixes group correctly.
+- Categories are applied when stats are computed, so the extra defaults also re-categorize
+  your existing history: sites that used to be "Other" can now count as shopping or social
+  (distracting) or as productivity, which can move the focus score a little.
+
 ## [1.5.0] — 2026-10-10
 
 A foundations-first release: a real-browser test suite that immediately exposed several

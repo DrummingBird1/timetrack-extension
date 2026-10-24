@@ -62,9 +62,13 @@ say so in the PR so a native speaker can review.
 2. Add the code to `LANG_META` in `extension/src/lib/i18n.js` (direction + Intl locale), and the
    per-language weekday and duration-unit tables in `extension/src/lib/utils.js`.
 3. Add an `<option>` to the language picker in `extension/src/dashboard/dashboard.html`.
-4. Add the language to the marketing site (`store-assets/site/index.html`: the `STR` dictionary,
+4. Add `extension/_locales/<code>/messages.json` (copy `en`, translate the five keys; the name
+   must stay within 75 characters and the description within 132). This is what makes the Web
+   Store dashboard offer a listing in that language. Add its short description and a detailed
+   description to `store-assets/STORE_LISTING.md`, then run `node dist/tools/listing-text.mjs`.
+5. Add the language to the marketing site (`store-assets/site/index.html`: the `STR` dictionary,
    a `privacy-card`, the picker) and a `README.<code>.md`; the language switcher in every README links to it.
-5. Update the `LANGS` list in `dist/tests/i18n.test.js` and `dist/tests/docs.test.js`.
+6. Update the `LANGS` list in `dist/tests/i18n.test.js` and `dist/tests/docs.test.js`.
 
 The tests tell you what you missed.
 

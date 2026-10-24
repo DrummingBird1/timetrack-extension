@@ -12,6 +12,12 @@ import { fileURLToPath } from 'node:url';
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '../../extension');
 const manifest = JSON.parse(fs.readFileSync(path.join(ROOT, 'manifest.json'), 'utf8'));
 
+// Manifest strings are localized through _locales/<lang>/messages.json (the in-app UI has its
+// own runtime dictionaries in src/lib/locales/ — see i18n.js).
+const LOCALES = path.join(ROOT, '_locales');
+const messages = Object.fromEntries(fs.readdirSync(LOCALES).map((lang) => [lang, JSON.parse(fs.readFileSync(path.join(LOCALES, lang, 'messages.json'), 'utf8'))]));
+const localize = (value, lang) => value.replace(/__MSG_(\w+)__/g, (_, key) => messages[lang][key].message);
+
 function walk(dir) {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walk(path.join(dir, e.name)) : [path.join(dir, e.name)]));
 }
@@ -22,8 +28,12 @@ const ofType = (ext) => files.filter((f) => f.endsWith(ext));
 test('manifest basics: MV3, valid version, store-length name and description', () => {
   assert.equal(manifest.manifest_version, 3);
   assert.match(manifest.version, /^\d+\.\d+\.\d+$/);
-  assert.ok(manifest.name.length <= 75, `name is ${manifest.name.length} chars (store limit 75)`);
-  assert.ok(manifest.description.length <= 132, `description is ${manifest.description.length} chars (store limit 132)`);
+  for (const lang of Object.keys(messages)) {
+    const name = localize(manifest.name, lang);
+    const description = localize(manifest.description, lang);
+    assert.ok(name.length <= 75, `${lang}: name is ${name.length} chars (store limit 75)`);
+    assert.ok(description.length <= 132, `${lang}: description is ${description.length} chars (store limit 132)`);
+  }
   assert.equal(manifest.background.service_worker, 'background.js');
   assert.equal(manifest.background.type, 'module');
   assert.ok(manifest.minimum_chrome_version);
@@ -37,6 +47,23 @@ test('permissions are exactly the documented set — adding one must be a delibe
   assert.equal(manifest.content_scripts, undefined, 'no content scripts');
   assert.equal(manifest.externally_connectable, undefined, 'no external messaging surface');
   assert.equal(manifest.content_security_policy, undefined, 'the default MV3 CSP is kept (no unsafe-eval / remote script)');
+});
+
+test('the manifest is localized: every __MSG_ key exists in every language, and the languages match the in-app UI', () => {
+  assert.equal(manifest.default_locale, 'en');
+  const uiLanguages = fs.readdirSync(path.join(ROOT, 'src/lib/locales')).map((f) => f.replace(/\.json$/, '')).sort();
+  assert.deepEqual(Object.keys(messages).sort(), uiLanguages, '_locales and src/lib/locales must cover the same languages — a new UI language needs a store locale too');
+
+  const raw = fs.readFileSync(path.join(ROOT, 'manifest.json'), 'utf8');
+  const used = [...new Set([...raw.matchAll(/__MSG_(\w+)__/g)].map((m) => m[1]))].sort();
+  assert.deepEqual(used, ['appDescription', 'appName', 'cmdOpenDashboard', 'cmdStartFocus', 'cmdToggleTracking']);
+  assert.doesNotMatch(raw, /[^\x00-\x7F]/, 'manifest.json has hard-coded non-English text: move it to _locales');
+
+  for (const [lang, table] of Object.entries(messages)) {
+    assert.deepEqual(Object.keys(table).sort(), Object.keys(messages.en).sort(), `${lang}: messages.json keys differ from en`);
+    for (const key of used) assert.ok(table[key]?.message?.trim(), `${lang}: ${key} is empty`);
+    assert.ok(localize(manifest.name, lang).startsWith('TimeTrack'), `${lang}: the name should keep the brand first`);
+  }
 });
 
 test('commands all have a description and a default key', () => {
