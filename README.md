@@ -160,9 +160,3 @@ archive/                 ← superseded assets (old images/build versions)
 | `favicon` (optional) | Real site icons from Chrome's local cache — only if manually enabled |
 
 No `host` permission, and no access to page content — only the domain name.
-
-## Support
-
-If this project is useful to you, you can support its development:
-
-[Ko-fi](https://ko-fi.com/idanlights) · [Buy Me a Coffee](https://buymeacoffee.com/MrIdan) · [Patreon](https://www.patreon.com/c/IdanLights)
