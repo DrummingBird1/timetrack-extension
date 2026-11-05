@@ -30,6 +30,8 @@ analytics, goals, cloud backup, and data export.
 > All data stays **local** on your device. Nothing is sent anywhere unless you
 > explicitly enable cloud backup.
 
+🗺 **Planned work: see [ROADMAP.md](ROADMAP.md).**
+
 ## ✨ Features
 
 - **Smart, automatic tracking** — counts only *active* time: window focused and
