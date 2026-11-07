@@ -1,6 +1,6 @@
 // Site detail modal: per-site stats and charts, alias merge, never-track toggle.
 import { getSettings, saveSettings, mergeDomainAlias, getSessions } from '../lib/storage.js';
-import { parseDayKey, formatDuration, sum } from '../lib/utils.js';
+import { parseDayKey, formatDuration, sum, esc } from '../lib/utils.js';
 import { domainPeakHour, domainHourly, firstLastVisit, sessionStats, SESSION_BUCKET_LABELS } from '../lib/stats.js';
 import { categorize, categoryDef } from '../lib/categories.js';
 import { barChart } from '../lib/charts.js';
@@ -29,7 +29,7 @@ export function openSiteDetail(domain, source = cache) {
   const card = $('#siteModalCard');
   card.innerHTML = `
     <div class="modal-head">
-      <div class="site-cell"><img src="${iconFor(domain)}" alt=""><h3>${domain}</h3></div>
+      <div class="site-cell"><img src="${iconFor(domain)}" alt=""><h3>${esc(domain)}</h3></div>
       <button class="modal-close" id="modalClose" aria-label="${t('btn.close')}">✕</button>
     </div>
     <div class="detail-stats">

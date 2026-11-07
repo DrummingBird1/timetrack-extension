@@ -1,6 +1,6 @@
 // Overview tab: summary cards, trend chart, category donut, insights, week-over-week comparison.
 import { getIndex, getDays, getDay } from '../lib/storage.js';
-import { dayKey, rangeKeys, parseDayKey, addDays, formatDuration, sum, weekdaysFull } from '../lib/utils.js';
+import { dayKey, rangeKeys, parseDayKey, addDays, formatDuration, sum, weekdaysFull, esc } from '../lib/utils.js';
 import {
   totalTime, topSites, byCategory, focusScore, dailyTotals,
   activeDaysCount, currentStreak, goalStreak, trend, generateInsights,
@@ -43,7 +43,7 @@ export async function renderOverview() {
     statCard({ icon: ICONS.focus, val: score == null ? '—' : `${score}`, lbl: t('card.focus') }),
     statCard({ icon: ICONS.globe, val: Object.keys(agg).length, lbl: t('card.sites') }),
     statCard({ icon: ICONS.fire, val: `${streak} ${t('unit.days')}`, lbl: t('card.streak') }),
-    goalDays == null ? '' : statCard({ icon: ICONS.focus, val: `${goalDays} ${t('unit.days')}`, lbl: t('card.goalStreak') }),
+    goalDays == null ? '' : statCard({ icon: ICONS.goal, val: `${goalDays} ${t('unit.days')}`, lbl: t('card.goalStreak') }),
   ].join('');
 
   // Trend chart
@@ -54,7 +54,9 @@ export async function renderOverview() {
   else { trendKeys = cache.keys; trendDays = days; }
   const totals = dailyTotals(trendDays, trendKeys);
   const labelEvery = totals.length > 20 ? Math.ceil(totals.length / 12) : 1;
-  barChart($('#trendChart'), totals.map((d, i) => ({
+  const noData = `<div class="empty">${t('empty.range')}</div>`;
+  if (!total) $('#trendChart').innerHTML = noData;
+  else barChart($('#trendChart'), totals.map((d, i) => ({
     label: i % labelEvery === 0 ? `${parseDayKey(d.key).getDate()}/${parseDayKey(d.key).getMonth() + 1}` : '',
     value: d.t,
     title: `${parseDayKey(d.key).toLocaleDateString(locale())}: ${formatDuration(d.t)}`,
@@ -62,7 +64,8 @@ export async function renderOverview() {
   const avgLine = totals.length ? sum(totals.map((x) => x.t)) / totals.length : 0;
   $('#trendHint').textContent = t('hint.avgPerDay', { v: formatDuration(avgLine) });
 
-  donutChart($('#categoryDonut'), cats.map((c) => ({ label: categoryLabel(c.key), value: c.t, color: c.color })),
+  if (!total) { $('#categoryDonut').innerHTML = noData; $('#categoryLegend').innerHTML = ''; }
+  else donutChart($('#categoryDonut'), cats.map((c) => ({ label: categoryLabel(c.key), value: c.t, color: c.color })),
     { size: 180, thickness: 26, legend: $('#categoryLegend') });
 
   await renderInsightsPanel();
@@ -101,7 +104,7 @@ function renderTopList(host, list, total) {
     row.className = 'tl-row';
     row.innerHTML = `
       <img src="${iconFor(s.domain)}" loading="lazy" alt="" />
-      <span class="tl-name" title="${s.domain}">${s.domain}</span>
+      <span class="tl-name" title="${esc(s.domain)}">${esc(s.domain)}</span>
       <span class="tl-bar"><span class="tl-fill" style="width:${Math.max(3, (s.t / max) * 100)}%"></span></span>
       <span class="tl-cat" style="--c:${def.color}">${categoryLabel(catKey)}</span>
       <span class="tl-time">${formatDuration(s.t)}</span>`;

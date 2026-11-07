@@ -2,8 +2,23 @@
 // date column, a site column and a duration column (header names are matched loosely).
 // Pure functions — no DOM, no chrome APIs.
 
+import { cleanDomain } from './utils.js';
+import { isDayKey } from './snapshot.js';
+
+/**
+ * The field separator of a CSV file: Excel writes ";" (and a decimal comma) in Hebrew, Russian,
+ * French, Spanish and most other locales, "," in English ones, and a tab for "Unicode text".
+ * Judged from the header line, ignoring anything inside quotes.
+ */
+export function detectDelimiter(text) {
+  const header = text.slice(0, text.search(/\r?\n/) < 0 ? undefined : text.search(/\r?\n/)).replace(/"[^"]*"/g, '');
+  const count = (c) => header.split(c).length - 1;
+  const best = [';', '\t'].reduce((a, c) => (count(c) > count(a) ? c : a), ',');
+  return count(best) > 0 ? best : ',';
+}
+
 /** Minimal RFC 4180 parser: quoted fields, "" escapes, CRLF/LF, blank lines ignored. */
-export function parseCsv(text) {
+export function parseCsv(text, delimiter = ',') {
   const rows = [];
   let field = '';
   let row = [];
@@ -16,7 +31,7 @@ export function parseCsv(text) {
       } else field += c;
     } else if (c === '"') {
       inQuotes = true;
-    } else if (c === ',') {
+    } else if (c === delimiter) {
       row.push(field); field = '';
     } else if (c === '\n' || c === '\r') {
       if (c === '\r' && text[i + 1] === '\n') i++;
@@ -53,20 +68,34 @@ function fail(code, message) {
   return error;
 }
 
-/** "2026-03-05", "2026-03-05T14:30:00", "2026-03-05 14:30", "2026/03/05" → { key, hour } or null. */
+/** "2026-03-05", "2026-03-05T14:30:00", "2026-03-05 14:30", "2026/03/05" → { key, hour } or null (also null for 2026-02-31). */
 function parseDate(raw) {
   const m = /^(\d{4})[-/](\d{2})[-/](\d{2})(?:[T\s](\d{2}))?/.exec((raw || '').trim());
   if (!m) return null;
-  const month = Number(m[2]);
-  const day = Number(m[3]);
-  if (month < 1 || month > 12 || day < 1 || day > 31) return null;
-  return { key: `${m[1]}-${m[2]}-${m[3]}`, hour: m[4] != null ? Math.min(23, Number(m[4])) : null };
+  const key = `${m[1]}-${m[2]}-${m[3]}`;
+  if (!isDayKey(key)) return null;
+  return { key, hour: m[4] != null ? Math.min(23, Number(m[4])) : null };
 }
+
+/**
+ * A number the way a spreadsheet wrote it: "90", "1.5", "1,5", "1.234,5" (decimal comma, used by ";"
+ * files) or "1,234.5". Plain decimal numbers only: no "Infinity", no "1e12". NaN when it is not one.
+ */
+function toNumber(raw, decimalComma) {
+  let s = String(raw ?? '').trim().replace(/\s/g, '');
+  if (decimalComma) s = s.replace(/\./g, '').replace(',', '.');
+  else if (/^\d+,\d{1,2}$/.test(s)) s = s.replace(',', '.');        // "1,5" in a comma-separated file: a decimal comma
+  else s = s.replace(/,/g, '');                                       // "1,234.5": thousands separators
+  return /^\d+(\.\d+)?$/.test(s) ? Number(s) : NaN;
+}
+
+const MAX_ROW_SECONDS = 86400;      // one site cannot have more than a day in a day
 
 /** Bare, lower-case hostname, or '' when the value is not a website (e.g. a desktop app name). */
 function cleanSite(raw) {
-  const d = (raw || '').trim().toLowerCase().replace(/^[a-z]+:\/\//, '').replace(/[/?#].*$/, '').replace(/^www\./, '');
-  return /^[a-z0-9.-]+\.[a-z]{2,}$/.test(d) ? d : '';
+  const host = cleanDomain(raw);
+  // a dot (a real site), or localhost / an IPv6 literal; a bare word is far more likely an app name
+  return host && (host.includes('.') || host === 'localhost' || host.startsWith('[')) ? host : '';
 }
 
 /**
@@ -75,7 +104,10 @@ function cleanSite(raw) {
  * @throws Error with `code` 'NO_COLUMNS' (unrecognized header) or 'NO_ROWS' (nothing usable)
  */
 export function parseUsageCsv(text) {
-  const rows = parseCsv(text.replace(/^﻿/, ''));
+  const body = text.replace(/^﻿/, '');
+  const delimiter = detectDelimiter(body);
+  const rows = parseCsv(body, delimiter);
+  const decimalComma = delimiter === ';';
   if (rows.length < 2) throw fail('NO_COLUMNS', 'CSV has no data rows');
   const header = rows[0].map((h) => h.trim().toLowerCase());
   const col = Object.fromEntries(Object.entries(COLUMNS).map(([key, names]) => [key, findColumn(header, names)]));
@@ -93,10 +125,10 @@ export function parseUsageCsv(text) {
     const when = parseDate(cells[col.date]);
     const domain = cleanSite(cells[col.domain]);
     let seconds = NaN;
-    if (col.seconds >= 0) seconds = parseFloat(cells[col.seconds]);
-    else if (col.minutes >= 0) seconds = parseFloat(cells[col.minutes]) * 60;
-    else seconds = parseFloat(cells[col.hours]) * 3600;
-    if (!when || !domain || !(seconds > 0)) { skipped++; continue; }
+    if (col.seconds >= 0) seconds = toNumber(cells[col.seconds], decimalComma);
+    else if (col.minutes >= 0) seconds = toNumber(cells[col.minutes], decimalComma) * 60;
+    else seconds = toNumber(cells[col.hours], decimalComma) * 3600;
+    if (!when || !domain || !(seconds > 0) || seconds > MAX_ROW_SECONDS) { skipped++; continue; }
 
     seconds = Math.round(seconds);
     const day = days[when.key] || (days[when.key] = { domains: {}, hours: new Array(24).fill(0) });

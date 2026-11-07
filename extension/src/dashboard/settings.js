@@ -1,6 +1,6 @@
 // Settings tab: form binding, change handlers, search filter, passphrase meter, backup status.
-import { saveSettings, getSettings, getIndex, storageFootprint, clearAllData, clearSessions } from '../lib/storage.js';
-import { clamp, passphraseStrength } from '../lib/utils.js';
+import { saveSettings, getSettings, getIndex, storageFootprint, clearAllData, clearSessions, countPrunable, getPreReplaceInfo } from '../lib/storage.js';
+import { clamp, passphraseStrength, esc } from '../lib/utils.js';
 import { t, locale } from '../lib/i18n.js';
 import { $, $$, settings, setSettings, setAllCache, toast, send, actions } from './core.js';
 import {
@@ -8,7 +8,7 @@ import {
   renderCategoryEditor, addCategoryMapping, renderSchedule, addScheduleEntry,
 } from './settingsEditors.js';
 import { renderBudgetEditor, wireBudgets } from './budgets.js';
-import { startRestoreFlow, exportData, exportCsv, handleImport, handleCsvImport } from './dataio.js';
+import { startRestoreFlow, exportData, exportCsv, handleImport, handleCsvImport, undoReplace } from './dataio.js';
 
 // ---------------- SETTINGS ----------------
 export function fillSettingsForm() {
@@ -48,6 +48,7 @@ export function fillSettingsForm() {
   updateFocusModeFields();
   renderSchedule();
   renderBackupStatus();
+  renderUndoReplace();
   renderStorageInfo();
   renderCategoryEditor();
   renderBudgetEditor();
@@ -87,7 +88,14 @@ function updatePassStrength(pw) {
 function renderBackupStatus() {
   const b = settings.backup;
   const last = b.lastBackup ? new Date(b.lastBackup).toLocaleString(locale()) : t('backup.never');
-  $('#backupStatus').innerHTML = `${t('backup.last')} <strong>${last}</strong><br>${b.lastBackupStatus || ''}`;
+  $('#backupStatus').innerHTML = `${t('backup.last')} <strong>${last}</strong><br>${esc(b.lastBackupStatus || '')}`;
+}
+
+/** The "undo the last replace" row: shown only while a pre-replace copy exists. */
+export async function renderUndoReplace() {
+  const info = await getPreReplaceInfo();
+  $('#undoReplaceBlock').classList.toggle('hidden', !info);
+  if (info) $('#undoReplaceInfo').textContent = t('set.undoReplaceDesc', { n: info.days, when: new Date(info.savedAt).toLocaleString(locale()) });
 }
 
 export async function renderStorageInfo() {
@@ -155,7 +163,12 @@ export function wireSettings() {
   });
 
   $('#setRetention').addEventListener('change', async (e) => {
-    await persist({ retentionDays: clamp(parseInt(e.target.value, 10) || 365, 7, 3650) });
+    const raw = parseInt(e.target.value, 10);
+    const next = raw === 0 ? 0 : clamp(raw || 365, 7, 3650);          // 0 keeps everything
+    const doomed = await countPrunable(next);
+    if (doomed > 0 && !confirm(t('confirm.retention', { d: next, n: doomed }))) { e.target.value = settings.retentionDays; return; }
+    e.target.value = next;
+    await persist({ retentionDays: next });
     const { removed } = await send('prune');
     if (removed) toast(t('toast.pruned', { n: removed }), 'success');
   });
@@ -181,6 +194,7 @@ export function wireSettings() {
     const r = await send('runBackup');
     setSettings(await getSettings());
     renderBackupStatus();
+  renderUndoReplace();
     toast(r?.ran ? t('toast.backupDone') : (r?.status || t('toast.noTarget')), r?.ok === false ? 'error' : 'success');
   });
 
@@ -194,6 +208,7 @@ export function wireSettings() {
   $('#importFile').addEventListener('change', handleImport);
   $('#importCsvBtn').addEventListener('click', () => $('#importCsvFile').click());
   $('#importCsvFile').addEventListener('change', handleCsvImport);
+  $('#undoReplaceBtn').addEventListener('click', undoReplace);
 
   $('#clearData').addEventListener('click', async () => {
     if (!confirm(t('confirm.clear'))) return;

@@ -1,7 +1,7 @@
 // Shared dashboard state, DOM helpers and small UI primitives used by every tab.
 import { getIndex, getDays } from '../lib/storage.js';
 import { aggregateDomains } from '../lib/stats.js';
-import { dayKey, rangeKeys, keysBetween, favicon } from '../lib/utils.js';
+import { dayKey, rangeKeys, keysBetween, favicon, cleanDomain } from '../lib/utils.js';
 import { CATEGORY_DEFS } from '../lib/categories.js';
 import { t, locale } from '../lib/i18n.js';
 import { sendMessage } from '../lib/messages.js';
@@ -47,12 +47,9 @@ export function iconFor(domain) {
   return favicon(domain);
 }
 
-// Normalize free-typed input to a bare registrable-ish domain, or '' if unusable.
-export function cleanDomain(raw) {
-  const d = (raw || '').trim().toLowerCase()
-    .replace(/^https?:\/\//, '').replace(/\/.*$/, '').replace(/^www\./, '');
-  return /^[a-z0-9.-]+\.[a-z]{2,}$/.test(d) ? d : '';
-}
+// Free-typed domains go through one shared rule (utils.cleanDomain): lower-case host, no scheme/path/port,
+// and localhost, IPs and IDN names are fine. '' means unusable.
+export { cleanDomain };
 
 // Sites tab reads either the selected range (default) or the full history.
 export async function sitesSource() {
@@ -119,7 +116,8 @@ export const ICONS = {
   clock: '<svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm1 11h-2V6h2v5l4 2-1 1.7L13 13z"/></svg>',
   cal: '<svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2zm0 16H5V10h14v10z"/></svg>',
   avg: '<svg viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8-1.4-1.4L13 12l-4-4-7.6 7.6z"/></svg>',
-  focus: '<svg viewBox="0 0 24 24"><path d="M12 8a4 4 0 100 8 4 4 0 000-8zm0-6v3m0 14v3M2 12h3m14 0h3"/></svg>',
+  focus: '<svg viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 2a8 8 0 110 16 8 8 0 010-16zm0 2a6 6 0 100 12 6 6 0 000-12zm0 2a4 4 0 110 8 4 4 0 010-8zm0 2a2 2 0 100 4 2 2 0 000-4z"/></svg>',
+  goal: '<svg viewBox="0 0 24 24"><path d="M14.4 6L14 4H5v17h2v-7h5.6l.4 2h7V6z"/></svg>',
   fire: '<svg viewBox="0 0 24 24"><path d="M13 2s4 4 4 9a5 5 0 01-10 0c0-2 1-3 1-3s0 2 2 2c1 0 1-2 0-4-1-2 3-4 3-6zM9 16a3 3 0 006 0c0-1-1-2-1-2s0 1-1 1-1-1-1-2c-2 1-2 2-2 3z"/></svg>',
   globe: '<svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 2c1.5 1.8 2.4 4.6 2.5 8H9.5c.1-3.4 1-6.2 2.5-8zM4 12a8 8 0 015-7.4A18 18 0 007.5 12 18 18 0 009 19.4 8 8 0 014 12zm11 7.4A18 18 0 0016.5 12 18 18 0 0015 4.6 8 8 0 0115 19.4z"/></svg>',
 };

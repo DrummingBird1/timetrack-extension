@@ -4,7 +4,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseCsv, parseUsageCsv } from '../../extension/src/lib/csvimport.js';
+import { parseCsv, parseUsageCsv, detectDelimiter } from '../../extension/src/lib/csvimport.js';
 
 test('parseCsv handles quotes, embedded commas, escaped quotes, CRLF and a trailing newline', () => {
   const rows = parseCsv('a,b,c\r\n"x, y","say ""hi""",z\r\n\r\n');
@@ -71,4 +71,49 @@ test('a CSV without usable columns or rows fails with a specific error code', ()
   assert.throws(() => parseUsageCsv('foo,bar\n1,2\n'), (e) => e.code === 'NO_COLUMNS');
   assert.throws(() => parseUsageCsv(''), (e) => e.code === 'NO_COLUMNS');
   assert.throws(() => parseUsageCsv('date,domain,seconds\nbad,x,y\n'), (e) => e.code === 'NO_ROWS');
+});
+
+// ---------------------------------------------------------------- 1.7: spreadsheets in other locales
+test('a semicolon-separated file with decimal commas (Excel in Hebrew, Russian, French, Spanish) imports', () => {
+  const csv = 'date;domain;minutes\r\n2026-03-05;example.com;1,5\r\n2026-03-05;news.example.org;12\r\n2026-03-06;example.com;1.234,5\r\n';
+  const { days, rows, skipped } = parseUsageCsv(csv);
+  assert.equal(rows, 3);
+  assert.equal(skipped, 0);
+  assert.equal(days['2026-03-05'].domains['example.com'].t, 90, '1,5 minutes is 90 seconds, not 15 minutes');
+  assert.equal(days['2026-03-06'].domains['example.com'].t, 74070, '1.234,5 minutes');
+});
+
+test('a tab-separated file works too, and a comma file reads "1,5" as a decimal and "1,234" as thousands', () => {
+  assert.equal(detectDelimiter('date\tdomain\tseconds\n'), '\t');
+  assert.equal(detectDelimiter('"date","domain","seconds"\n'), ',');
+  assert.equal(detectDelimiter('date;domain;seconds\n'), ';');
+  const tsv = parseUsageCsv('date\tdomain\tseconds\n2026-03-05\texample.com\t120\n');
+  assert.equal(tsv.days['2026-03-05'].domains['example.com'].t, 120);
+  const comma = parseUsageCsv('date,domain,minutes\n2026-03-05,a.example.com,"1,5"\n2026-03-05,b.example.com,"1,234"\n');
+  assert.equal(comma.days['2026-03-05'].domains['a.example.com'].t, 90);
+  assert.equal(comma.days['2026-03-05'].domains['b.example.com'].t, 74040);
+});
+
+test('numbers that are not plain durations are skipped: Infinity, exponents, more than a day, impossible dates', () => {
+  const csv = [
+    'date,domain,seconds',
+    '2026-03-05,ok.example.com,60',
+    '2026-03-05,inf.example.com,Infinity',
+    '2026-03-05,exp.example.com,1e12',
+    '2026-03-05,long.example.com,100000',
+    '2026-02-31,date.example.com,60',
+    '2026-03-05,neg.example.com,-5',
+  ].join('\n');
+  const { days, rows, skipped } = parseUsageCsv(csv);
+  assert.equal(rows, 1);
+  assert.equal(skipped, 5);
+  assert.deepEqual(Object.keys(days['2026-03-05'].domains), ['ok.example.com']);
+});
+
+test('localhost and IP addresses import (a TimeTrack export of them used to lose those rows); bare app names do not', () => {
+  const csv = 'date,domain,seconds\n2026-03-05,localhost,60\n2026-03-05,192.168.1.5,60\n2026-03-05,http://localhost:3000/x,30\n2026-03-05,Visual Studio Code,60\n2026-03-05,notepad,60\n';
+  const { days, skipped } = parseUsageCsv(csv);
+  assert.deepEqual(Object.keys(days['2026-03-05'].domains).sort(), ['192.168.1.5', 'localhost']);
+  assert.equal(days['2026-03-05'].domains.localhost.t, 90);
+  assert.equal(skipped, 2);
 });

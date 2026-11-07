@@ -15,8 +15,21 @@
   --shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
 }
 
+:root[data-theme="light"] {
+  --bg: #f4f4f8;
+  --surface: #ffffff;
+  --surface-2: #f7f7fb;
+  --surface-3: #eef0f6;
+  --border: #e2e4ec;
+  --text: #1b1b2b;
+  --text-dim: #6b6b80;
+  --accent-soft: rgba(99, 102, 241, 0.1);
+  --shadow: 0 8px 24px rgba(40, 40, 80, 0.12);
+}
+
+/* "auto" follows the system; an explicit Light/Dark setting (data-theme) wins over it. */
 @media (prefers-color-scheme: light) {
-  :root {
+  :root:not([data-theme]) {
     --bg: #f4f4f8;
     --surface: #ffffff;
     --surface-2: #f7f7fb;
@@ -70,11 +83,11 @@ body {
   border: 1px solid var(--border);
 }
 .switch-thumb {
-  position: absolute; top: 2px; right: 2px; width: 19px; height: 19px;
+  position: absolute; top: 2px; inset-inline-start: 2px; width: 19px; height: 19px;
   border-radius: 50%; background: var(--text-dim); transition: 0.2s;
 }
 .switch input:checked + .switch-track { background: linear-gradient(135deg, var(--accent-2), var(--accent)); border-color: transparent; }
-.switch input:checked + .switch-track .switch-thumb { right: 21px; background: #fff; }
+.switch input:checked + .switch-track .switch-thumb { inset-inline-start: 21px; background: #fff; }
 
 /* Now playing card */
 .now-card {

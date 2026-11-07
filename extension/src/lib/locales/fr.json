@@ -126,7 +126,7 @@
   "backup.never": "Jamais",
   "set.data": "Gestion des données",
   "set.retention": "Conservation des données (jours)",
-  "set.retentionDesc": "Suppression automatique des données plus anciennes",
+  "set.retentionDesc": "Suppression automatique des données plus anciennes que ce nombre de jours. 0 = tout conserver",
   "set.export": "Exporter les données",
   "btn.exportJson": "Exporter en JSON",
   "btn.exportCsv": "Exporter en CSV",
@@ -375,5 +375,16 @@
   "demo.loaded": "Données de démo chargées — vous pouvez les supprimer à tout moment",
   "demo.removed": "Données de démo supprimées",
   "demo.hasData": "Il y a déjà des données sur cette période : impossible de charger la démo",
-  "btn.close": "Fermer"
+  "btn.close": "Fermer",
+  "confirm.retention": "Ne conserver que les {d} derniers jours ? {n} jours plus anciens seront supprimés définitivement.",
+  "toast.retentionKept": "L'historique ajouté remonte plus loin que le réglage de conservation, qui est donc réglé sur « tout conserver ». Vous pouvez le modifier dans les paramètres.",
+  "toast.importSkipped": "{n} enregistrements non valides ont été ignorés.",
+  "import.badFile": "Ce fichier n'est pas une sauvegarde TimeTrack.",
+  "set.undoReplace": "Annuler le dernier remplacement",
+  "set.undoReplaceDesc": "Rétablit les {n} jours écrasés par le dernier import ou la dernière restauration cloud avec remplacement. Enregistré {when}.",
+  "btn.undoReplace": "Annuler le remplacement",
+  "confirm.undoReplace": "Rétablir les {n} jours écrasés par le dernier remplacement ? Les données actuelles sont conservées, vous pourrez donc aussi annuler cette action.",
+  "toast.undone": "{n} jours d'avant le remplacement ont été rétablis.",
+  "bk.shrink": "Sauvegarde ignorée : la copie cloud contient {n} jours et cet appareil seulement {m}. Utilisez « Sauvegarder maintenant » pour l'écraser malgré tout.",
+  "prompt.passphraseRetry": "Phrase secrète incorrecte. Réessayez :"
 }

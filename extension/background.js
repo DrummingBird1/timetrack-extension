@@ -14,7 +14,7 @@ import { domainFromUrl, dayKey, rangeKeys, addDays, formatDuration, startOfWeek,
 import { runAutoBackup } from './src/lib/backup.js';
 import { categorize } from './src/lib/categories.js';
 import { aggregateDomains, totalTime, topSites, byCategory, focusScore, categorySeconds } from './src/lib/stats.js';
-import { setLang, t } from './src/lib/i18n.js';
+import { setLang, t, pickLanguage } from './src/lib/i18n.js';
 import { parseMessage } from './src/lib/messages.js';
 
 const SESSION_STATE = 'ttt_state';
@@ -97,7 +97,7 @@ async function enforceFocusOnTab(tabId, url, settings, focus) {
   const domain = domainFromUrl(url, settings.groupSubdomains);
   if (isBlocked(domain, settings, focus)) {
     try {
-      await chrome.tabs.update(tabId, { url: `${BLOCK_PAGE}?d=${encodeURIComponent(domain)}` });
+      await chrome.tabs.update(tabId, { url: `${BLOCK_PAGE}?d=${encodeURIComponent(domain)}&u=${encodeURIComponent(url)}` });   // u: where to go when the block ends
     } catch { /* tab may be gone */ }
   }
 }
@@ -560,6 +560,8 @@ chrome.runtime.onInstalled.addListener(async (details) => {
   const meta = await getMeta();
   if (!meta.installedAt) await saveMeta({ installedAt: Date.now() });
   if (details.reason === 'install') {
+    // Start in the browser's language when we have it (otherwise English), not always in Hebrew.
+    try { await saveSettings({ language: pickLanguage(chrome.i18n.getUILanguage()) }); } catch { /* keep the default */ }
     chrome.tabs.create({ url: chrome.runtime.getURL('src/dashboard/dashboard.html#welcome') });
   }
   await init();

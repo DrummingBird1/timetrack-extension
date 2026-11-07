@@ -412,7 +412,7 @@
             <div class="panel-head"><h3 data-i18n="set.data">ניהול נתונים</h3></div>
             <div class="setting-row">
               <div><div id="lbl-setRetention" class="set-label" data-i18n="set.retention">שמירת נתונים (ימים)</div><div id="desc-setRetention" class="set-desc" data-i18n="set.retentionDesc">מחיקה אוטומטית של נתונים ישנים</div></div>
-              <input type="number" id="setRetention" aria-labelledby="lbl-setRetention" aria-describedby="desc-setRetention" min="7" max="3650" />
+              <input type="number" id="setRetention" aria-labelledby="lbl-setRetention" aria-describedby="desc-setRetention" min="0" max="3650" />
             </div>
             <div class="field-block">
               <label class="set-label" data-i18n="set.export">ייצוא נתונים</label>
@@ -431,6 +431,11 @@
                 <button class="btn" id="importCsvBtn" data-i18n="btn.importCsv">ייבוא CSV</button>
                 <select id="importMode" data-i18n-aria="set.import"><option value="merge" data-i18n="import.merge">מיזוג</option><option value="replace" data-i18n="import.replace">החלפה</option></select>
               </div>
+            </div>
+            <div class="field-block hidden" id="undoReplaceBlock">
+              <label class="set-label" data-i18n="set.undoReplace">ביטול ההחלפה האחרונה</label>
+              <div class="set-desc" id="undoReplaceInfo"></div>
+              <div class="btn-group"><button class="btn ghost" id="undoReplaceBtn" data-i18n="btn.undoReplace">בטל החלפה</button></div>
             </div>
             <div class="setting-row">
               <div><div id="lbl-setSessionLog" class="set-label" data-i18n="set.sessionLog">יומן ביקורים</div><div id="desc-setSessionLog" class="set-desc" data-i18n="set.sessionLogDesc">שמור גם את שעת ההתחלה ואת אורך כל ביקור (נשאר במכשיר בלבד). מאפשר סטטיסטיקת אורך ביקור לכל אתר</div></div>

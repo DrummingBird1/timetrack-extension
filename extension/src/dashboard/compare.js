@@ -1,6 +1,6 @@
 // Period comparison panels on the Overview: this week vs last week, and any two ranges.
 import { getDays } from '../lib/storage.js';
-import { dayKey, parseDayKey, addDays, startOfWeek, keysBetween, rangeKeys, formatDuration } from '../lib/utils.js';
+import { dayKey, parseDayKey, addDays, startOfWeek, keysBetween, rangeKeys, formatDuration, esc } from '../lib/utils.js';
 import { aggregateDomains, totalTime, byCategory, focusScore, siteChanges } from '../lib/stats.js';
 import { t } from '../lib/i18n.js';
 import { $, settings, toast, iconFor, productiveTime } from './core.js';
@@ -26,16 +26,17 @@ export async function renderCompare() {
 
   host.innerHTML = '';
   host.appendChild(compareRow(t('compare.total'), twTotal, lwTotal, formatDuration));
-  host.appendChild(compareRow(t('card.productive') + prodSuffix, twProd, lwProd, formatDuration, goal || undefined));
-  host.appendChild(compareRow(t('card.focusScore'), twScore, lwScore, (v) => `${Math.round(v)}/100`, 100));
+  host.appendChild(compareRow(t('card.productive') + prodSuffix, twProd, lwProd, formatDuration, goal || undefined, undefined, true));
+  host.appendChild(compareRow(t('card.focusScore'), twScore, lwScore, (v) => `${Math.round(v)}/100`, 100, undefined, true));
 }
 
-function compareRow(label, now, prev, fmt, max, tags = [t('compare.thisWeek'), t('compare.lastWeek')]) {
+/** `higherIsBetter`: productive time and the focus score improve when they rise; total browsing time does not. */
+function compareRow(label, now, prev, fmt, max, tags = [t('compare.thisWeek'), t('compare.lastWeek')], higherIsBetter = false) {
   const top = max || Math.max(now, prev, 1);
   const delta = prev ? Math.round(((now - prev) / prev) * 100) : null;
   const row = document.createElement('div');
   row.className = 'cmp-row';
-  const deltaCls = delta == null ? 'flat' : (delta > 0 ? 'up' : delta < 0 ? 'down' : 'flat');
+  const deltaCls = !delta ? 'flat' : (delta > 0) === higherIsBetter ? 'good' : 'bad';
   const deltaTxt = delta == null ? '' : `${delta > 0 ? '▲' : delta < 0 ? '▼' : ''} ${Math.abs(delta)}%`;
   row.innerHTML = `
     <div class="cmp-label"><span>${label}</span><span class="delta ${deltaCls}">${deltaTxt}</span></div>
@@ -77,8 +78,8 @@ export async function runCustomCompare() {
 
   host.innerHTML = '';
   host.appendChild(compareRow(t('compare.total'), totalTime(daysA), totalTime(daysB), formatDuration, undefined, tags));
-  host.appendChild(compareRow(t('card.productive'), productiveTime(catsA), productiveTime(catsB), formatDuration, undefined, tags));
-  host.appendChild(compareRow(t('card.focusScore'), focusScore(catsA) || 0, focusScore(catsB) || 0, (v) => `${Math.round(v)}/100`, 100, tags));
+  host.appendChild(compareRow(t('card.productive'), productiveTime(catsA), productiveTime(catsB), formatDuration, undefined, tags, true));
+  host.appendChild(compareRow(t('card.focusScore'), focusScore(catsA) || 0, focusScore(catsB) || 0, (v) => `${Math.round(v)}/100`, 100, tags, true));
 
   const changes = siteChanges(aggA, aggB, 5);
   if (changes.length) {
@@ -89,7 +90,7 @@ export async function runCustomCompare() {
       row.className = 'tl-row';
       row.innerHTML = `
         <img src="${iconFor(c.domain)}" loading="lazy" alt="" />
-        <span class="tl-name" title="${c.domain}">${c.domain}</span>
+        <span class="tl-name" title="${esc(c.domain)}">${esc(c.domain)}</span>
         <span class="tl-time" style="color:var(--${c.delta > 0 ? 'danger' : 'green'})">${c.delta > 0 ? '▲' : '▼'} ${formatDuration(Math.abs(c.delta))}</span>`;
       block.appendChild(row);
     }

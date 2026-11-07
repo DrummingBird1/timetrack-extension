@@ -1,6 +1,6 @@
 import { getSettings } from '../lib/storage.js';
 import { setLang, getLang, t, dir } from '../lib/i18n.js';
-import { formatClock } from '../lib/utils.js';
+import { formatClock, cleanDomain, hostnameFromUrl } from '../lib/utils.js';
 import { sendMessage as msg } from '../lib/messages.js';
 
 const $ = (id) => document.getElementById(id);
@@ -16,9 +16,16 @@ function localizeStatic() {
   $('endBtn').textContent = t('blocked.end');
 }
 
+// Where to let the user through to. The worker passes the page that was blocked (u) along with its
+// site (d); only an http(s) URL that really belongs to d is used, otherwise the site's front page.
 function siteUrl() {
-  const d = new URLSearchParams(location.search).get('d');
-  return d ? `https://${d}` : 'about:blank';
+  const params = new URLSearchParams(location.search);
+  const d = cleanDomain(params.get('d'));
+  if (!d) return 'about:blank';
+  const u = params.get('u');
+  const host = u ? hostnameFromUrl(u) : null;
+  if (u && host && (host === d || host.endsWith(`.${d}`))) return u;
+  return `https://${d}`;
 }
 
 function tick(endsAt) {
@@ -37,9 +44,10 @@ async function main() {
   await setLang(settings.language || 'he');
   document.documentElement.lang = getLang();
   document.documentElement.dir = dir();
+  if (settings.theme === 'light' || settings.theme === 'dark') document.documentElement.dataset.theme = settings.theme;
   localizeStatic();
 
-  $('domain').textContent = new URLSearchParams(location.search).get('d') || '';
+  $('domain').textContent = cleanDomain(new URLSearchParams(location.search).get('d'));
 
   const focus = await msg('getFocus');
   // Only hold the user here during an active WORK phase. On break / ended, let them through.
