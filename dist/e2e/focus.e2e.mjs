@@ -42,6 +42,7 @@ test('service worker: notifications work in a non-default language (dictionary f
 test('popup: the tracking switch pauses and resumes tracking', async () => {
   const popup = await ext.openPage('src/popup/popup.html');
   await popup.waitForSelector('#enabledToggle');
+  await popup.waitForSelector('#weekChart svg');       // render() has run: the script is loaded, its listeners are attached
   await popup.$eval('#enabledToggle', (e) => e.closest('label').click());
   await waitFor(async () => (await ext.getSettings()).enabled === false, { message: 'tracking disabled' });
   assert.equal((await ext.message('getLive')).enabled, false);

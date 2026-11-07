@@ -34,6 +34,7 @@ export async function launch({ lang } = {}) {
     pipe: true,
     enableExtensions: [EXT_PATH],
     args: ['--no-sandbox', '--no-first-run', '--window-size=1400,900', ...(lang ? [`--lang=${lang}`] : [])],
+    ...(lang ? { env: { ...process.env, LANGUAGE: lang } } : {}),     // Linux reads the UI language from here
   });
 
   const swTarget = await browser.waitForTarget(

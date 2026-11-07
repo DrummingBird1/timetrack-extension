@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { launch, waitFor, EXT_PATH } from './harness.mjs';
+import { pickLanguage } from '../../extension/src/lib/i18n.js';
 
 let ext;
 before(async () => { ext = await launch(); });
@@ -22,8 +23,10 @@ test('the manifest name, description and shortcut labels follow the browser lang
   for (const lang of ['he', 'en', 'ar', 'ru', 'es', 'fr']) {
     const probe = await launch({ lang });
     try {
-      // a first install starts in the browser's own language
-      await waitFor(async () => (await probe.getSettings()).language === lang, { message: `the first install to start in ${lang}` });
+      // a first install starts in the browser's own UI language
+      const ui = await probe.run(() => chrome.i18n.getUILanguage());
+      const expected = pickLanguage(ui);
+      await waitFor(async () => (await probe.getSettings()).language === expected, { message: `the first install to start in ${expected} (browser UI language ${ui}, asked for ${lang})` });
       const table = JSON.parse(fs.readFileSync(path.join(EXT_PATH, '_locales', lang, 'messages.json'), 'utf8'));
       const running = await probe.run(() => {
         const m = chrome.runtime.getManifest();
