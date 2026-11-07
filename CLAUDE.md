@@ -445,8 +445,9 @@ Two modes (`mode`): **block** (block the chosen categories/domains) or **allow**
 (block everything *except* the allowed ones). Both modes combine categories with an
 explicit per-domain list (`blockDomains`/`allowDomains`), all edited in the focus
 Settings panel. While a work phase is live, `chrome.tabs.onUpdated` (and `enforceAllTabs`
-at start / on each work resume) redirect any blocked tab to `src/blocked/blocked.html`
-(a web-accessible resource, `use_dynamic_url`). The popup starts/stops sessions via
+at start / on each work resume) redirect any blocked tab to `src/blocked/blocked.html` (a web-accessible resource, `use_dynamic_url`). The
+address is bare: the page the tab was on is kept in `storage.session` under `K.blocked(tabId)` (removed with the
+tab) and the block page never reads a URL from its own query string. The popup starts/stops sessions via
 `startFocus`/`stopFocus`/`getFocus`; `chrome.commands` also toggles focus/tracking.
 No host permissions — redirection uses the existing `tabs` API.
 

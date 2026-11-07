@@ -117,6 +117,26 @@ test('the Theme setting reaches the popup and the block page, not just the dashb
   }
 });
 
+// ------------------------------------------------------------------ block page
+test('the block page ignores whatever its address says: no redirect, no markup', async () => {
+  await ext.message('startFocus', { minutes: 25 });
+  try {
+    const hostile = 'src/blocked/blocked.html?d=' + encodeURIComponent('<img src=x onerror=document.title=1>') + '&u=' + encodeURIComponent('javascript:document.title="pwned"');
+    const block = await ext.openPage(hostile);
+    await block.waitForSelector('#domain');
+    await new Promise((r) => setTimeout(r, 600));
+    assert.ok(block.url().includes('blocked.html'), 'still on the block page, nowhere else');
+    assert.equal(await block.$eval('#domain', (e) => e.textContent), '', 'the query string is not displayed');
+    assert.equal(await block.$eval('#domain', (e) => e.children.length), 0);
+    await block.click('#snoozeBtn');                       // releasing the tab is what used to follow the address
+    await waitFor(() => block.url() === 'about:blank', { message: 'with nothing recorded for this tab there is nowhere to go but a blank page' });
+    assert.notEqual(await block.title(), 'pwned');
+    await block.close();
+  } finally {
+    await ext.message('stopFocus');
+  }
+});
+
 // ------------------------------------------------------------------ comparison colours
 test('period comparison: less productive time and a lower focus score are bad, less total browsing time is good', async () => {
   const days = {};

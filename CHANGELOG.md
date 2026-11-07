@@ -42,7 +42,8 @@ and no new kind of data (the undo copy below is your own earlier data, kept on t
   cards showed a dot instead of an icon, seven cards left an orphan, and an empty period drew bare grey
   charts.
 - Smaller ones: the popup said "Not active" over "Active now"; "32 m 29 s" wrapped in the site detail;
-  the block page returns to the page you were blocked from; the tracking streak no longer reads 0 until
+  the block page returns to the page you were blocked from (kept per tab in session storage, so nothing in the
+  page's own address can steer the redirect, which CodeQL flagged as an open redirect / XSS sink); the tracking streak no longer reads 0 until
   the first second of the day is tracked; `example.com.` is the same site as `example.com`; a custom
   range is capped at about ten years; a day and its index entry are written together, so a crash cannot
   leave an orphan day, and "Clear all data" also removes any that exist.

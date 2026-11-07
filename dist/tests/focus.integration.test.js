@@ -72,6 +72,22 @@ test('block mode redirects a blocked site to the block page', async () => {
   await send({ type: 'stopFocus' });
 });
 
+test('the block page address carries nothing; where the tab goes back to is kept per tab in storage.session', async () => {
+  await storage.saveSettings({ focus: { mode: 'block', blockCategories: ['social'], defaultMinutes: 10 } });
+  tabsList = [{ id: 7, url: 'https://facebook.com/feed?x=1' }];
+  await send({ type: 'startFocus', minutes: 10 });
+  await settle();
+  const u = updates.find((x) => x.id === 7);
+  assert.ok(u, 'the tab was redirected');
+  assert.equal(u.url, 'chrome-extension://test/src/blocked/blocked.html', 'no query string: a link must not be able to steer the redirect');
+  const key = storage.K.blocked(7);
+  const got = await chrome.storage.session.get(key);
+  assert.deepEqual(got[key], { d: 'facebook.com', u: 'https://facebook.com/feed?x=1' });
+  await chrome.tabs.onRemoved._fire(7);
+  assert.deepEqual(await chrome.storage.session.get(key), {}, 'closing the tab forgets it');
+  await send({ type: 'stopFocus' });
+});
+
 test('allow mode blocks everything except allowed categories', async () => {
   await storage.saveSettings({ focus: { mode: 'allow', allowCategories: ['productivity'], defaultMinutes: 10 } });
   tabsList = [{ id: 1, url: 'https://facebook.com/feed' }, { id: 2, url: 'https://github.com/x' }];

@@ -8,7 +8,7 @@
 
 import {
   getSettings, saveSettings, addTime, addVisit, recordSession, addFocusLog, getDay, getDays, pruneOld,
-  saveMeta, getMeta, migrate, storageFootprint,
+  saveMeta, getMeta, migrate, storageFootprint, K,
 } from './src/lib/storage.js';
 import { domainFromUrl, dayKey, rangeKeys, addDays, formatDuration, startOfWeek, keysBetween } from './src/lib/utils.js';
 import { runAutoBackup } from './src/lib/backup.js';
@@ -97,7 +97,11 @@ async function enforceFocusOnTab(tabId, url, settings, focus) {
   const domain = domainFromUrl(url, settings.groupSubdomains);
   if (isBlocked(domain, settings, focus)) {
     try {
-      await chrome.tabs.update(tabId, { url: `${BLOCK_PAGE}?d=${encodeURIComponent(domain)}&u=${encodeURIComponent(url)}` });   // u: where to go when the block ends
+      // Where the block page sends the tab when the block ends. It travels in storage.session, not in the
+      // page's address: a web-accessible page that navigates to a URL taken from its own query string is an
+      // open redirect for any site that links to it.
+      await chrome.storage.session.set({ [K.blocked(tabId)]: { d: domain, u: url } });
+      await chrome.tabs.update(tabId, { url: BLOCK_PAGE });
     } catch { /* tab may be gone */ }
   }
 }
@@ -433,7 +437,10 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   }
 });
 
-chrome.tabs.onRemoved.addListener(() => refresh());
+chrome.tabs.onRemoved.addListener((tabId) => {
+  chrome.storage.session.remove(K.blocked(tabId)).catch(() => {});
+  refresh();
+});
 
 chrome.windows.onFocusChanged.addListener(async (winId) => {
   const st = await loadState();

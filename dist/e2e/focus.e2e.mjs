@@ -56,7 +56,7 @@ test('focus mode (block list): a blocked domain is redirected to the block page,
   const tab = await ext.browser.newPage();
   await tab.goto(hostUrl(), { waitUntil: 'load' }).catch(() => {});
   await waitFor(() => tab.url().startsWith(`${ext.base}src/blocked/blocked.html`), { message: 'redirect to block page' });
-  assert.ok(tab.url().includes('d=localhost'));
+  assert.equal(tab.url(), `${ext.base}src/blocked/blocked.html`, 'the block page address carries no query string');
   await tab.waitForSelector('#domain');
   assert.equal(await tab.$eval('#domain', (e) => e.textContent), 'localhost');
   await waitFor(async () => /^0[45]:\d\d$/.test(await tab.$eval('#timer', (e) => e.textContent.trim())), { message: 'block-page countdown' });
@@ -142,6 +142,7 @@ test('block page: "allow 10 minutes" pauses blocking; strict mode removes every 
 
   await tab.click('#snoozeBtn');
   await waitFor(async () => (await ext.message('getFocus')).pausedUntil > Date.now(), { message: 'blocking paused' });
+  await waitFor(() => tab.url() === hostUrl(), { message: 'the tab goes back to the page it was blocked from' });
   const other = await ext.browser.newPage();
   await other.goto(hostUrl(), { waitUntil: 'load' });
   await sleep(700);

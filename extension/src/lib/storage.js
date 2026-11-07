@@ -14,6 +14,7 @@ export const K = {
   INDEX: 'ttt_index',
   META: 'ttt_meta',
   PREV: 'ttt_prev_snapshot',      // one-step undo for a replace import (see savePreReplaceSnapshot)
+  blocked: (tabId) => `ttt_blocked_${tabId}`,   // storage.session: { d, u } of the page a tab was redirected away from
   day: (key) => `ttt_day_${key}`,
   sess: (key) => `ttt_sess_${key}`,
   FOCUS_LOG: 'ttt_focuslog',

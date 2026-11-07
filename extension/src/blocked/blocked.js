@@ -1,4 +1,4 @@
-import { getSettings } from '../lib/storage.js';
+import { getSettings, K } from '../lib/storage.js';
 import { setLang, getLang, t, dir } from '../lib/i18n.js';
 import { formatClock, cleanDomain, hostnameFromUrl } from '../lib/utils.js';
 import { sendMessage as msg } from '../lib/messages.js';
@@ -16,13 +16,30 @@ function localizeStatic() {
   $('endBtn').textContent = t('blocked.end');
 }
 
-// Where to let the user through to. The worker passes the page that was blocked (u) along with its
-// site (d); only an http(s) URL that really belongs to d is used, otherwise the site's front page.
+// What the worker recorded for this tab when it redirected it here: the blocked site (d) and the page (u).
+// It is read from storage.session, never from the address bar, so nothing a link can put in this page's URL
+// decides where the tab goes. Missing (a restored tab after a browser restart, a page opened by hand) means
+// there is nowhere to send the tab back to.
+let target = null;
+
+async function loadTarget() {
+  try {
+    const tab = await chrome.tabs.getCurrent();
+    if (!tab || tab.id == null) return null;
+    const key = K.blocked(tab.id);
+    const got = await chrome.storage.session.get(key);
+    return got[key] || null;
+  } catch {
+    return null;
+  }
+}
+
+// Where to let the user through to: the page that was blocked when it really belongs to the recorded site
+// and is http(s), otherwise the site's front page.
 function siteUrl() {
-  const params = new URLSearchParams(location.search);
-  const d = cleanDomain(params.get('d'));
+  const d = target && cleanDomain(target.d);
   if (!d) return 'about:blank';
-  const u = params.get('u');
+  const u = typeof target.u === 'string' ? target.u : '';
   const host = u ? hostnameFromUrl(u) : null;
   if (u && host && (host === d || host.endsWith(`.${d}`))) return u;
   return `https://${d}`;
@@ -47,7 +64,8 @@ async function main() {
   if (settings.theme === 'light' || settings.theme === 'dark') document.documentElement.dataset.theme = settings.theme;
   localizeStatic();
 
-  $('domain').textContent = cleanDomain(new URLSearchParams(location.search).get('d'));
+  target = await loadTarget();
+  $('domain').textContent = target ? cleanDomain(target.d) : '';
 
   const focus = await msg('getFocus');
   // Only hold the user here during an active WORK phase. On break / ended, let them through.
