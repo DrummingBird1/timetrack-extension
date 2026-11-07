@@ -41,6 +41,9 @@ const activeTab = { id: 1, url: 'https://youtube.com/watch?v=1', audible: false 
 let messageListener = null;
 
 let createdNotifications = [];
+// A registry-backed chrome.alarms: create() replaces (and so restarts) an existing alarm, get() finds it.
+const alarmRegistry = new Map();
+const alarmCreates = [];
 
 globalThis.chrome = {
   storage: { local: area({ trackBytes: true }), session: area() },
@@ -59,7 +62,11 @@ globalThis.chrome = {
     queryState: async () => 'active',
     onStateChanged: (listeners.idle = evt()),
   },
-  alarms: { create: () => {}, onAlarm: (listeners.alarm = evt()) },
+  alarms: {
+    create: (name, info) => { alarmCreates.push(name); alarmRegistry.set(name, { name, ...info }); },
+    get: async (name) => alarmRegistry.get(name),
+    onAlarm: (listeners.alarm = evt()),
+  },
   commands: { onCommand: evt() },
   action: { setBadgeBackgroundColor: () => {}, setBadgeText: () => {} },
   notifications: {
@@ -281,6 +288,43 @@ test('a weekly category budget fires an 80% warning then a reached notification,
   await chrome.storage.session.remove(['ttt_notified', 'ttt_snoozed']);
 });
 
+// ---------------------------------------------------------------- 1.7: alarms, hourly jobs, incognito
+test('the tick and backup alarms are each created exactly once on the first start', () => {
+  assert.deepEqual([...alarmCreates].sort(), ['ttt_backup', 'ttt_tick']);
+  assert.equal(alarmRegistry.get('ttt_backup').periodInMinutes, 60);
+});
+
+test('the 1-minute tick runs the hourly jobs about once an hour, even if the 60-minute alarm never fires', async () => {
+  const stamp = async () => (await storage.getMeta()).lastHourlyJobs || 0;
+  clock += 61 * 60_000;                                   // an hour passes with no ttt_backup alarm at all
+  await listeners.alarm._fire({ name: 'ttt_tick' });
+  await settle();
+  const first = await stamp();
+  assert.equal(first, clock, 'the hourly jobs ran from the tick');
+
+  clock += 60_000;                                        // the next tick, a minute later: throttled
+  await listeners.alarm._fire({ name: 'ttt_tick' });
+  await settle();
+  assert.equal(await stamp(), first, 'not again within the hour');
+
+  clock += 61 * 60_000;
+  await listeners.alarm._fire({ name: 'ttt_tick' });
+  await settle();
+  assert.equal(await stamp(), clock, 'and again after another hour');
+});
+
+test('time in a private-browsing tab is never recorded, even if the extension is allowed there', async () => {
+  await send({ type: 'flush' });
+  const base = youtubeSeconds();
+  activeTab.incognito = true;
+  await send({ type: 'settingsChanged' });                // re-read the active tab
+  clock += 60_000;
+  await send({ type: 'flush' });
+  assert.equal(youtubeSeconds(), base, 'counted time in an incognito tab');
+  activeTab.incognito = false;
+  await send({ type: 'settingsChanged' });
+});
+
 test('a storage-quota warning fires once when local storage crosses the threshold', async () => {
   // Storage warnings use notify()'s default '' id (not snoozable/deduped-by-id
   // like limit notifications), so detect them by their message content instead
@@ -310,4 +354,13 @@ test('a storage-quota warning fires once when local storage crosses the threshol
 
   mockBytesInUse = 0;
   Date.now = realNow; // restore for any later files (each file is its own process anyway)
+});
+
+test('a later worker start leaves the existing alarms alone (re-creating one restarts its countdown)', async () => {
+  const before = alarmCreates.length;
+  const backupAlarm = alarmRegistry.get('ttt_backup');
+  await import('../../extension/background.js?cold-start');    // a fresh module instance = a cold worker start
+  await settle();
+  assert.equal(alarmCreates.length, before, 'init() created an alarm that already existed');
+  assert.equal(alarmRegistry.get('ttt_backup'), backupAlarm);
 });

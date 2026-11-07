@@ -9,6 +9,7 @@
 import { exportAll, importAll, getSettings, saveSettings, summarizeSnapshot } from './storage.js';
 import { encryptJSON, decryptJSON, isEncrypted } from './crypto.js';
 import { gzip, packJSON, unpackJSON, isPacked } from './compress.js';
+import { t } from './i18n.js';
 
 const SYNC_PREFIX = 'ttt_sync_';
 const SYNC_META = 'ttt_sync_meta';
@@ -111,7 +112,12 @@ async function daysThatFit(snapshot, encrypted) {
   return lo;
 }
 
-export async function backupToSync() {
+// An automatic backup that would shrink the cloud copy to under half its days is refused: the usual
+// cause is a second device or a fresh profile whose short history would overwrite the good copy.
+const SHRINK_MIN_DAYS = 14;
+
+/** @param {{ force?: boolean }} [opts]  force: a manual backup the user asked for skips the shrink guard */
+export async function backupToSync({ force = false } = {}) {
   const settings = await getSettings();
   const full = await exportAll({ sessions: false });   // session logs would not fit the 100 KB quota
   const totalDays = Object.keys(full.days).length;
@@ -132,6 +138,11 @@ export async function backupToSync() {
   if (!result) throw new Error('הגיבוי גדול מדי לסנכרון Google');
   const { chunks, json, encrypted, days, rawBytes } = result;
   const trimmed = totalDays - days;
+
+  const previous = (await chrome.storage.sync.get(SYNC_META))[SYNC_META];
+  if (!force && previous && previous.days >= SHRINK_MIN_DAYS && days < previous.days / 2) {
+    throw Object.assign(new Error(t('bk.shrink', { n: previous.days, m: days })), { code: 'SHRINK' });
+  }
 
   // Write the new copy over the old one in a single set() (it is all-or-nothing), THEN drop leftover
   // chunks — a failed backup must never cost the user the previous one. Only when the old and new
@@ -230,7 +241,8 @@ export async function backupToEndpoint(url, token) {
 }
 
 /** Run whichever backup targets are configured; updates settings.backup meta. */
-export async function runAutoBackup() {
+/** @param {{ force?: boolean }} [opts]  force: a manual "Back up now" (skips the cloud shrink guard) */
+export async function runAutoBackup({ force = false } = {}) {
   const settings = await getSettings();
   const b = settings.backup;
   const results = [];
@@ -238,7 +250,7 @@ export async function runAutoBackup() {
 
   if (b.syncEnabled) {
     try {
-      const r = await backupToSync();
+      const r = await backupToSync({ force });
       results.push(`ענן Google: ${r.chunks} מקטעים${r.encrypted ? ' 🔒' : ''}${r.trimmed ? ` (קוצצו ${r.trimmed} ימים)` : ''}`);
     } catch (e) {
       ok = false;
@@ -259,6 +271,7 @@ export async function runAutoBackup() {
   }
 
   const status = (ok ? '✅ ' : '⚠️ ') + results.join(' • ');
-  await saveSettings({ backup: { lastBackup: Date.now(), lastBackupStatus: status } });
+  // A failed run must not look like a fresh backup: only a successful one moves the date (and the next retry).
+  await saveSettings({ backup: ok ? { lastBackup: Date.now(), lastBackupStatus: status } : { lastBackupStatus: status } });
   return { ran: true, ok, status };
 }

@@ -3,6 +3,7 @@
 // `ttt_index` listing the days that exist.
 
 import { dayKey } from './utils.js';
+import { sanitizeSnapshot } from './snapshot.js';
 
 // v2: per-domain hourly map `dh`.  v3: optional per-day session logs (ttt_sess_<day>).
 // Both are additive — old records need no rewrite.
@@ -12,11 +13,13 @@ export const K = {
   SETTINGS: 'ttt_settings',
   INDEX: 'ttt_index',
   META: 'ttt_meta',
+  PREV: 'ttt_prev_snapshot',      // one-step undo for a replace import (see savePreReplaceSnapshot)
   day: (key) => `ttt_day_${key}`,
   sess: (key) => `ttt_sess_${key}`,
   FOCUS_LOG: 'ttt_focuslog',
 };
 const SESS_PREFIX = 'ttt_sess_';
+const DAY_PREFIX = 'ttt_day_';
 
 export const DEFAULT_SETTINGS = {
   enabled: true,
@@ -162,17 +165,6 @@ export async function getIndex() {
   return r[K.INDEX] || [];
 }
 
-async function ensureIndexed(key) {
-  const idx = await getIndex();
-  if (!idx.includes(key)) {
-    idx.push(key);
-    idx.sort();
-    await chrome.storage.local.set({ [K.INDEX]: idx });
-    const meta = await getMeta();
-    if (!meta.firstDay) await saveMeta({ firstDay: key });
-  }
-}
-
 export async function getMeta() {
   const r = await chrome.storage.local.get(K.META);
   return r[K.META] || { version: SCHEMA_VERSION, firstDay: null, installedAt: 0 };
@@ -214,25 +206,45 @@ export async function getDays(keys) {
 export async function addTime({ dateKey, domain, seconds, hour }) {
   if (!domain || seconds <= 0) return;
   const day = (await getDay(dateKey)) || emptyDay();
-  const rec = day.domains[domain] || (day.domains[domain] = { t: 0, v: 0 });
+  const rec = domainRecord(day, domain);
   rec.t += seconds;
   if (hour >= 0 && hour < 24) {
     day.hours[hour] = (day.hours[hour] || 0) + seconds;
     if (!rec.dh) rec.dh = {};
     rec.dh[hour] = (rec.dh[hour] || 0) + seconds;
   }
-  await chrome.storage.local.set({ [K.day(dateKey)]: day });
-  await ensureIndexed(dateKey);
+  await commitDay(dateKey, day);
 }
 
 /** Register a fresh visit (a switch into this domain). */
 export async function addVisit(dateKey, domain) {
   if (!domain) return;
   const day = (await getDay(dateKey)) || emptyDay();
-  if (!day.domains[domain]) day.domains[domain] = { t: 0, v: 0 };
-  day.domains[domain].v += 1;
-  await chrome.storage.local.set({ [K.day(dateKey)]: day });
-  await ensureIndexed(dateKey);
+  domainRecord(day, domain).v += 1;
+  await commitDay(dateKey, day);
+}
+
+/** The record for `domain`, created when missing. Own properties only: a host called "constructor" must not hit Object.prototype. */
+function domainRecord(day, domain) {
+  if (!Object.hasOwn(day.domains, domain)) day.domains[domain] = { t: 0, v: 0 };
+  return day.domains[domain];
+}
+
+/**
+ * Write a day record and, when the day is new, the index entry in ONE set() call (it is
+ * all-or-nothing). Writing them separately left an orphan day, missing from export and backup,
+ * if the worker died between the two writes.
+ */
+async function commitDay(dateKey, day) {
+  const writes = { [K.day(dateKey)]: day };
+  const idx = await getIndex();
+  const isNew = !idx.includes(dateKey);
+  if (isNew) writes[K.INDEX] = [...idx, dateKey].sort();
+  await chrome.storage.local.set(writes);
+  if (isNew) {
+    const meta = await getMeta();
+    if (!meta.firstDay) await saveMeta({ firstDay: dateKey });
+  }
 }
 
 // ---- focus session history ----
@@ -294,11 +306,23 @@ export async function clearSessions() {
   return keys.length;
 }
 
+/** The days (from `index`) that a retention of `retentionDays` would delete. 0 or less keeps everything. */
+export function prunableDays(index, retentionDays, now = Date.now()) {
+  if (!retentionDays || retentionDays <= 0) return [];
+  const cutoff = dayKey(new Date(now - retentionDays * 86400000));
+  return index.filter((k) => k < cutoff);
+}
+
+/** How many days a retention of `retentionDays` would delete right now — for confirming before lowering it. */
+export async function countPrunable(retentionDays) {
+  return prunableDays(await getIndex(), retentionDays).length;
+}
+
 export async function pruneOld(retentionDays) {
   if (!retentionDays || retentionDays <= 0) return 0;
   const idx = await getIndex();
   const cutoff = dayKey(new Date(Date.now() - retentionDays * 86400000));
-  const remove = idx.filter((k) => k < cutoff);
+  const remove = prunableDays(idx, retentionDays);
   if (!remove.length) return 0;
   await chrome.storage.local.remove([...remove.map(K.day), ...remove.map(K.sess)]);
   const kept = idx.filter((k) => k >= cutoff);
@@ -316,12 +340,15 @@ export async function removeDays(keys) {
 }
 
 export async function clearAllData() {
-  const idx = await getIndex();
-  await chrome.storage.local.remove(idx.map(K.day));
+  // Scan by prefix as well as by index: a day written without its index entry (an old crash) must not survive.
+  const all = await chrome.storage.local.get(null);
+  const dayKeys = Object.keys(all).filter((k) => k.startsWith(DAY_PREFIX));
+  if (dayKeys.length) await chrome.storage.local.remove(dayKeys);
   await clearSessions();
   await clearFocusLog();
+  await chrome.storage.local.remove(K.PREV);                    // the undo copy is old data too
   await chrome.storage.local.set({ [K.INDEX]: [] });
-  await saveMeta({ firstDay: null });
+  await saveMeta({ firstDay: null, demoDays: [] });
 }
 
 /**
@@ -362,70 +389,115 @@ export async function exportAll({ sessions = true } = {}) {
 }
 
 /**
- * Restore a snapshot. mode "replace" wipes existing days first; "merge" keeps
+ * Restore a snapshot. mode "replace" makes the stored days exactly the snapshot's; "merge" keeps
  * the larger time/visits per domain so re-importing never double counts.
- * Returns { days, domainsChanged }: domainsChanged counts domain-day records
- * whose merged value actually differs from what was already stored (null in
- * "replace" mode, where the concept of a "conflict" doesn't apply — everything
- * is wiped first).
+ * Returns { days, domainsChanged, dropped, retentionRelaxed }: domainsChanged counts domain-day
+ * records whose merged value actually differs from what was already stored (null in "replace"
+ * mode, where the concept of a "conflict" doesn't apply); dropped counts records that were
+ * malformed and left out; retentionRelaxed says the imported history reached back past the
+ * retention setting, so retention was switched to "keep everything" rather than deleting it.
+ *
+ * Safe by construction: the snapshot is validated before anything is touched, "replace" first
+ * saves the current data as a one-step undo (see undoLastReplace), the new data is written in one
+ * all-or-nothing set(), and only after that is anything the snapshot doesn't contain removed.
  */
 export async function importAll(snapshot, { mode = 'merge', includeSettings = true } = {}) {
-  if (!snapshot || typeof snapshot !== 'object' || !snapshot.days) {
-    throw new Error('קובץ גיבוי לא תקין');
-  }
-  if (includeSettings && snapshot.settings) {
-    await withSettingsLock(async () => {
-      const local = await getSettings();
-      const merged = deepMerge(DEFAULT_SETTINGS, snapshot.settings);
-      // Snapshots carry no credentials, so keep this device's own. (A legacy
-      // snapshot that still has them wins — it is the user's own data.)
-      merged.backup.passphrase = merged.backup.passphrase || local.backup.passphrase;
-      merged.backup.endpointToken = merged.backup.endpointToken || local.backup.endpointToken;
-      // "Encrypt backups" with no passphrase would be silently skipped by
-      // backup.js — turn the flag off so the UI never claims protection it lacks.
-      if (merged.backup.encrypt && !merged.backup.passphrase) merged.backup.encrypt = false;
-      await writeSettingsUnlocked(merged);
-    });
-  }
-  if (mode === 'replace') await clearAllData();
+  const clean = sanitizeSnapshot(snapshot, DEFAULT_SETTINGS);   // throws BAD_SNAPSHOT before any change
+  const keys = Object.keys(clean.days);
+  if (mode === 'replace' && !keys.length) throw Object.assign(new Error('the backup has no usable days'), { code: 'BAD_SNAPSHOT' });
 
+  // Real data never mixes with demo data: drop the demo first (it is only ever fake days).
+  const demo = (await getMeta()).demoDays || [];
+  if (demo.length) {
+    await removeDays(demo);
+    await saveMeta({ demoDays: [] });
+  }
+  if (mode === 'replace') await savePreReplaceSnapshot();
+
+  const oldIndex = await getIndex();
+  const existing = mode === 'merge' ? await getDays(keys) : {};
   const writes = {};
-  const idx = new Set(await getIndex());
-  const existing = await getDays(Object.keys(snapshot.days));
   let domainsChanged = 0;
-
-  for (const [key, incoming] of Object.entries(snapshot.days)) {
-    const base = existing[key] || emptyDay();
+  for (const key of keys) {
     if (mode === 'replace') {
-      writes[K.day(key)] = incoming;
+      writes[K.day(key)] = clean.days[key];
     } else {
-      const { day, changed } = mergeDay(base, incoming);
+      const { day, changed } = mergeDay(existing[key] || emptyDay(), clean.days[key]);
       writes[K.day(key)] = day;
       domainsChanged += changed;
     }
-    idx.add(key);
   }
+  const index = (mode === 'replace' ? keys : [...new Set([...oldIndex, ...keys])]).sort();
+  writes[K.INDEX] = index;
+
   // Session logs: keep whichever side recorded more for a day, so re-importing the same
   // file never doubles entries (the same idempotence rule as the day aggregates).
-  const incomingSessions = snapshot.sessions || {};
-  const sessionKeys = Object.keys(incomingSessions);
+  const sessionKeys = Object.keys(clean.sessions);
   if (sessionKeys.length) {
-    const existingSessions = await getSessions(sessionKeys);
+    const existingSessions = mode === 'merge' ? await getSessions(sessionKeys) : {};
     const total = (list) => (list || []).reduce((sum, e) => sum + (e[2] || 0), 0);
     for (const key of sessionKeys) {
-      const keep = total(existingSessions[key]) >= total(incomingSessions[key]) ? existingSessions[key] : incomingSessions[key];
+      const keep = total(existingSessions[key]) >= total(clean.sessions[key]) ? existingSessions[key] : clean.sessions[key];
       if (keep && keep.length) writes[K.sess(key)] = keep;
     }
   }
-  if (Array.isArray(snapshot.focusLog) && snapshot.focusLog.length) {
+  if (clean.focusLog && clean.focusLog.length) {
     // union by start time, so re-importing the same file never duplicates sessions
-    const merged = new Map((await getFocusLog()).map((e) => [e.start, e]));
-    for (const e of snapshot.focusLog) merged.set(e.start, e);
+    const merged = new Map((mode === 'merge' ? await getFocusLog() : []).map((e) => [e.start, e]));
+    for (const e of clean.focusLog) merged.set(e.start, e);
     writes[K.FOCUS_LOG] = [...merged.values()].sort((a, b) => a.start - b.start).slice(-FOCUS_LOG_MAX);
   }
-  writes[K.INDEX] = [...idx].sort();
-  await chrome.storage.local.set(writes);
-  return { days: Object.keys(snapshot.days).length, domainsChanged: mode === 'merge' ? domainsChanged : null };
+  if (mode === 'replace') writes[K.META] = { ...(await getMeta()), firstDay: index[0] || null };
+
+  await chrome.storage.local.set(writes);                         // all-or-nothing; the old data is still intact if this throws
+
+  if (mode === 'replace') {
+    // Only now remove what the snapshot doesn't contain — by prefix, so a day that was never indexed goes too.
+    const keep = new Set(keys);
+    const all = await chrome.storage.local.get(null);
+    const stale = Object.keys(all).filter((k) => (k.startsWith(DAY_PREFIX) && !keep.has(k.slice(DAY_PREFIX.length)))
+      || (k.startsWith(SESS_PREFIX) && !keep.has(k.slice(SESS_PREFIX.length))));
+    if (stale.length) await chrome.storage.local.remove(stale);
+  }
+
+  if (includeSettings && clean.settings) {
+    await withSettingsLock(async () => {
+      const local = await getSettings();
+      const merged = deepMerge(DEFAULT_SETTINGS, clean.settings);
+      merged.backup = local.backup;                               // where this device backs up to (and its credentials) never come from a file
+      await writeSettingsUnlocked(merged);
+    });
+  }
+
+  // History older than the retention setting would be deleted at the next worker start. Importing it
+  // was deliberate, so keep it and say so instead.
+  const retention = (await getSettings()).retentionDays;
+  const retentionRelaxed = prunableDays(keys, retention).length > 0;
+  if (retentionRelaxed) await saveSettings({ retentionDays: 0 });
+
+  return { days: keys.length, domainsChanged: mode === 'merge' ? domainsChanged : null, dropped: clean.dropped, retentionRelaxed };
+}
+
+// ---- one-step undo for "replace" ----
+// A replace import or cloud restore first stores the data it is about to overwrite here, so a wrong
+// file or a wrong backup is a click away from being undone. One generation: the next replace overwrites it.
+async function savePreReplaceSnapshot() {
+  if (!(await getIndex()).length) return;
+  const snapshot = await exportAll({ sessions: true });
+  await chrome.storage.local.set({ [K.PREV]: { savedAt: Date.now(), snapshot } });
+}
+
+/** { savedAt, days } for the saved pre-replace copy, or null. */
+export async function getPreReplaceInfo() {
+  const rec = (await chrome.storage.local.get(K.PREV))[K.PREV];
+  return rec && rec.snapshot ? { savedAt: rec.savedAt, days: Object.keys(rec.snapshot.days || {}).length } : null;
+}
+
+/** Put back the data that the last replace overwrote (the current data becomes the new undo copy). */
+export async function undoLastReplace() {
+  const rec = (await chrome.storage.local.get(K.PREV))[K.PREV];
+  if (!rec || !rec.snapshot) throw Object.assign(new Error('nothing to undo'), { code: 'NO_UNDO' });
+  return importAll(rec.snapshot, { mode: 'replace', includeSettings: false });
 }
 
 /** Pure summary of a snapshot's shape — for confirming a restore before committing it. */
@@ -460,7 +532,7 @@ function mergeDay(a, b) {
   const out = { domains: { ...a.domains }, hours: (a.hours || new Array(24).fill(0)).slice() };
   let changed = 0;
   for (const [domain, rec] of Object.entries(b.domains || {})) {
-    const cur = out.domains[domain] || { t: 0, v: 0 };
+    const cur = Object.hasOwn(out.domains, domain) ? out.domains[domain] : { t: 0, v: 0 };
     const merged = { t: Math.max(cur.t, rec.t || 0), v: Math.max(cur.v, rec.v || 0) };
     const dh = mergeDh(cur.dh, rec.dh);
     if (dh) merged.dh = dh;

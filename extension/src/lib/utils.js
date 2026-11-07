@@ -36,11 +36,17 @@ export function rangeKeys(days, end = new Date()) {
   return keys;
 }
 
+// A custom range is capped at about ten years: a typo such as year 0001 would otherwise ask
+// storage for millions of keys.
+const MAX_RANGE_DAYS = 3660;
+
 /** Inclusive day-keys between two dates, oldest first. */
 export function keysBetween(start, end) {
   const keys = [];
-  let cur = new Date(start.getFullYear(), start.getMonth(), start.getDate());
   const last = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+  let cur = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+  const earliest = addDays(last, -(MAX_RANGE_DAYS - 1));
+  if (cur < earliest) cur = earliest;
   while (cur <= last) {
     keys.push(dayKey(cur));
     cur = addDays(cur, 1);
@@ -83,14 +89,52 @@ function publicSuffixLength(labels) {
 const isIpv4 = (host) => /^\d{1,3}(\.\d{1,3}){3}$/.test(host);
 const isIpv6 = (host) => host.includes(':');   // URL.hostname brackets these: "[::1]"
 
-/** Extract a lowercase hostname from a URL, or null for non-web pages. */
+const RESERVED_NAMES = new Set(['__proto__', 'constructor', 'prototype']);
+
+/**
+ * Is `host` something we track and store as a site? URL.hostname hands back ASCII (an IDN host
+ * arrives as punycode): letters, digits, "-", "_" and ".", or a bracketed IPv6 literal. Quotes,
+ * "=", "&", spaces and the like are not sites, and keeping them out of storage keeps them out of
+ * the HTML we build from it. Names that are also Object.prototype members are refused for the
+ * same reason (they would collide with the plain objects the day records live in).
+ */
+export function isTrackableHost(host) {
+  if (typeof host !== 'string' || !host || host.length > 253 || RESERVED_NAMES.has(host)) return false;
+  if (/^\[[0-9a-f:.]+\]$/.test(host)) return true;
+  return /^[a-z0-9_-]+(\.[a-z0-9_-]+)*$/.test(host);
+}
+
+/**
+ * Normalize something a person typed or an import file contained ("https://www.Example.com/x",
+ * "localhost:3000", "münchen.de", "192.168.1.5") to a bare lowercase host, or '' when it is not
+ * a usable site. One rule for every input box and importer.
+ */
+export function cleanDomain(raw) {
+  const text = String(raw ?? '').trim();
+  if (!text || /\s/.test(text)) return '';
+  try {
+    const url = new URL(/^[a-z][a-z0-9+.-]*:\/\//i.test(text) ? text : `http://${text}`);
+    const host = url.hostname.toLowerCase().replace(/^www\./, '').replace(/\.$/, '');
+    return isTrackableHost(host) ? host : '';
+  } catch {
+    return '';
+  }
+}
+
+/** Escape text for use inside HTML, including attribute values written with either quote. */
+export function esc(value) {
+  return String(value ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+}
+
+/** Extract a lowercase hostname from a URL, or null for non-web pages and hosts we won't store. */
 export function hostnameFromUrl(url) {
   try {
     const u = new URL(url);
     if (u.protocol !== 'http:' && u.protocol !== 'https:') return null;
     let host = u.hostname.toLowerCase();
     if (host.startsWith('www.')) host = host.slice(4);
-    return host || null;
+    host = host.replace(/\.$/, '');          // "example.com." is the same site as "example.com"
+    return isTrackableHost(host) ? host : null;
   } catch {
     return null;
   }

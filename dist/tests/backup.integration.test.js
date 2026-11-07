@@ -480,12 +480,21 @@ test('restoring "encrypt: on" onto a device with no passphrase turns encryption 
   assert.equal(s.backup.encrypt, false, 'encrypt must not stay on without a passphrase — the UI would claim protection that is not applied');
 });
 
-test('an old snapshot that still carries secrets can be restored (backward compatible)', async () => {
-  const legacy = { app: 'TimeTrack', version: 2, days: {}, settings: { backup: { encrypt: true, passphrase: 'old-pass', endpointToken: 'old-token' } } };
-  await storage.importAll(legacy, { mode: 'merge' });
+test('a file can never change where this device backs up to, nor its credentials', async () => {
+  // Before 1.7 an old snapshot's secrets were restored and its endpoint applied. A file from
+  // someone else could then make the next backup POST the whole history to their server.
+  await storage.saveSettings({ backup: { endpointUrl: 'https://mine.example/backup', syncEnabled: true } });
+  const foreign = {
+    app: 'TimeTrack', version: 2, days: {},
+    settings: { backup: { endpointUrl: 'https://attacker.example/steal', syncEnabled: false, encrypt: true, passphrase: 'old-pass', endpointToken: 'old-token' } },
+  };
+  await storage.importAll(foreign, { mode: 'merge' });
   const s = await storage.getSettings();
-  assert.equal(s.backup.passphrase, 'old-pass');
-  assert.equal(s.backup.endpointToken, 'old-token');
+  assert.equal(s.backup.endpointUrl, 'https://mine.example/backup');
+  assert.equal(s.backup.syncEnabled, true);
+  assert.equal(s.backup.passphrase, '');
+  assert.equal(s.backup.endpointToken, '');
+  assert.equal(s.backup.encrypt, false);
 });
 
 // ---------- realistic data: the quota maths must count JSON escaping ----------
@@ -662,10 +671,56 @@ test('chunks left over from a bigger earlier backup are removed', async () => {
   const big = await backup.backupToSync();
   await storage.clearAllData();
   await seed(3);
-  const small = await backup.backupToSync();
+  const small = await backup.backupToSync({ force: true });        // a manual backup: the shrink guard (below) would refuse an automatic one
   assert.ok(small.chunks < big.chunks);
   const keys = [...chrome.storage.sync._store.keys()].filter((k) => k.startsWith('ttt_sync_') && k !== 'ttt_sync_meta');
   assert.equal(keys.length, small.chunks, 'stale chunks would waste the sync quota');
+});
+
+// ---------- 1.7: an emptier device must not overwrite a good cloud copy; a failed run must not look fresh ----------
+test('an automatic backup that would shrink the cloud copy to under half its days is refused; a manual one goes through', async () => {
+  await storage.importAll(buildSnapshot({ days: 120, seed: 5, endDate: new Date(2026, 5, 1) }), { mode: 'replace', includeSettings: false });
+  const good = await backup.backupToSync();
+  assert.ok(good.days >= 100);
+
+  // a second device / fresh profile with three days of history
+  await storage.clearAllData();
+  await seed(3);
+  await assert.rejects(() => backup.backupToSync(), (e) => e.code === 'SHRINK');
+  const meta = chrome.storage.sync._store.get('ttt_sync_meta');
+  assert.equal(meta.days, good.days, 'the good copy is still there');
+
+  const r = await backup.backupToSync({ force: true });
+  assert.ok(r.days < good.days);
+});
+
+test('a small cloud copy is never blocked from growing or from small changes', async () => {
+  await seed(3);
+  await backup.backupToSync();
+  await storage.addTime({ dateKey: '2025-02-01', domain: 'x.com', seconds: 100, hour: 9 });
+  await backup.backupToSync();                       // 3 → 4 days: fine
+  await storage.clearAllData();
+  await seed(2);
+  await backup.backupToSync();                       // 4 → 2 days: under the 14-day floor, so not a "good copy" worth guarding
+});
+
+test('a failed automatic backup records the error but not a fresh lastBackup', async () => {
+  await seed(3);
+  await storage.saveSettings({ backup: { syncEnabled: false, endpointUrl: 'https://down.example/hook', lastBackup: 12345 } });
+  globalThis.fetch = async () => ({ ok: false, status: 503 });
+  const r = await backup.runAutoBackup();
+  assert.equal(r.ok, false);
+  const s = await storage.getSettings();
+  assert.equal(s.backup.lastBackup, 12345, 'the date of the last SUCCESSFUL backup is kept');
+  assert.ok(s.backup.lastBackupStatus.startsWith('⚠️'));
+});
+
+test('decryptJSON: a wrong passphrase carries a code the UI can retry on, and a hostile iteration count cannot hang it', async () => {
+  const env = await crypto.encryptJSON({ a: 1 }, 'right');
+  await assert.rejects(() => crypto.decryptJSON(env, 'wrong'), (e) => e.code === 'BAD_PASSPHRASE');
+  const started = Date.now();
+  await assert.rejects(() => crypto.decryptJSON({ ...env, iterations: 4_000_000_000 }, 'right'), (e) => e.code === 'BAD_PASSPHRASE');
+  assert.ok(Date.now() - started < 8000, 'the iteration count is clamped, so the call fails fast instead of running billions of rounds');
 });
 
 test('a corrupted compressed payload fails with the friendly "corrupted backup" message', async () => {
