@@ -4,6 +4,64 @@ All notable changes to TimeTrack are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/); this project uses
 [Semantic Versioning](https://semver.org/).
 
+## [1.7.0] — 2026-11-07
+
+A reliability and data-safety release, from an audit of 1.6.0's code and a live walk-through of the
+real extension. Nothing here is a feature to learn: it makes automatic backups actually run, stops
+imports from losing or corrupting history, and fixes things that looked wrong. No new permissions
+and no new kind of data (the undo copy below is your own earlier data, kept on this device).
+
+### Fixed
+- **Automatic backup, the weekly summary and the storage warning almost never ran.** The 60-minute
+  alarm was re-created every time the background worker started, which restarts its countdown, and
+  the worker starts on most 1-minute ticks, so it never reached zero. Alarms are now created only when
+  missing, and the 1-minute tick runs the hourly jobs as a safety net.
+- **A failed or interrupted "Replace" could wipe your history.** Replace now validates the file first,
+  writes the new data in one all-or-nothing step and only then removes what the file doesn't contain.
+  The data it replaced is kept as a one-step undo (Settings → "Undo the last replace").
+- **History older than your retention setting was deleted a minute after importing it.** Imported
+  history is now kept (retention switches to "keep everything" and you are told). Lowering retention
+  asks first and says how many days it will delete; 0 means keep everything.
+- **An imported file could change where your backups go.** A settings block in a file could set the
+  backup server address, and the next backup would send your history there. Imports no longer touch the
+  backup settings (credentials never travelled in files). Imports are also checked field by field: bad
+  days, domains, numbers and settings are skipped and counted, names like `__proto__` cannot become
+  sites, and a file that is not a backup is refused.
+- **An emptier device could overwrite a good cloud backup.** An automatic backup that would shrink the
+  cloud copy to under half its days (a second device, a fresh profile) is refused; "Back up now" still
+  overrides. A failed backup no longer shows a fresh "last backup" date and is retried.
+- **A wrong passphrase on restore was a dead end.** You are asked again (three tries). A hostile backup
+  file can no longer hang the page with a huge key-derivation count.
+- **Private-browsing tabs were recorded** when the extension was allowed in incognito. They are skipped.
+- **Stored text is escaped wherever it is drawn** (site names, backup status, schedule text), and only
+  well-formed hostnames are stored, so an odd address cannot turn into markup in the dashboard.
+- **The toggle switches were backwards** in left-to-right languages ("on" put the knob on the left).
+- **The Theme setting was ignored** by the toolbar popup and the focus block page.
+- **Period comparison colours were wrong:** less productive time and a lower focus score showed green.
+- **The narrow dashboard** (under 920 px) stacked its tabs vertically with no labels. The focus and goal
+  cards showed a dot instead of an icon, seven cards left an orphan, and an empty period drew bare grey
+  charts.
+- Smaller ones: the popup said "Not active" over "Active now"; "32 m 29 s" wrapped in the site detail;
+  the block page returns to the page you were blocked from; the tracking streak no longer reads 0 until
+  the first second of the day is tracked; `example.com.` is the same site as `example.com`; a custom
+  range is capped at about ten years; a day and its index entry are written together, so a crash cannot
+  leave an orphan day, and "Clear all data" also removes any that exist.
+
+### Changed
+- **CSV import** reads files saved by Excel in Hebrew, Russian, French, Spanish and other locales
+  (semicolon-separated, decimal commas), rejects impossible dates and implausible durations, and accepts
+  localhost and IP addresses.
+- One validator for every domain input box and importer (accepts localhost, IPs and international names).
+- A first install starts in the browser's language (English when it is not one of the six) instead of
+  always Hebrew.
+- New checks, each verified to fail on the old behaviour: unit tests for import safety, validation,
+  alarms and CSV; a registry-backed alarms mock; E2E tests that stop the real service worker, render
+  hostile site names, and measure the switches, theme, comparison colours and narrow layout.
+
+Still open from the audit, for a later release: cross-context storage locks and a snapshotting migration
+runner, the Hebrew-only backup and encryption error text, a timeout and CORS handling for the custom backup
+endpoint, and notification de-duplication across browser restarts.
+
 ## [1.6.0] — 2026-10-23
 
 Smarter defaults for the sites people actually visit, in all six UI languages. The

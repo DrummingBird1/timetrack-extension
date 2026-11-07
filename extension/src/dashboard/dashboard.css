@@ -153,7 +153,8 @@ body {
 
 /* Summary cards */
 .cards-grid { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 18px; }
-.cards-grid > .stat-card { flex: 1 1 180px; min-width: 0; }
+/* four to a row on a desktop (so 7 cards read as 4 + 3), three or two as the window narrows; a short last row stretches to fill */
+.cards-grid > .stat-card { flex: 1 1 max(180px, 22%); min-width: 0; }
 .stat-card {
   background: var(--surface); border: 1px solid var(--border);
   border-radius: var(--radius); padding: 18px; position: relative; overflow: hidden;
