@@ -12,7 +12,7 @@ cloud backup, and data export.
 All data lives **locally** in `chrome.storage.local`. Nothing is sent anywhere
 unless the user explicitly enables a backup target. The UI is available in six
 languages (Hebrew is the default and the source language; Hebrew and Arabic are RTL).
-Current version: **1.6.0** (see `CHANGELOG.md`).
+Current version: **1.7.0** (see `CHANGELOG.md`).
 
 ## Repository layout
 
@@ -147,9 +147,9 @@ Dev tooling lives in `dist/` and uses **pnpm** (never npm — see the root `CLAU
 cd dist
 pnpm install
 pnpm exec puppeteer browsers install chrome   # once — Chrome for Testing, for the E2E suite
-pnpm test            # unit + integration (node --test), ~200 tests, seconds
+pnpm test            # unit + integration (node --test), ~250 tests, seconds
 pnpm typecheck       # tsc --checkJs over the extension, 0 errors expected
-pnpm test:e2e        # real extension in Chrome for Testing, ~60 tests, a couple of minutes
+pnpm test:e2e        # real extension in Chrome for Testing, ~75 tests, a couple of minutes
 ```
 
 `dist/pnpm-workspace.yaml` sets `allowBuilds: puppeteer: false` (pnpm 11 otherwise
@@ -258,6 +258,7 @@ IPv4/IPv6 addresses and single-label hosts (`localhost`) are never grouped.
 | `src/lib/utils.js` | Pure helpers: dates/day-keys, domain extraction (`registrableDomain`), duration formatting, favicons. No chrome/DOM. |
 | `src/lib/psl.js` | **Generated** Public Suffix List rules (`dist/tools/build-psl.mjs`) — don't edit by hand. |
 | `src/lib/storage.js` | All `chrome.storage.local` access: settings (+ map-setting helpers, write lock), per-day read/write, session logs, focus log, index, prune, export/import, migrations. |
+| `src/lib/snapshot.js` | **Pure** validation of everything imported (JSON export, cloud backup, CSV-built snapshot): day keys, hostnames, numbers, sessions, focus log, settings. `importAll` runs it first; `backup.*` is never taken from a file. |
 | `src/lib/categories.js` | Category definitions + default domain→category map + `categorize()`. |
 | `src/lib/stats.js` | **Pure** analytics over day records (aggregation, categories, focus score + weekly trend, heatmap, streaks, trends, budgets, session stats, any-range comparison). |
 | `src/lib/charts.js` | Dependency-free SVG charts (bar, donut, heatmap, sparkline). CSP-safe; gradient ids are unique per chart. |
@@ -418,6 +419,13 @@ Two zero-infra targets plus manual file I/O:
 forces `encrypt` off when there is no passphrase (so a restore can't silently turn
 encryption into a no-op). Before 1.5.0 both were exported in clear text.
 
+**Replace is safe, and undoable (1.7.0):** `importAll` validates the snapshot, saves the current
+data as a one-step undo copy (`ttt_prev_snapshot`, `undoLastReplace()`, the Settings button), writes the
+new days in one `set()` and only then removes what the snapshot lacks. History older than the retention
+setting makes retention "keep everything" instead of being pruned. An automatic cloud backup that would
+shrink the cloud copy to under half its days is refused (`SHRINK`; "Back up now" passes `force`), and a
+failed run does not move `lastBackup`.
+
 **Encryption (`crypto.js`):** when `backup.encrypt` + `backup.passphrase` are set,
 the snapshot is AES-256-GCM encrypted (PBKDF2-SHA256 key) before it leaves the
 device, for both sync and endpoint targets — the server/sync see only ciphertext.
@@ -437,8 +445,9 @@ Two modes (`mode`): **block** (block the chosen categories/domains) or **allow**
 (block everything *except* the allowed ones). Both modes combine categories with an
 explicit per-domain list (`blockDomains`/`allowDomains`), all edited in the focus
 Settings panel. While a work phase is live, `chrome.tabs.onUpdated` (and `enforceAllTabs`
-at start / on each work resume) redirect any blocked tab to `src/blocked/blocked.html`
-(a web-accessible resource, `use_dynamic_url`). The popup starts/stops sessions via
+at start / on each work resume) redirect any blocked tab to `src/blocked/blocked.html` (a web-accessible resource, `use_dynamic_url`). The
+address is bare: the page the tab was on is kept in `storage.session` under `K.blocked(tabId)` (removed with the
+tab) and the block page never reads a URL from its own query string. The popup starts/stops sessions via
 `startFocus`/`stopFocus`/`getFocus`; `chrome.commands` also toggles focus/tracking.
 No host permissions — redirection uses the existing `tabs` API.
 
@@ -526,12 +535,25 @@ restart can't double-start). Finished sessions are appended to `ttt_focuslog`
   This keeps the popup/dashboard live poll from amplifying writes. Reported live
   seconds are bounded by `MAX_SEGMENT_SECONDS`. Use `flush` when you actually want
   to force a commit (the dashboard does this once on load).
+- **`chrome.alarms.create()` with an existing name restarts its countdown**, and `init()` runs on most
+  ticks (the worker cold-starts), so alarms are created only when missing (`ensureAlarm`) and the hourly
+  jobs (auto-backup, weekly summary, storage warning) also run from the 1-minute tick (`runHourlyJobs`,
+  throttled by `meta.lastHourlyJobs`). Mocks hide this class of bug: `tracking.integration.test.js` has a
+  registry-backed alarms mock and `safety.e2e.mjs` really stops the worker (`ext.restartWorker()`, which
+  first drops the harness's debugger, because an attached debugger keeps an MV3 worker alive).
+- **Stored strings are untrusted.** The tracker only stores hosts that pass `utils.isTrackableHost`;
+  imports go through `snapshot.sanitizeSnapshot`; every `innerHTML` that interpolates a stored string
+  (domains, backup status, schedule text) wraps it in `utils.esc()`. Domain input boxes and importers all
+  use `utils.cleanDomain`.
+- **Positioning uses logical properties** (`inset-inline-start`, not `right`): a switch is "on" at the far
+  end in both text directions. The Theme setting travels as `data-theme` on `<html>` in the dashboard,
+  the popup and the block page; a `prefers-color-scheme` media query alone ignores an explicit setting.
 
 ## Tests
 
 Four layers, all from `dist/` (pnpm — see "How to run"):
 
-- **Unit** — `pnpm test` (`node --test`, ~190 cases, seconds). The pure modules are
+- **Unit** — `pnpm test` (`node --test`, ~250 cases, seconds). The pure modules are
   imported directly: `utils`, `stats`, `analytics` (budgets, weekly trend, goal streak,
   comparison), `sessions`, `csvimport`, `demo`, `psl`, `categories`, `messages`, and cross-language
   key/placeholder parity across the six locale files (`i18n.test.js`).
@@ -549,13 +571,13 @@ Four layers, all from `dist/` (pnpm — see "How to run"):
   host permissions, CSP-safe pages, every import resolves), `contrast.test.js` (WCAG AA
   from the CSS tokens), `docs.test.js` (READMEs, site translations and privacy cards
   in parity; manifest/CHANGELOG/banner agree on the version), `release-notes.test.js`.
-- **End-to-end** — `pnpm test:e2e` (`--test-concurrency=1`, ~60 cases, a couple of
+- **End-to-end** — `pnpm test:e2e` (`--test-concurrency=1`, ~75 cases, a couple of
   minutes): Puppeteer drives the *real* extension in Chrome for Testing. `smoke`
   (loads, manifest localized in every browser language, popup, every tab), `dashboard` (every tab and feature: charts, sites,
   bulk actions, settings, backup→restore, export/import, budgets, compare, demo
   data…), `focus` (popup session, block/allow redirects, tracking, strict/snooze),
   `scale` (3 years of synthetic history stays within time budgets), `sync` (cloud backup against real Chrome's storage.sync quotas), `a11y` (axe-core
-  on every screen in both themes and RTL, plus keyboard behaviour). When you fix a bug
+  on every screen in both themes and RTL, plus keyboard behaviour), `safety` (hostile strings, the switches, the theme setting, comparison colours, the narrow layout, retention and undo flows, and a real worker restart against the backup alarm). When you fix a bug
   here, add the regression test and run it against the old code to see it fail first
   (the unique-gradient-id test was checked that way). `pnpm typecheck` is the fifth check.
 
@@ -594,6 +616,11 @@ Kept in sync with the Trello board's **🔜 Next up** and **🗄️ Backlog** li
   (`categories.test.js` enforces it).
 - Refresh `psl.js` every few months (`node dist/tools/build-psl.mjs`); last refreshed in
   1.6.0 (list version 2026-10-22).
+- **The audit's remaining foundation work**, before any 2.0 data-model change: `navigator.locks` around every
+  storage write (the dashboard writes day records too, so "the worker is the only writer" is not strictly
+  true), a migration runner that snapshots first, Hebrew-only backup/encryption error strings, a fetch
+  timeout and CORS handling for the custom endpoint (it may need an optional host permission), and
+  de-duplicating limit notifications across browser restarts.
 - Deferred ideas: tags, achievements, a command palette, a weekly email summary (only
   an in-browser notification exists today).
 
@@ -610,4 +637,6 @@ snoozable focus + history, opt-in session log, bulk site actions at scale, toler
 import, demo-data onboarding, lazy locales, a typed worker protocol, and CI/release/site
 automation. Done in 1.6.0: 472 more built-in site categories for the he/es/fr/ru/ar
 markets (plus the registrable-domain fix for subdomain-keyed defaults), a refreshed PSL,
-and a translatable store listing (`_locales` + detailed descriptions in all six languages).
+and a translatable store listing (`_locales` + detailed descriptions in all six languages). Done in 1.7.0:
+reliability and data safety — see `CHANGELOG.md` (alarms that actually fire, atomic and undoable replace,
+validated imports, escaped output, and the visible defects from the live test).

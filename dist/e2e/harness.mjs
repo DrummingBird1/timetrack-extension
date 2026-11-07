@@ -34,6 +34,7 @@ export async function launch({ lang } = {}) {
     pipe: true,
     enableExtensions: [EXT_PATH],
     args: ['--no-sandbox', '--no-first-run', '--window-size=1400,900', ...(lang ? [`--lang=${lang}`] : [])],
+    ...(lang ? { env: { ...process.env, LANGUAGE: lang } } : {}),     // Linux reads the UI language from here
   });
 
   const swTarget = await browser.waitForTarget(
@@ -43,10 +44,11 @@ export async function launch({ lang } = {}) {
   const id = new URL(swTarget.url()).host;
   const base = `chrome-extension://${id}/`;
   const errors = [];
+  let workerSession = null;          // our debugger on the worker; it keeps an MV3 worker alive (see restartWorker)
 
   // Surface uncaught errors / console.error from the service worker too (it has no Page).
   try {
-    const cdp = await swTarget.createCDPSession();
+    const cdp = workerSession = await swTarget.createCDPSession();
     await cdp.send('Runtime.enable');
     cdp.on('Runtime.exceptionThrown', (e) => errors.push(`[service worker] exception: ${e.exceptionDetails?.exception?.description || e.exceptionDetails?.text}`));
     cdp.on('Runtime.consoleAPICalled', (e) => {
@@ -92,6 +94,25 @@ export async function launch({ lang } = {}) {
     },
     async saveSettings(patch) {
       return ops.evaluate(async (url, p) => (await import(url)).saveSettings(p), `${base}src/lib/storage.js`, patch);
+    },
+
+    /**
+     * Stop the service worker and start it again, like the browser does when it has been idle. The debugger
+     * session the harness holds on the worker keeps it alive, so that is dropped first (and not re-attached:
+     * errors from the worker after this call are not captured).
+     */
+    async restartWorker() {
+      if (workerSession) { await workerSession.detach().catch(() => {}); workerSession = null; }
+      const cdp = await ops.createCDPSession();
+      await cdp.send('ServiceWorker.enable');
+      const stopped = new Promise((resolve) => cdp.on('ServiceWorker.workerVersionUpdated', (e) => {
+        if (e.versions.some((v) => (v.scriptURL || '').endsWith('/background.js') && v.runningStatus === 'stopped')) resolve(true);
+      }));
+      await cdp.send('ServiceWorker.stopAllWorkers');
+      const didStop = await Promise.race([stopped, sleep(8000).then(() => false)]);
+      await cdp.detach().catch(() => {});
+      await ext.message('getLive');                         // any message from an extension page wakes the worker
+      return didStop;
     },
 
     /** Wipe all extension storage so each test starts from a clean slate. */

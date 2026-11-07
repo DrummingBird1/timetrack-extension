@@ -1,6 +1,6 @@
 // Settings-tab list editors: focus categories/domains, never-track list, category mappings.
 import { saveSettings, setSettingsMapEntry, removeSettingsMapEntry } from '../lib/storage.js';
-import { weekdaysShort } from '../lib/utils.js';
+import { weekdaysShort, esc } from '../lib/utils.js';
 import { CATEGORY_DEFS, CATEGORY_ORDER, categoryDef } from '../lib/categories.js';
 import { t, categoryLabel } from '../lib/i18n.js';
 import { $, settings, setSettings, toast, send, cleanDomain, actions, wireRemove } from './core.js';
@@ -40,7 +40,7 @@ export function renderFocusDomains(hostSel, settingKey) {
   for (const domain of settings.focus[settingKey] || []) {
     const chip = document.createElement('div');
     chip.className = 'cat-chip';
-    chip.innerHTML = `<span>${domain}</span><span class="x">✕</span>`;
+    chip.innerHTML = `<span>${esc(domain)}</span><span class="x">✕</span>`;
     wireRemove(chip, async () => {
       const next = (settings.focus[settingKey] || []).filter((d) => d !== domain);
       setSettings(await saveSettings({ focus: { [settingKey]: next } }));
@@ -74,7 +74,7 @@ export function renderBlacklist() {
   for (const domain of entries) {
     const chip = document.createElement('div');
     chip.className = 'cat-chip';
-    chip.innerHTML = `<span>🚫 ${domain}</span><span class="x">✕</span>`;
+    chip.innerHTML = `<span>🚫 ${esc(domain)}</span><span class="x">✕</span>`;
     wireRemove(chip, async () => {
       const next = (settings.blacklist || []).filter((d) => d !== domain);
       setSettings(await saveSettings({ blacklist: next }));
@@ -118,8 +118,8 @@ export function renderCategoryEditor() {
     const chip = document.createElement('div');
     chip.className = 'cat-chip';
     chip.innerHTML = `<span class="dot" style="background:${def.color}"></span>
-      <span>${domain} → ${categoryLabel(cat)}</span>
-      <span class="x" data-domain="${domain}">✕</span>`;
+      <span>${esc(domain)} → ${categoryLabel(cat)}</span>
+      <span class="x" data-domain="${esc(domain)}">✕</span>`;
     wireRemove(chip, async () => {
       setSettings(await removeSettingsMapEntry('categoryMap', domain));
       renderCategoryEditor();
@@ -130,10 +130,10 @@ export function renderCategoryEditor() {
 }
 
 export async function addCategoryMapping() {
-  const domain = $('#catDomain').value.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '').replace(/^www\./, '');
+  const domain = cleanDomain($('#catDomain').value);
   const cat = $('#catSelect').value;
-  if (!domain) return;
-  if (!/^[a-z0-9.-]+\.[a-z]{2,}$/.test(domain)) { toast(t('toast.badDomain'), 'error'); return; }
+  if (!$('#catDomain').value.trim()) return;
+  if (!domain) { toast(t('toast.badDomain'), 'error'); return; }
   setSettings(await setSettingsMapEntry('categoryMap', domain, cat));
   $('#catDomain').value = '';
   renderCategoryEditor();
@@ -166,7 +166,7 @@ export function renderSchedule() {
     const chip = document.createElement('div');
     chip.className = 'cat-chip';
     const dayNames = slot.days.map((d) => names[d]).join(' ');
-    chip.innerHTML = `<span>${t('schedule.entry', { days: dayNames, time: slot.time, m: slot.minutes })}</span>
+    chip.innerHTML = `<span>${esc(t('schedule.entry', { days: dayNames, time: slot.time, m: slot.minutes }))}</span>
       <span class="x" role="button" tabindex="0" aria-label="${t('btn.remove')}">✕</span>`;
     const remove = async () => {
       setSettings(await saveSettings({ focus: { schedule: entries.filter((_, i) => i !== index) } }));

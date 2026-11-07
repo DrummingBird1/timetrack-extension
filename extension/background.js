@@ -8,13 +8,13 @@
 
 import {
   getSettings, saveSettings, addTime, addVisit, recordSession, addFocusLog, getDay, getDays, pruneOld,
-  saveMeta, getMeta, migrate, storageFootprint,
+  saveMeta, getMeta, migrate, storageFootprint, K,
 } from './src/lib/storage.js';
 import { domainFromUrl, dayKey, rangeKeys, addDays, formatDuration, startOfWeek, keysBetween } from './src/lib/utils.js';
 import { runAutoBackup } from './src/lib/backup.js';
 import { categorize } from './src/lib/categories.js';
 import { aggregateDomains, totalTime, topSites, byCategory, focusScore, categorySeconds } from './src/lib/stats.js';
-import { setLang, t } from './src/lib/i18n.js';
+import { setLang, t, pickLanguage } from './src/lib/i18n.js';
 import { parseMessage } from './src/lib/messages.js';
 
 const SESSION_STATE = 'ttt_state';
@@ -43,14 +43,19 @@ function locked(fn) {
 
 // ---- session state ----
 let state = null;
-async function loadState() {
-  if (state) return state;
-  const r = await chrome.storage.session.get(SESSION_STATE);
-  state = r[SESSION_STATE] || {
-    domain: null, since: 0, counting: false, lastDomain: null,
-    focused: true, idle: false, audible: false,
-  };
-  return state;
+let statePromise = null;
+// Single-flight: two events arriving together on a cold start (an unlock fires idle and window
+// focus at once) must share ONE state object, or the second load replaces the first one's edits.
+function loadState() {
+  if (state) return Promise.resolve(state);
+  statePromise ||= chrome.storage.session.get(SESSION_STATE).then((r) => {
+    state ||= r[SESSION_STATE] || {
+      domain: null, since: 0, counting: false, lastDomain: null,
+      focused: true, idle: false, audible: false,
+    };
+    return state;
+  }).catch((e) => { statePromise = null; throw e; });
+  return statePromise;
 }
 async function saveState() {
   await chrome.storage.session.set({ [SESSION_STATE]: state });
@@ -92,7 +97,11 @@ async function enforceFocusOnTab(tabId, url, settings, focus) {
   const domain = domainFromUrl(url, settings.groupSubdomains);
   if (isBlocked(domain, settings, focus)) {
     try {
-      await chrome.tabs.update(tabId, { url: `${BLOCK_PAGE}?d=${encodeURIComponent(domain)}` });
+      // Where the block page sends the tab when the block ends. It travels in storage.session, not in the
+      // page's address: a web-accessible page that navigates to a URL taken from its own query string is an
+      // open redirect for any site that links to it.
+      await chrome.storage.session.set({ [K.blocked(tabId)]: { d: domain, u: url } });
+      await chrome.tabs.update(tabId, { url: BLOCK_PAGE });
     } catch { /* tab may be gone */ }
   }
 }
@@ -187,6 +196,7 @@ async function queryActive(settings) {
     const tabs = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
     const tab = tabs && tabs[0];
     if (!tab) return { domain: null, audible: false };
+    if (tab.incognito) return { domain: null, audible: false };   // never record private browsing, even if the user allowed the extension there
     return {
       domain: domainFromUrl(tab.url || tab.pendingUrl, settings.groupSubdomains),
       audible: !!tab.audible,
@@ -427,7 +437,10 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   }
 });
 
-chrome.tabs.onRemoved.addListener(() => refresh());
+chrome.tabs.onRemoved.addListener((tabId) => {
+  chrome.storage.session.remove(K.blocked(tabId)).catch(() => {});
+  refresh();
+});
 
 chrome.windows.onFocusChanged.addListener(async (winId) => {
   const st = await loadState();
@@ -446,12 +459,25 @@ chrome.idle.onStateChanged.addListener(async (newState) => {
 chrome.alarms.onAlarm.addListener(async (alarm) => {
   if (alarm.name === TICK_ALARM) {
     await refresh(); // periodic commit so long sessions aren't lost
+    await runHourlyJobs();   // the worker cold-starts on most ticks, so the 60-minute alarm alone can't be relied on
   } else if (alarm.name === BACKUP_ALARM) {
-    await maybeAutoBackup();
-    await maybeWeeklySummary();
-    await maybeStorageWarning(await getSettings());
+    await runHourlyJobs({ force: true });
   }
 });
+
+// Auto-backup, the weekly summary and the storage warning. Run from the 60-minute alarm and, as a
+// safety net, from the 1-minute tick (throttled by meta.lastHourlyJobs).
+const HOURLY_MS = 60 * 60 * 1000;
+async function runHourlyJobs({ force = false } = {}) {
+  if (!force) {
+    const meta = await getMeta();
+    if (Date.now() - (meta.lastHourlyJobs || 0) < HOURLY_MS - 30000) return;
+  }
+  await saveMeta({ lastHourlyJobs: Date.now() });
+  await maybeAutoBackup();
+  await maybeWeeklySummary();
+  await maybeStorageWarning(await getSettings());
+}
 
 // Fires once on the configured first day of the week, summarizing the prior 7
 // days. Deduped via meta.lastWeeklySummary so the hourly alarm can't repeat it.
@@ -486,11 +512,29 @@ async function maybeAutoBackup() {
   try {
     await runAutoBackup();
   } catch (e) {
-    await saveSettings({ backup: { lastBackupStatus: `⚠️ ${e.message}`, lastBackup: Date.now() } });
+    // Not stamping lastBackup: a failed attempt must not look like a fresh backup, and the next hourly run retries.
+    await saveSettings({ backup: { lastBackupStatus: `⚠️ ${e.message}` } });
   }
 }
 
-async function init() {
+// An alarm that already exists is left alone: chrome.alarms.create() with the same name restarts
+// its countdown, and init() runs on every worker start (most ticks).
+async function ensureAlarm(name, periodInMinutes) {
+  try {
+    if (await chrome.alarms.get(name)) return;
+  } catch { /* fall through and create it */ }
+  chrome.alarms.create(name, { periodInMinutes });
+}
+
+// init() is shared by the top-level call, onStartup and onInstalled, which can all fire in the
+// same worker start: run it once per worker so migrate() and the first refresh never overlap.
+let initPromise = null;
+function init() {
+  initPromise ||= runInit().catch((e) => { initPromise = null; throw e; });
+  return initPromise;
+}
+
+async function runInit() {
   await migrate();
   await applyIdleInterval();
   const st = await loadState();
@@ -510,8 +554,8 @@ async function init() {
   if (!st.since) st.since = Date.now();
   await saveState();
 
-  chrome.alarms.create(TICK_ALARM, { periodInMinutes: 1 });
-  chrome.alarms.create(BACKUP_ALARM, { periodInMinutes: 60 });
+  await ensureAlarm(TICK_ALARM, 1);
+  await ensureAlarm(BACKUP_ALARM, 60);
 
   const settings = await getSettings();
   await pruneOld(settings.retentionDays);
@@ -523,6 +567,8 @@ chrome.runtime.onInstalled.addListener(async (details) => {
   const meta = await getMeta();
   if (!meta.installedAt) await saveMeta({ installedAt: Date.now() });
   if (details.reason === 'install') {
+    // Start in the browser's language when we have it (otherwise English), not always in Hebrew.
+    try { await saveSettings({ language: pickLanguage(chrome.i18n.getUILanguage()) }); } catch { /* keep the default */ }
     chrome.tabs.create({ url: chrome.runtime.getURL('src/dashboard/dashboard.html#welcome') });
   }
   await init();
@@ -576,7 +622,7 @@ async function handleMessage(raw) {
       return { ok: true };
     }
     case 'runBackup': {
-      const r = await runAutoBackup();
+      const r = await runAutoBackup({ force: true });          // the user pressed "Back up now"
       return r;
     }
     case 'prune': {

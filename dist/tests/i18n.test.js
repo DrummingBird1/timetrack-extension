@@ -149,3 +149,14 @@ test('categoryLabel resolves every category key in every language', async () => 
   }
   await setLang('he');
 });
+
+test('pickLanguage maps a browser language to a supported UI language, with English as the fallback', async () => {
+  const { pickLanguage } = await import('../../extension/src/lib/i18n.js');
+  assert.equal(pickLanguage('he'), 'he');
+  assert.equal(pickLanguage('iw'), 'he', 'old Chrome builds say iw for Hebrew');
+  assert.equal(pickLanguage('fr-CA'), 'fr');
+  assert.equal(pickLanguage('ar_EG'), 'ar');
+  assert.equal(pickLanguage('pt-BR'), 'en');
+  assert.equal(pickLanguage(''), 'en');
+  assert.equal(pickLanguage(undefined, 'he'), 'he');
+});

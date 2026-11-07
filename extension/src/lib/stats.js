@@ -105,6 +105,8 @@ export function currentStreak(index, todayKey) {
   const set = new Set(index);
   let streak = 0;
   let d = parseDayKey(todayKey);
+  // Today only has data after its first tracked second; until then the streak is still alive through yesterday.
+  if (!set.has(toKey(d))) d.setDate(d.getDate() - 1);
   while (set.has(toKey(d))) {
     streak++;
     d.setDate(d.getDate() - 1);

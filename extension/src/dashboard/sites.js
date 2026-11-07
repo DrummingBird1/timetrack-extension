@@ -9,7 +9,7 @@ import {
   saveSettings, setSettingsMapEntries, removeSettingsMapEntries,
   setSettingsMapEntry, removeSettingsMapEntry,
 } from '../lib/storage.js';
-import { formatDuration } from '../lib/utils.js';
+import { formatDuration, esc } from '../lib/utils.js';
 import { categorize, categoryDef, CATEGORY_ORDER } from '../lib/categories.js';
 import { t, categoryLabel } from '../lib/i18n.js';
 import { $, settings, setSettings, sitesSource, iconFor, toast, send } from './core.js';
@@ -33,14 +33,14 @@ function buildRow(s) {
   tr.dataset.domain = s.domain;
   tr.tabIndex = 0;                       // Enter / Space opens the detail, like a click
   tr.innerHTML = `
-    <td class="select-cell"><input type="checkbox" class="row-select" aria-label="${t('bulk.selectRow', { d: s.domain })}" ${selected.has(s.domain) ? 'checked' : ''}></td>
-    <td class="pin-cell"><button class="pin-btn${isPinned ? ' on' : ''}" data-domain="${s.domain}" title="${isPinned ? t('sites.unpin') : t('sites.pin')}" aria-label="${isPinned ? t('sites.unpin') : t('sites.pin')}">${PIN_ICON}</button></td>
-    <td><div class="site-cell"><img src="${iconFor(s.domain)}" loading="lazy" alt=""><span class="dom">${s.domain}</span></div></td>
+    <td class="select-cell"><input type="checkbox" class="row-select" aria-label="${esc(t('bulk.selectRow', { d: s.domain }))}" ${selected.has(s.domain) ? 'checked' : ''}></td>
+    <td class="pin-cell"><button class="pin-btn${isPinned ? ' on' : ''}" data-domain="${esc(s.domain)}" title="${isPinned ? t('sites.unpin') : t('sites.pin')}" aria-label="${isPinned ? t('sites.unpin') : t('sites.pin')}">${PIN_ICON}</button></td>
+    <td><div class="site-cell"><img src="${iconFor(s.domain)}" loading="lazy" alt=""><span class="dom">${esc(s.domain)}</span></div></td>
     <td><span class="cat-pill" style="--c:${def.color}">${categoryLabel(catKey)}</span></td>
     <td>${formatDuration(s.t)}</td>
     <td>${s.v}</td>
     <td><div class="share-mini"><div class="bar"><div class="fill" style="width:${pct}%"></div></div><span>${pct}%</span></div></td>
-    <td><input type="number" class="limit-input" min="0" placeholder="—" value="${limit}" data-domain="${s.domain}" aria-label="${t('th.limit')}: ${s.domain}"></td>`;
+    <td><input type="number" class="limit-input" min="0" placeholder="—" value="${esc(limit)}" data-domain="${esc(s.domain)}" aria-label="${esc(t('th.limit'))}: ${esc(s.domain)}"></td>`;
   return tr;
 }
 

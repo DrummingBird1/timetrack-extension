@@ -28,6 +28,13 @@ const LANG_META = {
 
 export const SUPPORTED_LANGS = Object.keys(LANG_META);
 
+/** The UI language to start with for a browser UI language such as "fr-CA" or "iw": a supported one, else `fallback`. */
+export function pickLanguage(uiLanguage, fallback = 'en') {
+  const base = String(uiLanguage || '').toLowerCase().split(/[-_]/)[0];
+  const code = base === 'iw' ? 'he' : base;          // old Chrome builds name Hebrew "iw"
+  return SUPPORTED_LANGS.includes(code) ? code : fallback;
+}
+
 let lang = FALLBACK;
 const dicts = {};      // lang -> dictionary, once loaded
 const loading = {};    // lang -> in-flight load (dedupes concurrent setLang calls)

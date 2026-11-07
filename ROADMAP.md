@@ -6,6 +6,7 @@ A status list for **TimeTrack**, the privacy-first, local-first time tracker for
 
 ## Shipped
 
+- **v1.7.0 — Reliability and data safety.** Automatic backups that actually run, replace imports that cannot lose history (with a one-step undo), validated imports, and fixes for reversed switches, an ignored theme setting and wrong comparison colours.
 - **v1.6.0 — Categories for six markets.** 472 more built-in site categories (565 in total) for Israel, Spanish- and French-speaking countries, Russia and the Arab world; subdomain defaults now match correctly; the extension name and shortcut labels are localized; store listing in six languages.
 - **v1.5.0 — Foundations and depth.** Real-Chrome end-to-end tests, typecheck, an accessibility pass and keyboard support; category budgets, comparison across any range, focus-score trend and best week, goal streak, scheduled / strict / snoozable focus with history, an opt-in visit log, bulk site actions, tolerant CSV import, demo-data onboarding.
 - **v1.4.0 — Backup and sites trust.** Preview before restore, passphrase strength meter, merge-conflict counts, 80% limit warnings with snooze, settings search, pinned sites, domain rename and alias merge.

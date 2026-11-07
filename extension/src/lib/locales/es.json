@@ -126,7 +126,7 @@
   "backup.never": "Nunca",
   "set.data": "Gestión de datos",
   "set.retention": "Retención de datos (días)",
-  "set.retentionDesc": "Elimina automáticamente los datos anteriores a este período",
+  "set.retentionDesc": "Elimina automáticamente los datos anteriores a este número de días. 0 = conservar todo",
   "set.export": "Exportar datos",
   "btn.exportJson": "Exportar JSON",
   "btn.exportCsv": "Exportar CSV",
@@ -375,5 +375,16 @@
   "demo.loaded": "Datos de demostración cargados: puede quitarlos cuando quiera",
   "demo.removed": "Datos de demostración eliminados",
   "demo.hasData": "Ya hay datos en ese período, así que no se pueden cargar datos de demostración",
-  "btn.close": "Cerrar"
+  "btn.close": "Cerrar",
+  "confirm.retention": "¿Conservar solo los últimos {d} días? Se eliminarán definitivamente {n} días más antiguos.",
+  "toast.retentionKept": "El historial que añadió es anterior al ajuste de retención, por lo que ahora se conserva todo. Puede cambiarlo en Configuración.",
+  "toast.importSkipped": "Se omitieron {n} registros no válidos.",
+  "import.badFile": "Este archivo no es una copia de seguridad de TimeTrack.",
+  "set.undoReplace": "Deshacer el último reemplazo",
+  "set.undoReplaceDesc": "Recupera los {n} días que sobrescribió la última importación o restauración desde la nube con reemplazo. Guardado {when}.",
+  "btn.undoReplace": "Deshacer reemplazo",
+  "confirm.undoReplace": "¿Recuperar los {n} días que sobrescribió el último reemplazo? Los datos actuales se conservan, así que también podrá deshacer esto.",
+  "toast.undone": "Se recuperaron {n} días anteriores al reemplazo.",
+  "bk.shrink": "Copia omitida: la copia en la nube tiene {n} días y este dispositivo solo {m}. Use «Hacer copia de seguridad ahora» para sobrescribirla de todos modos.",
+  "prompt.passphraseRetry": "Frase de contraseña incorrecta. Inténtelo de nuevo:"
 }

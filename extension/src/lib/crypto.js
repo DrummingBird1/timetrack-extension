@@ -11,6 +11,7 @@ const dec = new TextDecoder();
 // `iterations` value in the envelope (see decryptJSON) so they keep decrypting.
 const PBKDF2_ITERATIONS = 600000;
 const LEGACY_ITERATIONS = 150000; // fallback for envelopes written before the bump
+const MAX_ITERATIONS = 2000000;   // the most an envelope may ask for when decrypting
 
 async function deriveKey(passphrase, salt, iterations = PBKDF2_ITERATIONS) {
   const base = await crypto.subtle.importKey(
@@ -64,12 +65,15 @@ export function isEncrypted(obj) {
  */
 export async function decryptJSON(envelope, passphrase) {
   if (!isEncrypted(envelope)) throw new Error('הקובץ אינו מוצפן');
+  // The envelope names its own iteration count (older backups used fewer). Clamp it: a hostile file
+  // could otherwise ask for billions of rounds and hang the page.
+  const iterations = Math.min(Math.max(Number(envelope.iterations) || LEGACY_ITERATIONS, 1000), MAX_ITERATIONS);
   try {
-    const key = await deriveKey(passphrase, fromB64(envelope.salt), envelope.iterations || LEGACY_ITERATIONS);
+    const key = await deriveKey(passphrase, fromB64(envelope.salt), iterations);
     const pt = new Uint8Array(await crypto.subtle.decrypt(
       { name: 'AES-GCM', iv: fromB64(envelope.iv) }, key, fromB64(envelope.ct)));
     return JSON.parse(dec.decode(envelope.zip === 'gzip' ? await gunzip(pt) : pt));
   } catch {
-    throw new Error('סיסמת הפענוח שגויה או שהקובץ פגום');
+    throw Object.assign(new Error('סיסמת הפענוח שגויה או שהקובץ פגום'), { code: 'BAD_PASSPHRASE' });
   }
 }

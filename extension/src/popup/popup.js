@@ -1,6 +1,6 @@
 import { getDays, getSettings } from '../lib/storage.js';
 import {
-  rangeKeys, formatDuration, formatClock, favicon, weekdaysShort, parseDayKey,
+  rangeKeys, formatDuration, formatClock, favicon, weekdaysShort, parseDayKey, esc,
 } from '../lib/utils.js';
 import { aggregateDomains, topSites, dailyTotals } from '../lib/stats.js';
 import { barChart } from '../lib/charts.js';
@@ -26,8 +26,9 @@ async function applyLang() {
   await setLang(settings.language || 'he');
   document.documentElement.lang = getLang();
   document.documentElement.dir = dir();
-  if (settings.theme === 'light') document.documentElement.style.colorScheme = 'light';
-  else if (settings.theme === 'dark') document.documentElement.style.colorScheme = 'dark';
+  // The Theme setting: light/dark are explicit, auto (no attribute) follows the system.
+  if (settings.theme === 'light' || settings.theme === 'dark') document.documentElement.dataset.theme = settings.theme;
+  else delete document.documentElement.dataset.theme;
   localize(document);
 }
 
@@ -50,11 +51,13 @@ async function render() {
   const nowCard = $('nowCard');
   if (live.counting && live.currentDomain) {
     nowCard.classList.add('live');
+    $('nowLabel').hidden = false;
     $('nowDomain').textContent = live.currentDomain;
     $('nowFavicon').src = iconFor(live.currentDomain);
     $('nowFavicon').style.visibility = 'visible';
   } else {
     nowCard.classList.remove('live');
+    $('nowLabel').hidden = true;                       // "Active now" under "Not active" read as a contradiction
     $('nowDomain').textContent = live.enabled ? t('popup.notActive') : t('popup.paused');
     $('nowFavicon').style.visibility = 'hidden';
   }
@@ -90,7 +93,7 @@ async function render() {
       li.className = 'top-row';
       li.innerHTML = `
         <img src="${iconFor(s.domain)}" alt="" loading="lazy" />
-        <span class="name" title="${s.domain}">${s.domain}</span>
+        <span class="name" title="${esc(s.domain)}">${esc(s.domain)}</span>
         <span class="bar-wrap"><span class="bar-fill" style="width:${Math.max(4, (s.t / max) * 100)}%"></span></span>
         <span class="time">${formatDuration(s.t)}</span>`;
       list.appendChild(li);

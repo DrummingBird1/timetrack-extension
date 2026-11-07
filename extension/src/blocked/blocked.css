@@ -8,8 +8,10 @@
   --accent-2: #8b5cf6;
   --danger: #ef4444;
 }
+:root[data-theme="light"] { --bg: #f3f4f9; --surface: #fff; --border: #e3e5ee; --text: #1a1a2b; --text-dim: #5f6178; }
+/* "auto" follows the system; an explicit Light/Dark setting (data-theme) wins over it. */
 @media (prefers-color-scheme: light) {
-  :root { --bg: #f3f4f9; --surface: #fff; --border: #e3e5ee; --text: #1a1a2b; --text-dim: #5f6178; }
+  :root:not([data-theme]) { --bg: #f3f4f9; --surface: #fff; --border: #e3e5ee; --text: #1a1a2b; --text-dim: #5f6178; }
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {

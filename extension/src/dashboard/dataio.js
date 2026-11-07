@@ -1,5 +1,5 @@
 // Backup restore flow plus file export / import (JSON, CSV).
-import { getSettings, getIndex, getDays, exportAll, importAll } from '../lib/storage.js';
+import { getSettings, getIndex, getDays, exportAll, importAll, getPreReplaceInfo, undoLastReplace } from '../lib/storage.js';
 import { restoreFromSync, peekSync } from '../lib/backup.js';
 import { isEncrypted, decryptJSON } from '../lib/crypto.js';
 import { dayKey, parseDayKey, formatDuration } from '../lib/utils.js';
@@ -12,21 +12,55 @@ import { $, settings, setSettings, cache, setAllCache, toast, actions } from './
 // site count, encrypted y/n, and a replace/merge choice) before committing.
 export async function startRestoreFlow() {
   try {
-    const preview = await peekSync();
-    showRestorePreview(preview);
+    showRestorePreview(await peekSync());
   } catch (e) {
-    if (e.code === 'ENCRYPTED') {
-      const pass = prompt(t('prompt.passphrase'));
+    if (e.code !== 'ENCRYPTED') { toast(e.message, 'error'); return; }
+    // Encrypted: ask for the passphrase, and ask again when it is wrong (three tries).
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const pass = prompt(t(attempt ? 'prompt.passphraseRetry' : 'prompt.passphrase'));
       if (!pass) return;
       try {
         showRestorePreview(await peekSync({ passphrase: pass }), pass);
+        return;
       } catch (e2) {
-        toast(e2.message, 'error');
+        if (e2.code !== 'BAD_PASSPHRASE' || attempt === 2) { toast(e2.message, 'error'); return; }
       }
-    } else {
-      toast(e.message, 'error');
     }
   }
+}
+
+/** Decrypt an encrypted export, asking for the passphrase again (three tries) when it is wrong. Null when cancelled. */
+async function decryptWithPrompt(envelope) {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const pass = prompt(t(attempt ? 'prompt.passphraseRetry' : 'prompt.passphrase'));
+    if (!pass) return null;
+    try {
+      return await decryptJSON(envelope, pass);
+    } catch (e) {
+      if (e.code !== 'BAD_PASSPHRASE' || attempt === 2) throw e;
+    }
+  }
+  return null;
+}
+
+/** What to tell the user beyond "imported N days": records that were left out, and a retention change. */
+function importNotes(r) {
+  const notes = [];
+  if (r.dropped) notes.push(t('toast.importSkipped', { n: r.dropped }));
+  if (r.retentionRelaxed) notes.push(t('toast.retentionKept'));
+  return notes.length ? ` ${notes.join(' ')}` : '';
+}
+
+const importError = (err) => (err.code === 'BAD_SNAPSHOT' ? t('import.badFile') : err.message);
+
+/** Re-read everything the dashboard shows after the stored data (or the settings in it) changed. */
+async function afterDataChange() {
+  setAllCache(null);
+  setSettings(await getSettings());
+  await actions.applyLanguage();
+  actions.applyTheme();
+  await actions.refresh();
+  actions.fillSettingsForm();
 }
 
 function showRestorePreview(preview, passphrase) {
@@ -77,16 +111,25 @@ function closeRestoreModal() {
 
 async function doRestore(passphrase, mode = 'replace') {
   const r = await restoreFromSync({ mode, passphrase });
-  setAllCache(null);
-  setSettings(await getSettings());
-  await actions.applyLanguage();
-  actions.applyTheme();
-  await actions.refresh();
-  actions.fillSettingsForm();
+  await afterDataChange();
   const msg = mode === 'merge' && r.domainsChanged != null
     ? t('toast.importedWithChanges', { n: r.days, mode: t('import.merge'), c: r.domainsChanged })
     : t('toast.restored', { n: r.days });
-  toast(msg, 'success');
+  toast(msg + importNotes(r), 'success');
+}
+
+/** Put back the data the last "replace" (import or cloud restore) overwrote. */
+export async function undoReplace() {
+  const info = await getPreReplaceInfo();
+  if (!info) return;
+  if (!confirm(t('confirm.undoReplace', { n: info.days }))) return;
+  try {
+    const r = await undoLastReplace();
+    await afterDataChange();
+    toast(t('toast.undone', { n: r.days }), 'success');
+  } catch (err) {
+    toast(t('toast.importErr', { e: importError(err) }), 'error');
+  }
 }
 
 // ---- export / import ----
@@ -131,25 +174,19 @@ export async function handleImport(e) {
   try {
     let snapshot = JSON.parse(await file.text());
     if (isEncrypted(snapshot)) {
-      const pass = prompt(t('prompt.passphrase'));
-      if (!pass) { e.target.value = ''; return; }
-      snapshot = await decryptJSON(snapshot, pass);
+      snapshot = await decryptWithPrompt(snapshot);
+      if (!snapshot) { e.target.value = ''; return; }
     }
     const mode = $('#importMode').value;
     const r = await importAll(snapshot, { mode, includeSettings: true });
-    setAllCache(null);
-    setSettings(await getSettings());
-    await actions.applyLanguage();
-    actions.applyTheme();
-    await actions.refresh();
-    actions.fillSettingsForm();
+    await afterDataChange();
     const modeLabel = mode === 'merge' ? t('import.merge') : t('import.replace');
     const msg = mode === 'merge' && r.domainsChanged != null
       ? t('toast.importedWithChanges', { n: r.days, mode: modeLabel, c: r.domainsChanged })
       : t('toast.imported', { n: r.days, mode: modeLabel });
-    toast(msg, 'success');
+    toast(msg + importNotes(r), 'success');
   } catch (err) {
-    toast(t('toast.importErr', { e: err.message }), 'error');
+    toast(t('toast.importErr', { e: err instanceof SyntaxError ? t('import.badFile') : importError(err) }), 'error');
   } finally {
     e.target.value = '';
   }
@@ -163,13 +200,12 @@ export async function handleCsvImport(e) {
     const { days, skipped } = parseUsageCsv(await file.text());
     const count = Object.keys(days).length;
     const mode = $('#importMode').value;
-    await importAll({ app: 'TimeTrack', version: 3, days }, { mode, includeSettings: false });
-    setAllCache(null);
-    await actions.refresh();
+    const r = await importAll({ app: 'TimeTrack', version: 3, days }, { mode, includeSettings: false });
+    await afterDataChange();
     actions.renderStorageInfo();
-    toast(skipped ? t('toast.importedCsvSkipped', { n: count, s: skipped }) : t('toast.importedCsv', { n: count }), 'success');
+    toast((skipped ? t('toast.importedCsvSkipped', { n: count, s: skipped }) : t('toast.importedCsv', { n: count })) + importNotes(r), 'success');
   } catch (err) {
-    const message = err.code === 'NO_COLUMNS' ? t('csv.badHeader') : err.code === 'NO_ROWS' ? t('csv.noRows') : err.message;
+    const message = err.code === 'NO_COLUMNS' ? t('csv.badHeader') : err.code === 'NO_ROWS' ? t('csv.noRows') : importError(err);
     toast(t('toast.importErr', { e: message }), 'error');
   } finally {
     e.target.value = '';

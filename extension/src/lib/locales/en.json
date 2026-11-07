@@ -126,7 +126,7 @@
   "backup.never": "Never",
   "set.data": "Data management",
   "set.retention": "Data retention (days)",
-  "set.retentionDesc": "Auto-delete data older than this",
+  "set.retentionDesc": "Auto-delete data older than this many days. 0 = keep everything",
   "set.export": "Export data",
   "btn.exportJson": "Export JSON",
   "btn.exportCsv": "Export CSV",
@@ -375,5 +375,16 @@
   "demo.loaded": "Demo data loaded — you can remove it any time",
   "demo.removed": "Demo data removed",
   "demo.hasData": "There is already data in that period, so demo data can't be loaded",
-  "btn.close": "Close"
+  "btn.close": "Close",
+  "confirm.retention": "Keep only the last {d} days? {n} older days will be deleted for good.",
+  "toast.retentionKept": "The history you added goes back further than the retention setting, so retention is now set to keep everything. You can change it in Settings.",
+  "toast.importSkipped": "{n} invalid records were skipped.",
+  "import.badFile": "This file is not a TimeTrack backup.",
+  "set.undoReplace": "Undo the last replace",
+  "set.undoReplaceDesc": "Puts back the {n} days that the last Replace import or cloud restore overwrote. Saved {when}.",
+  "btn.undoReplace": "Undo replace",
+  "confirm.undoReplace": "Put back the {n} days that the last replace overwrote? The data as it is now is kept, so you can undo this as well.",
+  "toast.undone": "Put back {n} days from before the replace.",
+  "bk.shrink": "Backup skipped: the cloud copy has {n} days and this device only {m}. Use \"Back up now\" to overwrite it anyway.",
+  "prompt.passphraseRetry": "Wrong passphrase. Try again:"
 }
