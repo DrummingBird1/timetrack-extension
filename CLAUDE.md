@@ -277,7 +277,7 @@ IPv4/IPv6 addresses and single-label hosts (`localhost`) are never grouped.
 | `src/blocked/*` | Focus-mode block page (with "allow 10 minutes"; none in strict mode). |
 | `dist/tests/*.test.js` | `node:test` unit + integration tests (`pnpm test`); `helpers/` holds the chrome.* mocks. |
 | `dist/e2e/*.e2e.mjs` | Puppeteer end-to-end tests against the real extension; `harness.mjs` launches Chrome for Testing with it loaded. |
-| `dist/tools/` | `add-strings` (add a UI string to all six locales), `build-psl`, `fixture` (deterministic synthetic history), `screenshots` + `promo-tiles` (store graphics), `release-notes` (CHANGELOG → release body), `listing-text` (STORE_LISTING.md descriptions → `store-assets/listing-text/*.txt`). |
+| `dist/tools/` | `brand` (the logo mark and palette, one source), `icons` (toolbar icons + `src/brand-mark.svg`), `brand-apply` (mark into the README banner, hero and site), `add-strings` (add a UI string to all six locales), `build-psl`, `fixture` (deterministic synthetic history), `screenshots` + `promo-tiles` (store graphics), `release-notes` (CHANGELOG → release body), `listing-text` (STORE_LISTING.md descriptions → `store-assets/listing-text/*.txt`). |
 | `dist/tsconfig.json`, `dist/types/` | `tsc --checkJs` setup; `chrome-storage.d.ts` fixes `storage.get()` result typing. |
 | `dist/package.json` | Dev-only (scripts + devDependencies, `"type":"module"`); the extension has no deps/build. |
 | `dist/build.ps1` | Builds `timetrack-v<version>.zip` from `extension/` (store upload) and moves earlier versions' zips to `archive/old-builds/`. |

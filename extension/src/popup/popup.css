@@ -63,13 +63,8 @@ body {
 .brand { display: flex; align-items: center; gap: 10px; }
 .brand-mark {
   width: 34px; height: 34px; border-radius: 10px;
-  background: linear-gradient(135deg, var(--accent-2), var(--accent));
-  position: relative; box-shadow: 0 4px 12px var(--accent-soft);
-}
-.brand-mark::after {
-  content: ""; position: absolute; inset: 9px;
-  border: 2px solid #fff; border-radius: 50%;
-  border-top-color: transparent; transform: rotate(45deg);
+  background: url('../brand-mark.svg') center / contain no-repeat;
+  box-shadow: 0 4px 12px var(--accent-soft);
 }
 .brand h1 { font-size: 16px; font-weight: 700; letter-spacing: -0.2px; }
 .brand-sub { font-size: 11px; color: var(--text-dim); }

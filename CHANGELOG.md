@@ -43,6 +43,8 @@ No new browser permissions.
 - Limit notifications are de-duplicated across browser restarts; the custom backup endpoint has a
   30-second timeout; backup error messages are translated; settings writes are serialised across the
   worker, popup and dashboard.
+- **A new logo and icons** (a clock drawn as a progress ring), used in the toolbar, popup, dashboard,
+  site and store graphics, plus a redesigned promo tile, marquee and link-preview image.
 - Internals: `storage.js` and `background.js` are split into smaller modules (no behaviour change).
 
 ### Privacy
