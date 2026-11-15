@@ -1,12 +1,12 @@
 # Chrome Web Store — Listing & Submission Pack
 
-<!-- descriptions-reviewed-for: 2.0.0 -->
+<!-- descriptions-reviewed-for: 2.0.1 -->
 <!-- Iron rule: every release re-reads the descriptions (short, detailed, READMEs, site copy) against what the extension now offers,
      fixes what is stale, and only then bumps the version above. dist/tests/docs.test.js fails until it matches manifest.json. -->
 
 Everything you need to paste into the Developer Dashboard, plus the answers the
 review form expects. Store-listing text can be entered per language in the
-dashboard (no manifest changes needed). Current release: **2.0.0** (1.7.0 is already in
+dashboard (no manifest changes needed). Current release: **2.0.1** (1.7.0 is already in
 the Store).
 
 ---
@@ -276,7 +276,7 @@ language, are in [`listing-text/`](listing-text/). They are generated from this 
 | `favicon` *(optional)* | Requested **only at runtime** if the user turns on "Real site icons". Displays site icons from Chrome's **local** favicon cache (`_favicon/`) instead of the generated letter avatars. No network requests and no extra data access; off by default, and removed when the user turns it off. |
 | `web_accessible_resources` (block page) | During a focus session, redirect a blocked tab to the extension's own block page. Uses `use_dynamic_url`, so sites cannot probe for the extension. |
 
-1.5.0, 1.6.0, 1.7.0 and 2.0.0 add **no new permissions** (enforced by `dist/tests/package.test.js`).
+1.5.0, 1.6.0, 1.7.0, 2.0.0 and 2.0.1 add **no new permissions** (enforced by `dist/tests/package.test.js`).
 
 ---
 
@@ -348,8 +348,9 @@ Upload `screenshots/he/*` to the Hebrew listing and `screenshots/en/*` to the En
 - [x] **1.6.0:** merged to `main` and uploaded to the Store (2026-10-24, per the owner). The
       `v1.6.0` tag and GitHub Release are still to do.
 - [x] **1.7.0:** merged, tagged `v1.7.0` and uploaded to the Store.
-- [ ] **2.0.0:** merge the release PR to `main`, push the tag `v2.0.0`, then upload that
-      Release's `timetrack-v2.0.0.zip`. No new permissions. Data disclosures (section 4) and the
+- [x] **2.0.0:** merged and tagged `v2.0.0` (GitHub Release); superseded by 2.0.1 before the Store upload.
+- [ ] **2.0.1:** merged and tagged `v2.0.1`; upload that Release's `timetrack-v2.0.1.zip` (it carries the
+      refreshed short descriptions) and paste the detailed descriptions. The notes below apply to it as they did to 2.0.0. No new permissions. Data disclosures (section 4) and the
       privacy policy are updated for the new local data (tags, achievements, install ID) and the
       two optional destinations (a local folder, a WebDAV server). In the Store's Privacy practices tab
       the declared category stays *Web history*; paste each language's

@@ -4,6 +4,17 @@ All notable changes to TimeTrack are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/); this project uses
 [Semantic Versioning](https://semver.org/).
 
+## [2.0.1] — 2026-11-15
+
+A small release so the Store shows accurate text: the one-line description that ships inside the
+package (in all six languages) now mentions tags and backups you control, matching what 2.0.0 can do.
+The detailed store description, the README feature lists and the site copy were rewritten at the same
+time (they are not part of the package). No code, data or permission changes.
+
+### Changed
+- The short store description, in Hebrew, English, Arabic, Russian, Spanish and French, covers tags and
+  backups you control.
+
 ## [2.0.0] — 2026-11-15
 
 The biggest release so far: your own tags and budgets, achievements, a command palette, smarter
