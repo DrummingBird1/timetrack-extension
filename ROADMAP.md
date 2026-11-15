@@ -6,6 +6,7 @@ A status list for **TimeTrack**, the privacy-first, local-first time tracker for
 
 ## Shipped
 
+- **v2.0.0 — Tags, achievements and a broader backup story.** Tags with weekly budgets, a Ctrl/Cmd+K command palette, achievements, smarter insights and scheduled HTML reports; backup to a folder on your computer or a WebDAV server with version history, verify-without-restoring, partial restore and a warning when backups stop; Google, Microsoft and similar products counted separately (schema v4); a three-step welcome.
 - **v1.7.0 — Reliability and data safety.** Automatic backups that actually run, replace imports that cannot lose history (with a one-step undo), validated imports, and fixes for reversed switches, an ignored theme setting and wrong comparison colours.
 - **v1.6.0 — Categories for six markets.** 472 more built-in site categories (565 in total) for Israel, Spanish- and French-speaking countries, Russia and the Arab world; subdomain defaults now match correctly; the extension name and shortcut labels are localized; store listing in six languages.
 - **v1.5.0 — Foundations and depth.** Real-Chrome end-to-end tests, typecheck, an accessibility pass and keyboard support; category budgets, comparison across any range, focus-score trend and best week, goal streak, scheduled / strict / snoozable focus with history, an opt-in visit log, bulk site actions, tolerant CSV import, demo-data onboarding.
@@ -17,7 +18,6 @@ A status list for **TimeTrack**, the privacy-first, local-first time tracker for
 None of these is a small change; each starts with a choice.
 
 - **Multi-device merge** — which device wins, how two day records combine, and whether `storage.sync` is the transport.
-- **Multi-product hosts** (google.com, microsoft.com, office.com) — Gmail, Docs and Search currently land in one category; fixing it changes stored keys.
 - **Webtime Tracker importer** — needs a real sample of their export. Generic CSV and RescueTime-style files already import.
 - **Edge listing and a Firefox port** — nothing is tested on either yet.
 

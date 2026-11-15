@@ -9,6 +9,8 @@ TimeTrack mide cuánto tiempo dedica realmente a cada sitio web, con la privacid
 • Pestaña de sitios pensada para historiales grandes: búsqueda en todo el historial, sitios fijados, fusión del historial de un sitio que cambió de nombre y acciones masivas (categorizar, limitar o dejar de seguir)
 • Importación desde CSV (incluidas exportaciones al estilo RescueTime) y exportación a JSON/CSV en cualquier momento
 • Copia de seguridad en la nube en su cuenta de Google o en su propio servidor HTTPS, con cifrado AES-256 opcional y vista previa antes de restaurar
+• Etiquetas, logros y paleta de comandos: agrupa sitios en tus propias etiquetas con presupuestos semanales, consigue logros locales, salta a cualquier parte con Ctrl/Cmd+K y obtén ideas más inteligentes (uso nocturno, sitios nuevos, tu hora más productiva)
+• Más formas de proteger tus datos: copias programadas en una carpeta de tu equipo o en un servidor WebDAV con historial de versiones, verificación de un archivo de copia sin restaurarlo, restauración solo de un rango de fechas o solo de los ajustes, informes HTML semanales o mensuales y un aviso cuando las copias dejan de funcionar
 • Atajos de teclado, accesibilidad para teclado y lectores de pantalla, temas claro y oscuro
 • Seis idiomas con cambio en vivo: hebreo, inglés, árabe, ruso, español y francés (con compatibilidad de derecha a izquierda)
 

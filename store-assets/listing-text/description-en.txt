@@ -9,6 +9,8 @@ TimeTrack measures how much time you actually spend on each website — privacy-
 • Sites tab built for large histories: search all of it, pin sites, merge a renamed site's history, and categorize, limit or untrack many sites at once
 • Import from CSV (including RescueTime-style exports); export JSON/CSV any time
 • Cloud backup to your Google account or your own HTTPS server, with optional AES-256 encryption and a restore preview
+• Tags, achievements & command palette: group sites into your own tags with weekly budgets, earn local achievements, jump anywhere with Ctrl/Cmd+K, and get smarter insights (late-night use, new sites, your most productive hour)
+• More ways to protect your data: scheduled backups to a folder on your computer or a WebDAV server with version history, verify a backup file without restoring it, restore just a date range or just the settings, weekly or monthly HTML reports, and a warning when backups stop working
 • Keyboard shortcuts, keyboard and screen-reader accessibility, light and dark themes
 • Six languages with live switching: Hebrew, English, Arabic, Russian, Spanish, French (right-to-left supported)
 

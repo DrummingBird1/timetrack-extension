@@ -12,7 +12,7 @@ cloud backup, and data export.
 All data lives **locally** in `chrome.storage.local`. Nothing is sent anywhere
 unless the user explicitly enables a backup target. The UI is available in six
 languages (Hebrew is the default and the source language; Hebrew and Arabic are RTL).
-Current version: **1.7.0** (see `CHANGELOG.md`).
+Current version: **2.0.0** (see `CHANGELOG.md`).
 
 ## Repository layout
 
@@ -597,7 +597,7 @@ backup endpoint.
 
 Kept in sync with the Trello board's **🔜 Next up** and **🗄️ Backlog** lists.
 
-- **Chrome Web Store submission** of `timetrack-v1.6.0.zip` (1.5.0 is already in the
+- **Chrome Web Store submission** of `timetrack-v2.0.0.zip` (1.7.0 is already in the
   Store; the owner has a developer account) — pack in `store-assets/STORE_LISTING.md`.
 - **Multi-device merge** — needs a design decision first (which device wins, how to
   merge day records, whether `storage.sync` is the transport).
@@ -606,11 +606,6 @@ Kept in sync with the Trello board's **🔜 Next up** and **🗄️ Backlog** li
 - **Edge Add-ons listing** (same zip) and a possible **Firefox port** — see
   `store-assets/BROWSER_SUPPORT.md`; none of it is tested.
 - Google Drive OAuth backup (see note above).
-- **Multi-product hosts** (`google.com` = Gmail + Docs + Search, `microsoft.com`,
-  `office.com`) fall under "Other" when subdomains are grouped, and a category map can't
-  split them. Fixing it means keeping the subdomain for a short built-in list of such hosts
-  — which changes the stored domain keys (and so splits existing history), so it needs a
-  design decision first.
 - Keep extending `DEFAULT_DOMAIN_CATEGORY` (`categories.js`) as sites turn up under "Other";
   1.6.0 took it from 93 to 565 entries. Keys must be registrable domains
   (`categories.test.js` enforces it).
@@ -621,8 +616,9 @@ Kept in sync with the Trello board's **🔜 Next up** and **🗄️ Backlog** li
   true), a migration runner that snapshots first, Hebrew-only backup/encryption error strings, a fetch
   timeout and CORS handling for the custom endpoint (it may need an optional host permission), and
   de-duplicating limit notifications across browser restarts.
-- Deferred ideas: tags, achievements, a command palette, a weekly email summary (only
-  an in-browser notification exists today).
+- Deferred ideas: per-device day merge (the install ID is already in every backup), incremental
+  backup upload, S3-style targets, a per-day limit per tag, a "replay the tour" button, a weekly
+  email summary (only an in-browser notification and the HTML report exist today).
 
 Done in 1.2.0: per-site **hourly** timeline in the drill-down (uses the per-domain `dh`
 map), and reaching the blacklist / focus per-domain settings from the UI. Done in 1.3.0:
@@ -640,3 +636,4 @@ markets (plus the registrable-domain fix for subdomain-keyed defaults), a refres
 and a translatable store listing (`_locales` + detailed descriptions in all six languages). Done in 1.7.0:
 reliability and data safety — see `CHANGELOG.md` (alarms that actually fire, atomic and undoable replace,
 validated imports, escaped output, and the visible defects from the live test).
+Done in 2.0.0: tags with weekly budgets and a change-vs-previous panel, a Ctrl/Cmd+K command palette, achievements, smarter insights (`stats.smartInsights`), scheduled HTML reports (`lib/report.js`, `lib/reportjob.js`), backup to a local folder (`lib/localbackup.js`) and a WebDAV server with version history (`backup.js`), integrity checksums with verify-without-restoring and partial restore (`lib/integrity.js`), a stale-backup warning, per-product buckets for multi-product hosts (schema v4, `PRODUCT_HOSTS` in `utils.js`), snapshot-and-rollback migrations, a three-step welcome, and the split of `storage.js` / `background.js` into `storage/` and `src/worker/`.

@@ -2,7 +2,7 @@
 
 Everything you need to paste into the Developer Dashboard, plus the answers the
 review form expects. Store-listing text can be entered per language in the
-dashboard (no manifest changes needed). Current release: **1.7.0** (1.6.0 is already in
+dashboard (no manifest changes needed). Current release: **2.0.0** (1.7.0 is already in
 the Store).
 
 ---
@@ -54,6 +54,8 @@ language, are in [`listing-text/`](listing-text/). They are generated from this 
 > • Sites tab built for large histories: search all of it, pin sites, merge a renamed site's history, and categorize, limit or untrack many sites at once
 > • Import from CSV (including RescueTime-style exports); export JSON/CSV any time
 > • Cloud backup to your Google account or your own HTTPS server, with optional AES-256 encryption and a restore preview
+> • Tags, achievements & command palette: group sites into your own tags with weekly budgets, earn local achievements, jump anywhere with Ctrl/Cmd+K, and get smarter insights (late-night use, new sites, your most productive hour)
+> • More ways to protect your data: scheduled backups to a folder on your computer or a WebDAV server with version history, verify a backup file without restoring it, restore just a date range or just the settings, weekly or monthly HTML reports, and a warning when backups stop working
 > • Keyboard shortcuts, keyboard and screen-reader accessibility, light and dark themes
 > • Six languages with live switching: Hebrew, English, Arabic, Russian, Spanish, French (right-to-left supported)
 >
@@ -72,6 +74,8 @@ language, are in [`listing-text/`](listing-text/). They are generated from this 
 > • לשונית אתרים שמותאמת להיסטוריה גדולה: חיפוש בכל ההיסטוריה, הצמדת אתרים, איחוד ההיסטוריה של אתר ששינה שם, וקטגוריה, מגבלה או אי-מעקב למספר אתרים בבת אחת
 > • ייבוא מ-CSV (כולל קבצי ייצוא בסגנון RescueTime) וייצוא JSON/CSV בכל עת
 > • גיבוי ענן לחשבון Google שלך או לשרת HTTPS משלך, עם הצפנת AES-256 אופציונלית ותצוגה מקדימה לפני שחזור
+> • תגיות, הישגים ופלטת פקודות: קבץ אתרים לתגיות משלך עם תקציבים שבועיים, צבור הישגים מקומיים, קפוץ לכל מקום עם Ctrl/Cmd+K וקבל תובנות חכמות יותר (גלישה בלילה, אתרים חדשים, השעה היצרנית ביותר שלך)
+> • עוד דרכים להגן על הנתונים: גיבוי מתוזמן לתיקייה במחשב או לשרת WebDAV עם היסטוריית גרסאות, אימות קובץ גיבוי בלי לשחזר, שחזור של טווח תאריכים או של ההגדרות בלבד, דוחות HTML שבועיים או חודשיים, והתראה כשהגיבוי מפסיק לעבוד
 > • קיצורי מקלדת, נגישות למקלדת ולקוראי מסך, ערכות נושא בהיר וכהה
 > • שש שפות עם החלפה חיה: עברית, אנגלית, ערבית, רוסית, ספרדית, צרפתית (כולל כתיבה מימין לשמאל)
 >
@@ -90,6 +94,8 @@ language, are in [`listing-text/`](listing-text/). They are generated from this 
 > • تبويب مواقع مصمم للسجلات الكبيرة: بحث في كل السجل، وتثبيت المواقع، ودمج سجل موقع غيّر اسمه، وتصنيف عدة مواقع أو تحديد حد لها أو إيقاف تتبعها دفعة واحدة
 > • استيراد من CSV (بما في ذلك ملفات التصدير بنمط RescueTime) وتصدير JSON/CSV في أي وقت
 > • نسخ احتياطي سحابي إلى حساب Google أو إلى خادم HTTPS خاص بك، مع تشفير AES-256 اختياري ومعاينة قبل الاستعادة
+> • الوسوم والإنجازات ولوحة الأوامر: جمّع المواقع في وسومك الخاصة مع ميزانيات أسبوعية، واكسب إنجازات محلية، وانتقل إلى أي مكان بـ Ctrl/Cmd+K، واحصل على رؤى أذكى (الاستخدام الليلي، المواقع الجديدة، ساعتك الأكثر إنتاجية)
+> • طرق أكثر لحماية بياناتك: نسخ احتياطي مجدول إلى مجلد على حاسوبك أو إلى خادم WebDAV مع سجل إصدارات، والتحقق من ملف نسخة احتياطية دون استعادته، واستعادة نطاق تواريخ أو الإعدادات فقط، وتقارير HTML أسبوعية أو شهرية، وتحذير عند توقف النسخ الاحتياطي
 > • اختصارات لوحة المفاتيح، وإتاحة للوحة المفاتيح وقارئات الشاشة، وسمتان فاتحة وداكنة
 > • ست لغات مع تبديل فوري: العبرية والإنجليزية والعربية والروسية والإسبانية والفرنسية (مع دعم الكتابة من اليمين إلى اليسار)
 >
@@ -108,6 +114,8 @@ language, are in [`listing-text/`](listing-text/). They are generated from this 
 > • Вкладка «Сайты» для больших историй: поиск по всей истории, закрепление сайтов, объединение истории переименованного сайта, а также массовое назначение категории, лимита или отключение учёта
 > • Импорт из CSV (включая экспорт в стиле RescueTime), экспорт в JSON/CSV в любой момент
 > • Облачное резервное копирование в аккаунт Google или на ваш HTTPS-сервер, с необязательным шифрованием AES-256 и предпросмотром перед восстановлением
+> • Теги, достижения и палитра команд: объединяйте сайты в собственные теги с недельными бюджетами, получайте локальные достижения, переходите куда угодно по Ctrl/Cmd+K и смотрите более умные выводы (ночное использование, новые сайты, ваш самый продуктивный час)
+> • Больше способов защитить данные: резервные копии по расписанию в папку на компьютере или на сервер WebDAV с историей версий, проверка файла копии без восстановления, восстановление только диапазона дат или только настроек, еженедельные и ежемесячные HTML-отчёты и предупреждение, когда копии перестают создаваться
 > • Горячие клавиши, доступность с клавиатуры и для программ чтения с экрана, светлая и тёмная темы
 > • Шесть языков с мгновенным переключением: иврит, английский, арабский, русский, испанский, французский (с поддержкой письма справа налево)
 >
@@ -126,6 +134,8 @@ language, are in [`listing-text/`](listing-text/). They are generated from this 
 > • Pestaña de sitios pensada para historiales grandes: búsqueda en todo el historial, sitios fijados, fusión del historial de un sitio que cambió de nombre y acciones masivas (categorizar, limitar o dejar de seguir)
 > • Importación desde CSV (incluidas exportaciones al estilo RescueTime) y exportación a JSON/CSV en cualquier momento
 > • Copia de seguridad en la nube en su cuenta de Google o en su propio servidor HTTPS, con cifrado AES-256 opcional y vista previa antes de restaurar
+> • Etiquetas, logros y paleta de comandos: agrupa sitios en tus propias etiquetas con presupuestos semanales, consigue logros locales, salta a cualquier parte con Ctrl/Cmd+K y obtén ideas más inteligentes (uso nocturno, sitios nuevos, tu hora más productiva)
+> • Más formas de proteger tus datos: copias programadas en una carpeta de tu equipo o en un servidor WebDAV con historial de versiones, verificación de un archivo de copia sin restaurarlo, restauración solo de un rango de fechas o solo de los ajustes, informes HTML semanales o mensuales y un aviso cuando las copias dejan de funcionar
 > • Atajos de teclado, accesibilidad para teclado y lectores de pantalla, temas claro y oscuro
 > • Seis idiomas con cambio en vivo: hebreo, inglés, árabe, ruso, español y francés (con compatibilidad de derecha a izquierda)
 >
@@ -144,6 +154,8 @@ language, are in [`listing-text/`](listing-text/). They are generated from this 
 > • Onglet Sites conçu pour les gros historiques : recherche dans tout l'historique, sites épinglés, fusion de l'historique d'un site renommé et actions groupées (catégoriser, limiter, ne plus suivre)
 > • Import depuis CSV (y compris les exports de type RescueTime) et export JSON/CSV à tout moment
 > • Sauvegarde cloud sur votre compte Google ou votre propre serveur HTTPS, avec chiffrement AES-256 facultatif et aperçu avant restauration
+> • Tags, réussites et palette de commandes: regroupez des sites dans vos propres tags avec des budgets hebdomadaires, obtenez des réussites locales, allez partout avec Ctrl/Cmd+K et profitez d'analyses plus fines (usage nocturne, nouveaux sites, votre heure la plus productive)
+> • Plus de moyens de protéger vos données: sauvegardes planifiées vers un dossier de votre ordinateur ou un serveur WebDAV avec historique des versions, vérification d'un fichier de sauvegarde sans le restaurer, restauration d'une plage de dates ou des réglages seulement, rapports HTML hebdomadaires ou mensuels, et alerte quand les sauvegardes cessent de fonctionner
 > • Raccourcis clavier, accessibilité au clavier et aux lecteurs d'écran, thèmes clair et sombre
 > • Six langues avec changement à la volée : hébreu, anglais, arabe, russe, espagnol, français (écriture de droite à gauche prise en charge)
 >
@@ -171,7 +183,7 @@ language, are in [`listing-text/`](listing-text/). They are generated from this 
 | `favicon` *(optional)* | Requested **only at runtime** if the user turns on "Real site icons". Displays site icons from Chrome's **local** favicon cache (`_favicon/`) instead of the generated letter avatars. No network requests and no extra data access; off by default, and removed when the user turns it off. |
 | `web_accessible_resources` (block page) | During a focus session, redirect a blocked tab to the extension's own block page. Uses `use_dynamic_url`, so sites cannot probe for the extension. |
 
-1.5.0, 1.6.0 and 1.7.0 add **no new permissions** (enforced by `dist/tests/package.test.js`).
+1.5.0, 1.6.0, 1.7.0 and 2.0.0 add **no new permissions** (enforced by `dist/tests/package.test.js`).
 
 ---
 
@@ -187,8 +199,12 @@ language, are in [`listing-text/`](listing-text/). They are generated from this 
   - ☑ I do **not** use or transfer data for purposes unrelated to the single purpose.
   - ☑ I do **not** use or transfer data to determine creditworthiness or for lending.
 - **Data handling:** stored locally; transmitted only to a user-configured backup
-  target (Google sync or the user's own HTTPS endpoint), optionally AES-256
-  encrypted. Backups and exports never contain the passphrase or endpoint token.
+  target (Google sync, the user's own HTTPS endpoint, or the user's own WebDAV
+  server), optionally AES-256 encrypted. Backups and exports never contain the
+  passphrase, the endpoint token or the WebDAV password. Backup files and summary
+  reports can also be written into a folder the user picks on their own computer.
+  The extension stores a random install ID (included in backups) and the date each
+  achievement was reached; neither identifies the user.
   Link the privacy policy URL.
 
 ---
@@ -237,10 +253,13 @@ Upload `screenshots/he/*` to the Hebrew listing and `screenshots/en/*` to the En
 - [x] **Upload the zip** in the Developer Dashboard — 1.5.0 is in the Store.
 - [x] **1.6.0:** merged to `main` and uploaded to the Store (2026-10-24, per the owner). The
       `v1.6.0` tag and GitHub Release are still to do.
-- [ ] **1.7.0:** merge the release PR to `main`, push the tag `v1.7.0`, then upload that
-      Release's `timetrack-v1.7.0.zip`. The release changes no permissions and adds no new kind of
-      data (the one-step undo copy is the same local history), so the permission justifications and
-      data disclosures are unchanged.
+- [x] **1.7.0:** merged, tagged `v1.7.0` and uploaded to the Store.
+- [ ] **2.0.0:** merge the release PR to `main`, push the tag `v2.0.0`, then upload that
+      Release's `timetrack-v2.0.0.zip`. No new permissions. Data disclosures (section 4) and the
+      privacy policy are updated for the new local data (tags, achievements, install ID) and the
+      two optional destinations (a local folder, a WebDAV server). In the Store's Privacy practices tab
+      the declared category stays *Web history*; paste each language's
+      `listing-text/description-<lang>.txt` again and use the new screenshots.
 - [ ] **1.6.0 listing:** in the dashboard's Store listing tab, set the default language to
       English, add Hebrew, Arabic, Russian, Spanish and French from the language dropdown, and
       paste each language's `listing-text/description-<lang>.txt` into its Description box.
