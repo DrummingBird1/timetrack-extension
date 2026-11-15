@@ -683,6 +683,51 @@ test('backup v2: restoring only the settings leaves the history alone', async ()
   }
 });
 
+// ------------------------------------------------------ scheduled backup to a folder
+// The directory picker needs a human, so the browser's private file system (OPFS) stands in for the
+// chosen folder: it is the same FileSystemDirectoryHandle API, and it is what the worker gets from IndexedDB.
+test('local backup: the worker writes backup files into the chosen folder, rotates them, and reports a missing folder', async () => {
+  await openTab('settings');
+  const lib = `${ext.base}src/lib/localbackup.js`;
+  await page.evaluate(async (url) => {
+    const m = await import(url);
+    await m.clearFolderHandle();
+    const root = await navigator.storage.getDirectory();
+    await root.removeEntry('tt-e2e-backups', { recursive: true }).catch(() => {});
+    await m.saveFolderHandle(await root.getDirectoryHandle('tt-e2e-backups', { create: true }));
+  }, lib);
+  await ext.run(async (url) => (await import(url)).saveSettings({ backup: { localEnabled: true, localKeep: 2 } }), `${ext.base}src/lib/storage.js`);
+
+  const r = await ext.message('runBackup');
+  assert.equal(r.ok, true, r.status);
+  const listing = () => page.evaluate(async () => {
+    const dir = await (await navigator.storage.getDirectory()).getDirectoryHandle('tt-e2e-backups');
+    const out = [];
+    for await (const [name] of dir.entries()) out.push(name);
+    return out;
+  });
+  const names = await listing();
+  assert.equal(names.length, 1);
+  assert.match(names[0], /^timetrack-backup-\d{4}-\d{2}-\d{2}-\d{4}\.json$/);
+
+  // The file is a real, verifiable backup.
+  const verdict = await page.evaluate(async (libUrl, integrityUrl, settingsDefaults) => {
+    const dir = await (await navigator.storage.getDirectory()).getDirectoryHandle('tt-e2e-backups');
+    const [name] = await (async () => { const o = []; for await (const [n] of dir.entries()) o.push(n); return o; })();
+    const text = await (await (await dir.getFileHandle(name)).getFile()).text();
+    const { verifySnapshot } = await import(integrityUrl);
+    return verifySnapshot(JSON.parse(text), settingsDefaults);
+  }, lib, `${ext.base}src/lib/integrity.js`, {});
+  assert.equal(verdict.checksum, 'match');
+  assert.equal(verdict.ok, true);
+
+  // No folder -> a clear failure, and the backup date does not move.
+  await page.evaluate(async (url) => (await import(url)).clearFolderHandle(), lib);
+  const failed = await ext.message('runBackup');
+  assert.equal(failed.ok, false);
+  await ext.run(async (url) => (await import(url)).saveSettings({ backup: { localEnabled: false } }), `${ext.base}src/lib/storage.js`);
+});
+
 // --------------------------------------------------------- import / clear
 test('import: a JSON backup and a CSV file are imported through the file inputs', async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'tt-e2e-'));

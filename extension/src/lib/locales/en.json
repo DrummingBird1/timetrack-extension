@@ -423,5 +423,20 @@
   "verify.ok": "Backup is intact: {n} days, checksum matches",
   "verify.okNoChecksum": "The file is valid ({n} days), but it is an older backup with no checksum, so changes can't be ruled out",
   "verify.mismatch": "Checksum mismatch: the file was changed or damaged after it was made",
-  "verify.invalid": "The file has {n} invalid records that would not be restored"
+  "verify.invalid": "The file has {n} invalid records that would not be restored",
+  "set.local": "Automatic backup to a folder on this computer",
+  "set.localDesc": "A backup file is written to the folder you choose, at the interval above. The browser may ask you to allow access to the folder again.",
+  "btn.pickFolder": "Choose folder",
+  "btn.grantFolder": "Allow folder access",
+  "btn.clearFolder": "Disconnect folder",
+  "set.localKeep": "Files to keep",
+  "local.none": "No folder chosen yet",
+  "local.ready": "Folder: {n} — ready for backups",
+  "local.needsPermission": "Folder: {n} — the browser needs you to allow access again before the next backup",
+  "local.unsupported": "This browser can't pick a folder",
+  "local.pickFirst": "Choose a folder so backups can run",
+  "local.chosen": "Backups will be saved to {n}",
+  "bk.localNoFolder": "No local backup folder chosen",
+  "bk.localPermission": "Backup folder: allow access again in Settings (the \"Allow folder access\" button)",
+  "bk.localOk": "Local folder: saved {name}"
 }
