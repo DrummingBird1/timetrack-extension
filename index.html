@@ -350,7 +350,7 @@
       <ul>
         <li><strong>Your Google account</strong> via <code>chrome.storage.sync</code> — Chrome's built-in sync, tied to your account. We are not a party to it.</li>
         <li><strong>A custom server</strong> at an HTTPS URL you provide — data goes to your server.</li>
-        <li><strong>A WebDAV server</strong> at an HTTPS address you provide — each backup is a new file there, so earlier ones are kept; data goes to your server.</li>
+        <li><strong>A WebDAV server</strong> at an HTTPS address you provide — each backup is a new file there, so earlier ones are kept; data goes to your server. The user name and password are stored only on this device and sent only to that server to sign in; they are never part of a backup.</li>
       </ul>
       <p>You may enable <strong>AES-256 passphrase encryption</strong>; data is then
       encrypted on your device before leaving, and the target sees only ciphertext.
@@ -405,7 +405,7 @@
       <ul>
         <li><strong>חשבון Google שלך</strong> דרך <code>chrome.storage.sync</code> — מנגנון הסנכרון המובנה של Chrome, המשויך לחשבון שלך. איננו צד בכך.</li>
         <li><strong>שרת מותאם אישית</strong> בכתובת HTTPS שאתה מספק — הנתונים נשלחים לשרת שלך.</li>
-        <li><strong>שרת WebDAV</strong> בכתובת HTTPS שאתה מספק — כל גיבוי נשמר שם כקובץ חדש, כך שגיבויים קודמים נשמרים; הנתונים נשלחים לשרת שלך.</li>
+        <li><strong>שרת WebDAV</strong> בכתובת HTTPS שאתה מספק — כל גיבוי נשמר שם כקובץ חדש, כך שגיבויים קודמים נשמרים; הנתונים נשלחים לשרת שלך. שם המשתמש והסיסמה נשמרים רק במכשיר הזה ונשלחים רק לשרת הזה לצורך התחברות; הם לעולם אינם חלק מגיבוי.</li>
       </ul>
       <p>ניתן להגדיר <strong>הצפנת AES-256 עם סיסמה</strong>; במצב זה הנתונים מוצפנים במכשיר שלך לפני היציאה, והיעד רואה רק טקסט מוצפן. הסיסמה נשמרת מקומית בלבד ולעולם אינה נשלחת.</p>
 
@@ -448,7 +448,7 @@
       <ul>
         <li><strong>حساب Google الخاص بك</strong> عبر <code>chrome.storage.sync</code> — مزامنة Chrome المدمجة، المرتبطة بحسابك. نحن لسنا طرفًا في هذه العملية.</li>
         <li><strong>خادم مخصص</strong> على عنوان HTTPS تُقدّمه أنت — تُرسَل البيانات إلى خادمك.</li>
-        <li><strong>خادم WebDAV</strong> على عنوان HTTPS تقدّمه — يُحفظ كل نسخ احتياطي هناك كملف جديد فتبقى النسخ السابقة؛ تُرسل البيانات إلى خادمك.</li>
+        <li><strong>خادم WebDAV</strong> على عنوان HTTPS تقدّمه — يُحفظ كل نسخ احتياطي هناك كملف جديد فتبقى النسخ السابقة؛ تُرسل البيانات إلى خادمك. يُخزَّن اسم المستخدم وكلمة المرور على هذا الجهاز فقط ويُرسلان إلى ذلك الخادم وحده لتسجيل الدخول؛ ولا يكونان أبدًا جزءًا من نسخة احتياطية.</li>
       </ul>
       <p>يمكنك تفعيل <strong>تشفير AES-256 بعبارة مرور</strong>؛ عندئذٍ تُشفَّر البيانات على جهازك قبل مغادرته، ولا ترى الوجهة سوى نص مشفّر. تُخزَّن عبارة المرور محليًا ولا تُنقَل أبدًا.</p>
 
@@ -487,7 +487,7 @@
       <ul>
         <li><strong>Ваш аккаунт Google</strong> через <code>chrome.storage.sync</code> — встроенную синхронизацию Chrome, привязанную к вашему аккаунту. Мы не являемся стороной этого процесса.</li>
         <li><strong>Собственный сервер</strong> по указанному вами адресу <code>HTTPS</code> — данные отправляются на ваш сервер.</li>
-        <li><strong>Сервер WebDAV</strong> по HTTPS-адресу, который вы укажете — каждая копия сохраняется там новым файлом, поэтому прежние остаются; данные уходят на ваш сервер.</li>
+        <li><strong>Сервер WebDAV</strong> по HTTPS-адресу, который вы укажете — каждая копия сохраняется там новым файлом, поэтому прежние остаются; данные уходят на ваш сервер. Логин и пароль хранятся только на этом устройстве и отправляются только на этот сервер для входа; они никогда не входят в резервную копию.</li>
       </ul>
       <p>Вы можете включить <strong>шифрование AES-256 по парольной фразе</strong>; в этом случае данные шифруются на вашем устройстве перед отправкой, и цель резервного копирования видит только зашифрованный текст. Парольная фраза хранится локально и никогда не передаётся.</p>
 
@@ -526,7 +526,7 @@
       <ul>
         <li><strong>Su cuenta de Google</strong> mediante <code>chrome.storage.sync</code> — la sincronización integrada de Chrome, vinculada a su cuenta. No somos parte de este proceso.</li>
         <li><strong>Un servidor personalizado</strong> en una URL <code>HTTPS</code> que usted proporcione — los datos se envían a su servidor.</li>
-        <li><strong>Un servidor WebDAV</strong> en una dirección HTTPS que tú indicas: cada copia es allí un archivo nuevo, así que se conservan las anteriores; los datos van a tu servidor.</li>
+        <li><strong>Un servidor WebDAV</strong> en una dirección HTTPS que tú indicas: cada copia es allí un archivo nuevo, así que se conservan las anteriores; los datos van a tu servidor. El usuario y la contraseña se guardan solo en este dispositivo y se envían únicamente a ese servidor para iniciar sesión; nunca forman parte de una copia.</li>
       </ul>
       <p>Puede activar el <strong>cifrado mediante frase de contraseña AES-256</strong>; en ese caso, los datos se cifran en su dispositivo antes de salir, y el destino solo recibe texto cifrado. La frase de contraseña se almacena localmente y nunca se transmite.</p>
 
@@ -565,7 +565,7 @@
       <ul>
         <li><strong>Votre compte Google</strong> via <code>chrome.storage.sync</code> — la synchronisation intégrée de Chrome, liée à votre compte. Nous n'intervenons à aucun moment dans ce processus.</li>
         <li><strong>Un serveur personnalisé</strong>, à une URL HTTPS que vous fournissez — les données sont envoyées vers votre serveur.</li>
-        <li><strong>Un serveur WebDAV</strong> à une adresse HTTPS que vous fournissez : chaque sauvegarde y est un nouveau fichier, donc les précédentes sont conservées ; les données vont vers votre serveur.</li>
+        <li><strong>Un serveur WebDAV</strong> à une adresse HTTPS que vous fournissez : chaque sauvegarde y est un nouveau fichier, donc les précédentes sont conservées ; les données vont vers votre serveur. L'identifiant et le mot de passe restent sur cet appareil et ne sont envoyés qu'à ce serveur pour se connecter ; ils ne font jamais partie d'une sauvegarde.</li>
       </ul>
       <p>Vous pouvez activer le <strong>chiffrement par phrase secrète AES-256</strong> ; les données sont alors chiffrées sur votre appareil avant leur envoi, et la destination ne reçoit que du texte chiffré. La phrase secrète est stockée localement et n'est jamais transmise.</p>
 
