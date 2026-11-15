@@ -12,6 +12,7 @@ import { renderInsights } from './insights.js';
 import { wireCustomCompare } from './compare.js';
 import { wireDemo, updateDemoBanner } from './demo.js';
 import { wireProductNote, updateProductNote } from './productNote.js';
+import { wirePalette } from './palette.js';
 import { fillSettingsForm, filterSettings, renderStorageInfo, wireSettings } from './settings.js';
 
 function applyTheme() {
@@ -144,6 +145,7 @@ async function init() {
   wireSites();
   wireDemo();
   wireProductNote();
+  wirePalette();
   wireCustomCompare();
 
   // modal dismissal

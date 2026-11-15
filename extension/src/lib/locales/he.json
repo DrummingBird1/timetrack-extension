@@ -458,5 +458,16 @@
   "set.backupWarnDesc": "התראה אחת ביום אם גיבוי מוגדר לא הצליח במשך כך וכך ימים. 0 מכבה.",
   "backup.stale": "⚠️ לא בוצע גיבוי מוצלח כבר {n} ימים",
   "notif.backupStale.title": "הגיבוי לא מצליח",
-  "notif.backupStale.body": "לא בוצע גיבוי מוצלח כבר {n} ימים. פתח את ההגדרות כדי לבדוק את הסטטוס."
+  "notif.backupStale.body": "לא בוצע גיבוי מוצלח כבר {n} ימים. פתח את ההגדרות כדי לבדוק את הסטטוס.",
+  "palette.title": "חיפוש ופקודות",
+  "palette.placeholder": "עבור למסך, אתר או פעולה…",
+  "palette.hint": "↑↓ לבחירה · Enter לפתיחה · Esc לסגירה",
+  "palette.empty": "אין תוצאות",
+  "palette.kind.page": "מסך",
+  "palette.kind.action": "פעולה",
+  "palette.kind.site": "אתר",
+  "palette.cmd.toggleTracking": "הפעל / עצור מעקב",
+  "palette.cmd.backupNow": "גבה עכשיו",
+  "palette.cmd.exportJson": "ייצוא JSON",
+  "card.usual": "בדרך כלל {v} ביום {d}"
 }

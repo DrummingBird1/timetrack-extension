@@ -458,5 +458,16 @@
   "set.backupWarnDesc": "Одно уведомление в день, если настроенная копия не удавалась столько дней. 0 — выключить.",
   "backup.stale": "⚠️ Нет успешной копии уже {n} дн.",
   "notif.backupStale.title": "Копии не создаются",
-  "notif.backupStale.body": "Успешной копии нет уже {n} дн. Откройте настройки, чтобы проверить статус."
+  "notif.backupStale.body": "Успешной копии нет уже {n} дн. Откройте настройки, чтобы проверить статус.",
+  "palette.title": "Поиск и команды",
+  "palette.placeholder": "Экран, сайт или действие…",
+  "palette.hint": "↑↓ выбор · Enter открыть · Esc закрыть",
+  "palette.empty": "Ничего не найдено",
+  "palette.kind.page": "Экран",
+  "palette.kind.action": "Действие",
+  "palette.kind.site": "Сайт",
+  "palette.cmd.toggleTracking": "Включить / выключить учёт",
+  "palette.cmd.backupNow": "Создать копию сейчас",
+  "palette.cmd.exportJson": "Экспорт JSON",
+  "card.usual": "Обычно {v} в {d}"
 }

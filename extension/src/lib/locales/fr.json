@@ -458,5 +458,16 @@
   "set.backupWarnDesc": "Une notification par jour si une sauvegarde configurée n'a pas réussi depuis ce nombre de jours. 0 désactive.",
   "backup.stale": "⚠️ Aucune sauvegarde réussie depuis {n} jours",
   "notif.backupStale.title": "Les sauvegardes échouent",
-  "notif.backupStale.body": "Aucune sauvegarde réussie depuis {n} jours. Ouvrez les réglages pour vérifier l'état."
+  "notif.backupStale.body": "Aucune sauvegarde réussie depuis {n} jours. Ouvrez les réglages pour vérifier l'état.",
+  "palette.title": "Recherche et commandes",
+  "palette.placeholder": "Aller à un écran, un site ou une action…",
+  "palette.hint": "↑↓ choisir · Entrée ouvrir · Échap fermer",
+  "palette.empty": "Aucun résultat",
+  "palette.kind.page": "Écran",
+  "palette.kind.action": "Action",
+  "palette.kind.site": "Site",
+  "palette.cmd.toggleTracking": "Activer / suspendre le suivi",
+  "palette.cmd.backupNow": "Sauvegarder maintenant",
+  "palette.cmd.exportJson": "Exporter en JSON",
+  "card.usual": "En général {v} le {d}"
 }

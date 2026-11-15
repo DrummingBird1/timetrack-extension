@@ -369,6 +369,13 @@ select { cursor: pointer; }
   padding: 24px; max-width: 560px; width: 100%; box-shadow: var(--shadow);
   max-height: 86vh; overflow-y: auto; animation: pop 0.22s ease;
 }
+.palette { padding: 14px; max-width: 520px; }
+.palette input { width: 100%; box-sizing: border-box; margin-bottom: 8px; }
+#paletteList { list-style: none; margin: 0 0 8px; padding: 0; max-height: 50vh; overflow-y: auto; }
+.palette-item { display: flex; justify-content: space-between; gap: 12px; padding: 8px 10px; border-radius: 10px; cursor: pointer; font-size: 14px; }
+.palette-item.active { background: var(--surface-2); outline: 1px solid var(--border); }
+.palette-kind { color: var(--dim); font-size: 12px; white-space: nowrap; }
+.palette-empty { padding: 10px; color: var(--dim); font-size: 13px; }
 @keyframes pop { from { transform: scale(0.96); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 .modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
 .modal-head .site-cell { display: flex; align-items: center; gap: 11px; }

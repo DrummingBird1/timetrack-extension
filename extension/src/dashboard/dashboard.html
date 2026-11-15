@@ -541,6 +541,15 @@
     <div class="modal-card" id="siteModalCard"></div>
   </div>
 
+  <!-- Command palette (Ctrl/Cmd+K) -->
+  <div class="modal hidden" id="paletteModal" role="dialog" aria-modal="true" data-i18n-aria="palette.title" aria-label="TimeTrack">
+    <div class="modal-card palette">
+      <input type="text" id="paletteInput" role="combobox" aria-expanded="true" aria-controls="paletteList" aria-autocomplete="list" autocomplete="off" data-i18n-ph="palette.placeholder" data-i18n-aria="palette.title" placeholder="" />
+      <ul id="paletteList" role="listbox" data-i18n-aria="palette.title"></ul>
+      <div class="set-desc" data-i18n="palette.hint">↑↓ לבחירה · Enter לפתיחה · Esc לסגירה</div>
+    </div>
+  </div>
+
   <!-- Restore preview modal -->
   <div class="modal hidden" id="restoreModal" role="dialog" aria-modal="true" aria-label="TimeTrack">
     <div class="modal-card" id="restoreModalCard"></div>
