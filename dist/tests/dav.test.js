@@ -110,3 +110,15 @@ test('runAutoBackup includes the WebDAV target and reports it', async () => {
   assert.equal(r.ok, true);
   assert.match(r.status, /WebDAV|שרת/);
 });
+
+// ---- stale-backup warning (pure part) ----
+test('backupStaleDays: counts from the last success (or install), only for a configured target, and honours the switch', () => {
+  const day = 86_400_000;
+  const now = 100 * day;
+  const base = { backupWarnDays: 7, backup: { endpointUrl: 'https://x.example/', lastBackup: now - 9 * day } };
+  assert.equal(backup.backupStaleDays(base, 0, now), 9);
+  assert.equal(backup.backupStaleDays({ ...base, backup: { ...base.backup, lastBackup: now - 6 * day } }, 0, now), 0, 'not overdue yet');
+  assert.equal(backup.backupStaleDays({ ...base, backup: { ...base.backup, lastBackup: 0 } }, now - 8 * day, now), 8, 'never succeeded: counts from install');
+  assert.equal(backup.backupStaleDays({ ...base, backup: { lastBackup: now - 30 * day } }, 0, now), 0, 'no target configured, nothing to warn about');
+  assert.equal(backup.backupStaleDays({ ...base, backupWarnDays: 0 }, 0, now), 0, 'switched off');
+});

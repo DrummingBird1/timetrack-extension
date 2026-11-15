@@ -360,6 +360,26 @@ export async function backupToEndpoint(url, token) {
   return { status: res.status };
 }
 
+/** Is any backup target configured? */
+export function hasBackupTarget(b) {
+  return !!(b.syncEnabled || b.endpointUrl || b.localEnabled || b.davUrl);
+}
+
+/**
+ * How many whole days a configured backup has gone without succeeding, or 0 when there is
+ * nothing to warn about (no target, warning switched off, or not yet overdue). The clock
+ * starts at the last successful backup, or at install if there never was one.
+ * @param {{ backup: any, backupWarnDays?: number }} settings
+ * @param {number} installedAt  ms timestamp from meta
+ */
+export function backupStaleDays(settings, installedAt, now = Date.now()) {
+  const warn = settings.backupWarnDays || 0;
+  if (warn <= 0 || !hasBackupTarget(settings.backup)) return 0;
+  const since = settings.backup.lastBackup || installedAt || now;
+  const days = Math.floor((now - since) / 86400000);
+  return days >= warn ? days : 0;
+}
+
 /** Run whichever backup targets are configured; updates settings.backup meta. */
 /** @param {{ force?: boolean }} [opts]  force: a manual "Back up now" (skips the cloud shrink guard) */
 export async function runAutoBackup({ force = false } = {}) {
@@ -405,7 +425,7 @@ export async function runAutoBackup({ force = false } = {}) {
       results.push(e.message);
     }
   }
-  if (!b.syncEnabled && !b.endpointUrl && !b.localEnabled && !b.davUrl) {
+  if (!hasBackupTarget(b)) {
     return { ran: false, status: 'לא הוגדר יעד גיבוי' };
   }
 

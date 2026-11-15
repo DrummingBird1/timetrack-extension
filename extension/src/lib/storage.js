@@ -40,6 +40,7 @@ export const DEFAULT_SETTINGS = {
   tags: {},                      // tag name -> domains (a tag matches a domain and its subdomains)
   notifyLimits: true,            // fire notifications when limits are hit
   weeklySummary: true,           // weekly digest notification
+  backupWarnDays: 7,             // warn when a configured backup hasn't succeeded for this many days (0 = off)
   categoryMap: {},               // domain -> category override
   blacklist: [],                 // domains never tracked
   pinnedSites: [],                // domains pinned to the top of the Sites table

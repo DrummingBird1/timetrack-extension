@@ -407,6 +407,10 @@
               <input type="number" id="setBackupInterval" aria-labelledby="lbl-setBackupInterval" aria-describedby="desc-setBackupInterval" min="1" max="168" />
             </div>
             <div class="setting-row">
+              <div><div id="lbl-setBackupWarn" class="set-label" data-i18n="set.backupWarn">אזהרה כשהגיבוי לא מצליח (ימים)</div><div id="desc-setBackupWarn" class="set-desc" data-i18n="set.backupWarnDesc">התראה אחת ביום אם גיבוי מוגדר לא הצליח במשך כך וכך ימים. 0 מכבה.</div></div>
+              <input type="number" id="setBackupWarn" aria-labelledby="lbl-setBackupWarn" aria-describedby="desc-setBackupWarn" min="0" max="365" />
+            </div>
+            <div class="setting-row">
               <div><div id="lbl-setLocalEnabled" class="set-label" data-i18n="set.local">גיבוי אוטומטי לתיקייה במחשב</div><div id="desc-setLocalEnabled" class="set-desc" data-i18n="set.localDesc">קובץ גיבוי נכתב לתיקייה שתבחר, ככל שהתדירות למעלה. הדפדפן עשוי לבקש לאשר גישה לתיקייה מחדש.</div></div>
               <label class="switch"><input type="checkbox" id="setLocalEnabled" aria-labelledby="lbl-setLocalEnabled" aria-describedby="desc-setLocalEnabled" /><span class="switch-track"><span class="switch-thumb"></span></span></label>
             </div>

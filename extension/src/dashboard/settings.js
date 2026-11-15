@@ -1,5 +1,6 @@
 // Settings tab: form binding, change handlers, search filter, passphrase meter, backup status.
-import { saveSettings, getSettings, getIndex, storageFootprint, clearAllData, clearSessions, countPrunable, getPreReplaceInfo } from '../lib/storage.js';
+import { saveSettings, getSettings, getMeta, getIndex, storageFootprint, clearAllData, clearSessions, countPrunable, getPreReplaceInfo } from '../lib/storage.js';
+import { backupStaleDays } from '../lib/backup.js';
 import { clamp, passphraseStrength, esc } from '../lib/utils.js';
 import { t, locale } from '../lib/i18n.js';
 import { $, $$, settings, setSettings, setAllCache, toast, send, actions } from './core.js';
@@ -37,6 +38,7 @@ export function fillSettingsForm() {
   $('#setFocusStrict').checked = settings.focus.strict;
   $('#setSyncEnabled').checked = settings.backup.syncEnabled;
   $('#setBackupInterval').value = settings.backup.autoIntervalHours;
+  $('#setBackupWarn').value = settings.backupWarnDays;
   $('#setEndpoint').value = settings.backup.endpointUrl;
   $('#setEndpointToken').value = settings.backup.endpointToken;
   $('#setEncrypt').checked = settings.backup.encrypt;
@@ -91,10 +93,13 @@ function updatePassStrength(pw) {
   $('#passStrengthLabel').textContent = t(`set.passStrength.${strength}`);
 }
 
-function renderBackupStatus() {
+async function renderBackupStatus() {
+  const installedAt = (await getMeta()).installedAt;
   const b = settings.backup;
   const last = b.lastBackup ? new Date(b.lastBackup).toLocaleString(locale()) : t('backup.never');
-  $('#backupStatus').innerHTML = `${t('backup.last')} <strong>${last}</strong><br>${esc(b.lastBackupStatus || '')}`;
+  const stale = backupStaleDays(settings, installedAt);
+  $('#backupStatus').innerHTML = `${t('backup.last')} <strong>${last}</strong><br>${esc(b.lastBackupStatus || '')}`
+    + (stale ? `<br><strong role="alert" style="color:var(--danger-text)">${esc(t('backup.stale', { n: stale }))}</strong>` : '');
 }
 
 /** The "undo the last replace" row: shown only while a pre-replace copy exists. */
@@ -181,6 +186,10 @@ export function wireSettings() {
 
   // Backup
   $('#setSyncEnabled').addEventListener('change', (e) => persist({ backup: { syncEnabled: e.target.checked } }));
+  $('#setBackupWarn').addEventListener('change', async (e) => {
+    await persist({ backupWarnDays: clamp(parseInt(e.target.value, 10) || 0, 0, 365) });
+    renderBackupStatus();
+  });
   $('#setBackupInterval').addEventListener('change', (e) => persist({ backup: { autoIntervalHours: clamp(parseInt(e.target.value, 10) || 24, 1, 168) } }));
   $('#setEndpoint').addEventListener('change', (e) => {
     const url = e.target.value.trim();
