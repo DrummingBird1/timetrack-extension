@@ -276,7 +276,7 @@ test('a weekly category budget fires an 80% warning then a reached notification,
   assert.equal(createdNotifications.filter((n) => n.id.startsWith('cat:')).length, 0, 'both are deduped for the week');
 
   // a snoozed budget stays quiet even when it would otherwise fire
-  await chrome.storage.session.remove('ttt_notified');
+  await chrome.storage.local.remove('ttt_notified');
   await chrome.notifications.onButtonClicked._fire(warnId, 0);
   await settle();
   createdNotifications = [];
@@ -285,7 +285,7 @@ test('a weekly category budget fires an 80% warning then a reached notification,
   assert.equal(createdNotifications.filter((n) => n.id.startsWith('cat:')).length, 0, 'snoozed budget should not fire');
 
   await storage.removeSettingsMapEntry('categoryBudgets', 'entertainment');
-  await chrome.storage.session.remove(['ttt_notified', 'ttt_snoozed']);
+  await Promise.all([chrome.storage.local.remove('ttt_notified'), chrome.storage.session.remove('ttt_snoozed')]);
 });
 
 // ---------------------------------------------------------------- 1.7: alarms, hourly jobs, incognito

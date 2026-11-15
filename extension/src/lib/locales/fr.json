@@ -386,5 +386,14 @@
   "confirm.undoReplace": "Rétablir les {n} jours écrasés par le dernier remplacement ? Les données actuelles sont conservées, vous pourrez donc aussi annuler cette action.",
   "toast.undone": "{n} jours d'avant le remplacement ont été rétablis.",
   "bk.shrink": "Sauvegarde ignorée : la copie cloud contient {n} jours et cet appareil seulement {m}. Utilisez « Sauvegarder maintenant » pour l'écraser malgré tout.",
-  "prompt.passphraseRetry": "Phrase secrète incorrecte. Réessayez :"
+  "prompt.passphraseRetry": "Phrase secrète incorrecte. Réessayez :",
+  "bk.tooBig": "La sauvegarde est trop volumineuse pour la synchronisation Google",
+  "bk.noCloud": "Aucune sauvegarde dans le cloud",
+  "bk.corruptPart": "La sauvegarde cloud est endommagée (une partie manque)",
+  "bk.corruptWait": "La sauvegarde cloud est endommagée ou la synchronisation n'est pas terminée — réessayez dans une minute",
+  "bk.corruptContent": "La sauvegarde cloud est endommagée (contenu invalide)",
+  "bk.needHttps": "L'adresse du serveur doit commencer par https://",
+  "bk.httpStatus": "Le serveur a répondu {n}",
+  "bk.timeout": "Le serveur n'a pas répondu en {n} secondes",
+  "bk.network": "Serveur injoignable (réseau, CORS ou adresse incorrecte)"
 }

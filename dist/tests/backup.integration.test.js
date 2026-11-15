@@ -49,6 +49,8 @@ function installChrome() {
 }
 installChrome();
 
+await import('./helpers/node-locales.js');   // errors are translated: load the Hebrew dictionary from disk
+await (await import('../../extension/src/lib/i18n.js')).setLang('he');
 const storage = await import('../../extension/src/lib/storage.js');
 const backup = await import('../../extension/src/lib/backup.js');
 const crypto = await import('../../extension/src/lib/crypto.js');
@@ -733,4 +735,19 @@ test('a corrupted compressed payload fails with the friendly "corrupted backup" 
   for (let i = 1; i < meta.chunks; i++) chrome.storage.sync._store.delete(`ttt_sync_${i}`);
   meta.chunks = 1;
   await assert.rejects(() => backup.restoreFromSync({ mode: 'replace' }), /פגום/);
+});
+
+// ---- custom endpoint: timeout and network failures are reported in the UI language ----
+test('backupToEndpoint reports a timeout and a network failure with translated messages', async () => {
+  const real = globalThis.fetch;
+  try {
+    globalThis.fetch = async () => { throw Object.assign(new Error('x'), { name: 'TimeoutError' }); };
+    await assert.rejects(() => backup.backupToEndpoint('https://example.test/b', ''), /לא הגיב תוך 30 שניות/);
+    globalThis.fetch = async () => { throw new TypeError('Failed to fetch'); };
+    await assert.rejects(() => backup.backupToEndpoint('https://example.test/b', ''), /אין חיבור לשרת/);
+    globalThis.fetch = async () => ({ ok: false, status: 503 });
+    await assert.rejects(() => backup.backupToEndpoint('https://example.test/b', ''), /503/);
+  } finally {
+    globalThis.fetch = real;
+  }
 });

@@ -386,5 +386,14 @@
   "confirm.undoReplace": "Put back the {n} days that the last replace overwrote? The data as it is now is kept, so you can undo this as well.",
   "toast.undone": "Put back {n} days from before the replace.",
   "bk.shrink": "Backup skipped: the cloud copy has {n} days and this device only {m}. Use \"Back up now\" to overwrite it anyway.",
-  "prompt.passphraseRetry": "Wrong passphrase. Try again:"
+  "prompt.passphraseRetry": "Wrong passphrase. Try again:",
+  "bk.tooBig": "The backup is too large for Google sync",
+  "bk.noCloud": "No cloud backup found",
+  "bk.corruptPart": "The cloud backup is damaged (a piece is missing)",
+  "bk.corruptWait": "The cloud backup is damaged or sync hasn't finished — try again in a minute",
+  "bk.corruptContent": "The cloud backup is damaged (invalid content)",
+  "bk.needHttps": "The server address must start with https://",
+  "bk.httpStatus": "The server returned {n}",
+  "bk.timeout": "The server did not respond within {n} seconds",
+  "bk.network": "Could not reach the server (network, CORS or wrong address)"
 }

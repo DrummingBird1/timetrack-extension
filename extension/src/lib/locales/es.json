@@ -386,5 +386,14 @@
   "confirm.undoReplace": "¿Recuperar los {n} días que sobrescribió el último reemplazo? Los datos actuales se conservan, así que también podrá deshacer esto.",
   "toast.undone": "Se recuperaron {n} días anteriores al reemplazo.",
   "bk.shrink": "Copia omitida: la copia en la nube tiene {n} días y este dispositivo solo {m}. Use «Hacer copia de seguridad ahora» para sobrescribirla de todos modos.",
-  "prompt.passphraseRetry": "Frase de contraseña incorrecta. Inténtelo de nuevo:"
+  "prompt.passphraseRetry": "Frase de contraseña incorrecta. Inténtelo de nuevo:",
+  "bk.tooBig": "La copia de seguridad es demasiado grande para la sincronización de Google",
+  "bk.noCloud": "No se encontró ninguna copia en la nube",
+  "bk.corruptPart": "La copia en la nube está dañada (falta una parte)",
+  "bk.corruptWait": "La copia en la nube está dañada o la sincronización no ha terminado — inténtalo en un minuto",
+  "bk.corruptContent": "La copia en la nube está dañada (contenido no válido)",
+  "bk.needHttps": "La dirección del servidor debe empezar por https://",
+  "bk.httpStatus": "El servidor devolvió {n}",
+  "bk.timeout": "El servidor no respondió en {n} segundos",
+  "bk.network": "No se pudo contactar con el servidor (red, CORS o dirección incorrecta)"
 }
