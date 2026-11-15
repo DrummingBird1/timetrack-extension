@@ -29,8 +29,7 @@
   <rect x="330" y="84" width="180" height="18" rx="9" fill="#232331"/>
 
   <!-- brand mark -->
-  <rect x="112" y="140" width="52" height="52" rx="15" fill="url(#heroAccent)"/>
-  <circle cx="138" cy="166" r="14" fill="none" stroke="#ffffff" stroke-width="3" stroke-dasharray="66 22" transform="rotate(45 138 166)"/>
+  <svg x="112" y="140" width="52" height="52" viewBox="0 0 88 88" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"> <defs> <linearGradient id="m2b" x1="0.1" y1="0" x2="0.9" y2="1"> <stop offset="0" stop-color="#8b5cf6"/><stop offset="0.58" stop-color="#6366f1"/><stop offset="1" stop-color="#3b82f6"/> </linearGradient> <radialGradient id="m2g" cx="0.22" cy="0.14" r="0.75"> <stop offset="0" stop-color="#fff" stop-opacity="0.38"/><stop offset="1" stop-color="#fff" stop-opacity="0"/> </radialGradient> <radialGradient id="m2h" cx="0.5" cy="0.5" r="0.5"> <stop offset="0" stop-color="#22d3ee" stop-opacity="0.9"/><stop offset="1" stop-color="#22d3ee" stop-opacity="0"/> </radialGradient> </defs> <rect width="88" height="88" rx="24" fill="url(#m2b)"/> <rect width="88" height="88" rx="24" fill="url(#m2g)"/> <path d="M44 18 A26 26 0 1 1 18 44" fill="none" stroke="#fff" stroke-width="9" stroke-linecap="round"/> <circle cx="18" cy="44" r="7" fill="url(#m2h)"/> <circle cx="18" cy="44" r="4" fill="#22d3ee" stroke="#fff" stroke-width="2"/> <path d="M44 44 L44 29.5" stroke="#fff" stroke-width="7" stroke-linecap="round"/> <circle cx="44" cy="44" r="4.5" fill="#fff"/> </svg>
   <rect x="176" y="146" width="150" height="16" rx="6" fill="#ececf4"/>
   <rect x="176" y="168" width="100" height="12" rx="5" fill="#65657c"/>
 

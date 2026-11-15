@@ -11,6 +11,7 @@
 // and commit the output to store-assets/promo/releases/v<version>.svg (see the
 // "Release banners" note in CLAUDE.md).
 
+import { markSvg } from './tools/brand.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -58,8 +59,7 @@ function svg(version, themeKey, tagline) {
   <rect width="1280" height="320" rx="20" fill="none" stroke="#2a2a3a" stroke-width="1.5"/>
 
   <!-- brand mark -->
-  <rect x="64" y="88" width="88" height="88" rx="24" fill="url(#mark)"/>
-  <circle cx="108" cy="132" r="24" fill="none" stroke="#ffffff" stroke-width="5" stroke-dasharray="113 38" transform="rotate(45 108 132)"/>
+  ${markSvg(88).replace('<svg ', '<svg x="64" y="88" ').replace(/\s*\n\s*/g, ' ')}
 
   <!-- wordmark + tagline -->
   <text x="172" y="140" font-family="Segoe UI, -apple-system, Helvetica, Arial, sans-serif" font-size="56" font-weight="800" fill="#ececf4" letter-spacing="-1">TimeTrack</text>

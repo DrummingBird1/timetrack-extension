@@ -32,7 +32,7 @@ try {
   for (const lang of langs) {
     const dir = path.join(outRoot, lang);
     fs.mkdirSync(dir, { recursive: true });
-    const shot = async (page, name) => { await page.screenshot({ path: path.join(dir, name), ...JPEG }); console.log(`  ${lang}/${name}`); };
+    const shot = async (page, name) => { await page.addStyleTag({ content: '#toast{display:none!important}' }).catch(() => {}); await page.screenshot({ path: path.join(dir, name), ...JPEG }); console.log(`  ${lang}/${name}`); };
 
     await ext.reset();
     const snapshot = buildSnapshot({ days: 90, seed: 21 });
