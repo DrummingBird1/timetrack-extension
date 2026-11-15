@@ -254,10 +254,10 @@ IPv4/IPv6 addresses and single-label hosts (`localhost`) are never grouped.
 |------|----------------|
 | `manifest.json` | MV3 manifest. Permissions: storage, tabs, idle, alarms, notifications, unlimitedStorage. Name, description and shortcut labels are `__MSG_…__` keys. |
 | `_locales/{he,en,ar,ru,es,fr}/messages.json` | Chrome's manifest localization (5 keys each): the store title/summary and shortcut labels. Not the in-app UI strings. |
-| `background.js` | Service worker = tracking engine + message router + alarms. |
+| `background.js` | Service worker entry = tracking engine + focus state machine + message router + alarms and event wiring. The self-contained parts live in `src/worker/`: `notifications.js` (limit/budget notifications, dedupe, snooze, storage warning), `jobs.js` (hourly jobs: auto backup, weekly summary, stale-backup warning, scheduled report), `focusState.js` (focus-session state helpers). |
 | `src/lib/utils.js` | Pure helpers: dates/day-keys, domain extraction (`registrableDomain`), duration formatting, favicons. No chrome/DOM. |
 | `src/lib/psl.js` | **Generated** Public Suffix List rules (`dist/tools/build-psl.mjs`) — don't edit by hand. |
-| `src/lib/storage.js` | All `chrome.storage.local` access: settings (+ map-setting helpers, write lock), per-day read/write, session logs, focus log, index, prune, export/import, migrations. |
+| `src/lib/storage.js` | Facade over `src/lib/storage/`, which holds all `chrome.storage.local` access, layered `keys` -> `settings` (defaults, write lock, map-setting helpers) -> `days` (day records, index, meta, tracking commits) -> `logs` (focus log, session logs) -> `maintenance` (prune, delete, alias merge) -> `transfer` (export/import, undo, settings-only restore); `migrations` (snapshot + rollback). Import from `storage.js`, not the parts. |
 | `src/lib/snapshot.js` | **Pure** validation of everything imported (JSON export, cloud backup, CSV-built snapshot): day keys, hostnames, numbers, sessions, focus log, settings. `importAll` runs it first; `backup.*` is never taken from a file. |
 | `src/lib/categories.js` | Category definitions + default domain→category map + `categorize()`. |
 | `src/lib/stats.js` | **Pure** analytics over day records (aggregation, categories, focus score + weekly trend, heatmap, streaks, trends, budgets, session stats, any-range comparison). |
