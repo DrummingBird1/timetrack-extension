@@ -94,7 +94,12 @@ let settingsChain = /** @type {Promise<any>} */ (Promise.resolve());
  * @returns {Promise<T>}
  */
 function withSettingsLock(fn) {
-  const run = settingsChain.then(fn);
+  // The in-context chain orders writes inside one page/worker; the Web Lock (when the
+  // runtime has one) orders them across the worker, popup and dashboard, which share storage.
+  const locked = () => (typeof navigator !== 'undefined' && navigator.locks
+    ? navigator.locks.request('ttt_settings_write', fn)
+    : fn());
+  const run = settingsChain.then(locked);
   settingsChain = run.catch(() => {});
   return run;
 }

@@ -135,7 +135,7 @@ export async function backupToSync({ force = false } = {}) {
     else if (keep <= 1) break;
     else keep = Math.max(1, Math.min(keep - 1, Math.floor(keep * (SYNC_TOTAL_BYTES / stored) * 0.97)));
   }
-  if (!result) throw new Error('הגיבוי גדול מדי לסנכרון Google');
+  if (!result) throw new Error(t('bk.tooBig'));
   const { chunks, json, encrypted, days, rawBytes } = result;
   const trimmed = totalDays - days;
 
@@ -171,25 +171,25 @@ export async function backupToSync({ force = false } = {}) {
  */
 async function fetchSyncSnapshot(passphrase) {
   const meta = (await chrome.storage.sync.get(SYNC_META))[SYNC_META];
-  if (!meta || !meta.chunks) throw new Error('לא נמצא גיבוי בענן');
+  if (!meta || !meta.chunks) throw new Error(t('bk.noCloud'));
   const keys = [];
   for (let i = 0; i < meta.chunks; i++) keys.push(`${SYNC_PREFIX}${i}`);
   const parts = await chrome.storage.sync.get(keys);
   let json = '';
   for (let i = 0; i < meta.chunks; i++) {
     const piece = parts[`${SYNC_PREFIX}${i}`];
-    if (piece == null) throw new Error('הגיבוי בענן פגום (חלק חסר)');
+    if (piece == null) throw new Error(t('bk.corruptPart'));
     json += piece;
   }
   // Another device's write reaches this one item by item, so a restore can catch a mix of two backups.
   if (meta.sha && (await sha256Hex(json)) !== meta.sha) {
-    throw new Error('הגיבוי בענן פגום או שהסנכרון עדיין לא הסתיים — נסה שוב בעוד דקה');
+    throw new Error(t('bk.corruptWait'));
   }
   let snapshot;
   try {
     snapshot = JSON.parse(json);
   } catch {
-    throw new Error('הגיבוי בענן פגום (תוכן לא תקין)');
+    throw new Error(t('bk.corruptContent'));
   }
   const wasEncrypted = isEncrypted(snapshot);
   if (wasEncrypted) {
@@ -200,7 +200,7 @@ async function fetchSyncSnapshot(passphrase) {
     try {
       snapshot = await unpackJSON(snapshot);
     } catch {
-      throw new Error('הגיבוי בענן פגום (תוכן לא תקין)');
+      throw new Error(t('bk.corruptContent'));
     }
   }
   return { snapshot, meta, wasEncrypted };
@@ -225,18 +225,27 @@ export async function restoreFromSync({ mode = 'replace', passphrase } = {}) {
 }
 
 export async function backupToEndpoint(url, token) {
-  if (!/^https:\/\//i.test(url)) throw new Error('כתובת השרת חייבת להתחיל ב-https://');
+  if (!/^https:\/\//i.test(url)) throw new Error(t('bk.needHttps'));
   const settings = await getSettings();
   const { json } = await buildPayload(settings, await exportAll());
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-    body: json,
-  });
-  if (!res.ok) throw new Error(`השרת החזיר ${res.status}`);
+  const ENDPOINT_TIMEOUT_S = 30;
+  let res;
+  try {
+    res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: json,
+      signal: AbortSignal.timeout(ENDPOINT_TIMEOUT_S * 1000),
+    });
+  } catch (e) {
+    // A timed-out request surfaces as TimeoutError; anything else (offline, CORS, DNS) is a network failure.
+    if (e && (e.name === 'TimeoutError' || e.name === 'AbortError')) throw new Error(t('bk.timeout', { n: ENDPOINT_TIMEOUT_S }));
+    throw new Error(t('bk.network'));
+  }
+  if (!res.ok) throw new Error(t('bk.httpStatus', { n: res.status }));
   return { status: res.status };
 }
 

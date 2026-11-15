@@ -269,14 +269,19 @@ function updateBadge(settings, counting) {
 }
 
 // ---- limit notifications (deduped per day, snoozable) ----
+// Kept in storage.local (not session) so a browser restart doesn't re-fire today's
+// notifications. Values are the time each was sent; entries older than 14 days are dropped.
+const NOTIFIED_TTL_MS = 14 * 24 * 3600 * 1000;
 async function notifiedSet() {
-  const r = await chrome.storage.session.get(NOTIFIED);
+  const r = await chrome.storage.local.get(NOTIFIED);
   return r[NOTIFIED] || {};
 }
 async function markNotified(key) {
   const set = await notifiedSet();
-  set[key] = true;
-  await chrome.storage.session.set({ [NOTIFIED]: set });
+  const now = Date.now();
+  set[key] = now;
+  for (const [k, at] of Object.entries(set)) if (typeof at === 'number' && now - at > NOTIFIED_TTL_MS) delete set[k];
+  await chrome.storage.local.set({ [NOTIFIED]: set });
 }
 
 async function snoozedSet() {
