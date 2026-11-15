@@ -518,5 +518,17 @@
   "report.status.empty": "تم تخطي آخر تقرير: لم يُسجَّل وقت في تلك الفترة",
   "report.status.ok": "تم حفظ آخر تقرير: {name}",
   "report.empty": "لم يُسجَّل وقت في فترة التقرير، لذا فهو فارغ",
-  "report.downloaded": "تم تنزيل التقرير"
+  "report.downloaded": "تم تنزيل التقرير",
+  "welcome.next": "التالي",
+  "welcome.back": "رجوع",
+  "welcome.skip": "تخطي",
+  "welcome.step": "الخطوة {n} من {total}",
+  "welcome.setupTitle": "إعداد سريع",
+  "welcome.setupBody": "يمكنك تغيير كل ذلك لاحقًا من الإعدادات.",
+  "welcome.goal": "هدف الوقت المنتج يوميًا",
+  "welcome.goalNone": "بدون هدف",
+  "welcome.tipsTitle": "بعض الأمور المفيدة",
+  "welcome.tip1": "⌨️ Ctrl/Cmd+K يفتح البحث والأوامر في أي مكان في لوحة التحكم",
+  "welcome.tip2": "🏷️ في الإعدادات يمكنك تجميع المواقع في وسوم ومنحها ميزانية أسبوعية",
+  "welcome.tip3": "💾 اختر مجلد نسخ احتياطي للحصول على نسخ احتياطية وتقرير ملخص تلقائيًا"
 }

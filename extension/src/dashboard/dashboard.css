@@ -412,6 +412,10 @@ select { cursor: pointer; }
 .welcome p { color: var(--text-dim); font-size: 14px; line-height: 1.6; margin-bottom: 18px; }
 .welcome-feats { list-style: none; text-align: start; display: flex; flex-direction: column; gap: 11px; margin-bottom: 22px; }
 .welcome .btn, .welcome .btn-primary { margin-top: 12px; }
+.welcome h3 { font-size: 17px; margin: 4px 0 8px; }
+.welcome-fields { display: grid; grid-template-columns: auto 1fr; gap: 10px 12px; align-items: center; text-align: start; margin-bottom: 14px; }
+.welcome-step.hidden { display: none; }
+.welcome-progress { color: var(--dim); font-size: 12.5px; margin-top: 12px; }
 .welcome-feats li { background: var(--surface-2); border: 1px solid var(--border); border-radius: 11px; padding: 12px 15px; font-size: 13.5px; }
 .btn-primary {
   width: 100%; border: none; cursor: pointer; background: linear-gradient(135deg, var(--accent-2), var(--accent));

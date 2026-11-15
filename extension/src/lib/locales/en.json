@@ -518,5 +518,17 @@
   "report.status.empty": "The last report was skipped: no time was tracked in that period",
   "report.status.ok": "Last report saved: {name}",
   "report.empty": "No time was tracked in the report period, so the report is empty",
-  "report.downloaded": "Report downloaded"
+  "report.downloaded": "Report downloaded",
+  "welcome.next": "Next",
+  "welcome.back": "Back",
+  "welcome.skip": "Skip",
+  "welcome.step": "Step {n} of {total}",
+  "welcome.setupTitle": "Quick setup",
+  "welcome.setupBody": "You can change all of this later in Settings.",
+  "welcome.goal": "Daily productive-time goal",
+  "welcome.goalNone": "No goal",
+  "welcome.tipsTitle": "A few things worth knowing",
+  "welcome.tip1": "⌨️ Ctrl/Cmd+K opens search and commands anywhere in the dashboard",
+  "welcome.tip2": "🏷️ In Settings you can group sites into tags and give them a weekly budget",
+  "welcome.tip3": "💾 Choose a backup folder to get automatic backups and a summary report"
 }

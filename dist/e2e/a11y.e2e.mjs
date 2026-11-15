@@ -71,6 +71,22 @@ for (const [theme, language] of [['dark', 'en'], ['light', 'he']]) {
   });
 }
 
+for (const [theme, language] of [['dark', 'en'], ['light', 'ar']]) {
+  test(`welcome steps (${theme}, ${language}) have no accessibility violations`, async () => {
+    await ext.saveSettings({ theme, language });
+    const page = await ext.openPage('src/dashboard/dashboard.html#welcome');
+    await page.waitForSelector('#welcomeModal:not(.hidden)');
+    await new Promise((r) => setTimeout(r, 500));                    // let the open animation finish
+    const seen = [];
+    for (const next of ['#welcomeNext1', '#welcomeNext2', null]) {
+      seen.push(...await scan(page, '#welcomeModal .modal-card'));
+      if (next) await page.click(next);
+    }
+    await page.close();
+    assert.deepEqual(seen, [], `\n${seen.join('\n')}`);
+  });
+}
+
 test('popup has no accessibility violations', async () => {
   await ext.saveSettings({ language: 'en' });
   const page = await ext.openPage('src/popup/popup.html', { viewport: { width: 380, height: 640 } });

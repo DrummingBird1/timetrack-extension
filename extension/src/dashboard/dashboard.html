@@ -579,8 +579,39 @@
         <li data-i18n="welcome.f2">🎯 יעדים, מגבלות ומצב פוקוס</li>
         <li data-i18n="welcome.f3">☁️ גיבוי בענן מוצפן וייצוא נתונים</li>
       </ul>
-      <button class="btn-primary" id="welcomeCta" data-i18n="welcome.cta">בוא נתחיל</button>
-      <button class="btn ghost" id="welcomeDemo" data-i18n="welcome.demo">נסו עם נתוני הדגמה</button>
+      <div class="welcome-step" data-step="1">
+        <button class="btn-primary" id="welcomeNext1" data-i18n="welcome.next">הבא</button>
+        <button class="btn ghost" id="welcomeDemo" data-i18n="welcome.demo">נסו עם נתוני הדגמה</button>
+      </div>
+
+      <div class="welcome-step hidden" data-step="2">
+        <h3 data-i18n="welcome.setupTitle">התאמה מהירה</h3>
+        <p data-i18n="welcome.setupBody">אפשר לשנות הכול אחר כך בהגדרות.</p>
+        <div class="welcome-fields">
+          <label for="wLang" data-i18n="set.language">שפה</label>
+          <select id="wLang"></select>
+          <label for="wWeek" data-i18n="set.weekStart">תחילת שבוע</label>
+          <select id="wWeek"></select>
+          <label for="wGoal" data-i18n="welcome.goal">יעד זמן פרודוקטיבי ביום</label>
+          <select id="wGoal"></select>
+        </div>
+        <button class="btn-primary" id="welcomeNext2" data-i18n="welcome.next">הבא</button>
+        <button class="btn ghost" id="welcomeBack2" data-i18n="welcome.back">חזרה</button>
+      </div>
+
+      <div class="welcome-step hidden" data-step="3">
+        <h3 data-i18n="welcome.tipsTitle">כמה דברים שכדאי לדעת</h3>
+        <ul class="welcome-feats">
+          <li data-i18n="welcome.tip1">⌨️ Ctrl/Cmd+K פותח חיפוש ופקודות מכל מקום בלוח הבקרה</li>
+          <li data-i18n="welcome.tip2">🏷️ בהגדרות אפשר לקבץ אתרים לתגיות ולתת להן תקציב שבועי</li>
+          <li data-i18n="welcome.tip3">💾 בחר תיקיית גיבוי כדי לקבל גיבוי ודוח מסכם אוטומטיים</li>
+        </ul>
+        <button class="btn-primary" id="welcomeCta" data-i18n="welcome.cta">בוא נתחיל</button>
+        <button class="btn ghost" id="welcomeBack3" data-i18n="welcome.back">חזרה</button>
+      </div>
+
+      <div class="welcome-progress" id="welcomeProgress" role="status" aria-live="polite"></div>
+      <button class="btn ghost" id="welcomeSkip" data-i18n="welcome.skip">דלג</button>
     </div>
   </div>
 
