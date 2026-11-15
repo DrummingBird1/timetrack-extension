@@ -108,7 +108,8 @@ function coerce(path, value, def) {
     if (!isObj(value)) return undefined;
     const out = {};
     for (const [k, v] of Object.entries(value)) {
-      if (path === 'tags') {
+      if (path === 'tagBudgets') { const name = cleanTagName(k); if (name && name === k && isNum(v, 10080) && v > 0) out[k] = v; }
+      else if (path === 'tags') {
         const name = cleanTagName(k);
         if (name && name === k && Array.isArray(v)) out[k] = [...new Set(v.filter((d) => isTrackableHost(d)))].slice(0, 200);
       }

@@ -78,7 +78,7 @@ export async function renderOverview() {
   await renderInsightsPanel();
   await renderCompare();
   await renderBudgetPanel();
-  renderTagPanel();
+  await renderTagPanel();
   renderTopList($('#overviewTop'), topSites(agg, 8), total);
 }
 

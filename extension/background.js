@@ -13,7 +13,7 @@ import {
 import { domainFromUrl, dayKey, rangeKeys, addDays, formatDuration, startOfWeek, keysBetween } from './src/lib/utils.js';
 import { runAutoBackup, hasBackupTarget, backupStaleDays } from './src/lib/backup.js';
 import { categorize } from './src/lib/categories.js';
-import { aggregateDomains, totalTime, topSites, byCategory, focusScore, categorySeconds } from './src/lib/stats.js';
+import { aggregateDomains, totalTime, topSites, byCategory, focusScore, categorySeconds, tagSeconds, domainInTag } from './src/lib/stats.js';
 import { setLang, t, pickLanguage } from './src/lib/i18n.js';
 import { parseMessage } from './src/lib/messages.js';
 
@@ -365,6 +365,31 @@ async function checkLimits(settings, domain) {
       }
       if (!set[baseKey] && used >= limitSec) {
         notifyLimit(baseKey, t('notif.catBudget.title'), t('notif.catBudget.body', vars));
+        await markNotified(baseKey);
+      }
+    }
+  }
+
+  // Weekly tag budgets: only for the tags the site being visited belongs to.
+  if (domain) {
+    const weekStart = startOfWeek(new Date(), settings.weekStart);
+    let weekDays = null;
+    for (const [tag, sites] of Object.entries(settings.tags || {})) {
+      const minutes = settings.tagBudgets?.[tag];
+      if (!(minutes > 0) || !sites.some((s) => domainInTag(domain, s))) continue;
+      const baseKey = `tag:${dayKey(weekStart)}:${tag}`;
+      if (await isSnoozedKey(baseKey)) continue;
+      weekDays ||= await getDays(keysBetween(weekStart, new Date()));
+      const used = tagSeconds(weekDays, { [tag]: sites })[0]?.seconds || 0;
+      const limitSec = minutes * 60;
+      const vars = { c: tag, n: minutes };
+      const warnKey = `${baseKey}:80`;
+      if (!set[warnKey] && used >= limitSec * 0.8 && used < limitSec) {
+        notifyLimit(warnKey, t('notif.tagBudgetWarn.title'), t('notif.tagBudgetWarn.body', vars));
+        await markNotified(warnKey);
+      }
+      if (!set[baseKey] && used >= limitSec) {
+        notifyLimit(baseKey, t('notif.tagBudget.title'), t('notif.tagBudget.body', vars));
         await markNotified(baseKey);
       }
     }

@@ -38,6 +38,7 @@ export const DEFAULT_SETTINGS = {
   siteLimits: {},                // domain -> minutes/day
   categoryBudgets: {},           // category -> minutes/week (notifies at 80% and 100%)
   tags: {},                      // tag name -> domains (a tag matches a domain and its subdomains)
+  tagBudgets: {},                // tag name -> minutes/week (notifies at 80% and 100%)
   notifyLimits: true,            // fire notifications when limits are hit
   weeklySummary: true,           // weekly digest notification
   backupWarnDays: 7,             // warn when a configured backup hasn't succeeded for this many days (0 = off)
@@ -126,7 +127,7 @@ async function writeSettingsUnlocked(next) {
  * site-limit clearing before it was caught, so these two can no longer go through
  * saveSettings() at all: use setSettingsMapEntry / removeSettingsMapEntry.
  */
-export const MAP_SETTINGS = ['categoryMap', 'siteLimits', 'categoryBudgets', 'tags'];
+export const MAP_SETTINGS = ['categoryMap', 'siteLimits', 'categoryBudgets', 'tags', 'tagBudgets'];
 
 export async function saveSettings(patch) {
   const mapKey = MAP_SETTINGS.find((k) => patch && k in patch);

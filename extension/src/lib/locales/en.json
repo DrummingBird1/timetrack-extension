@@ -469,5 +469,11 @@
   "palette.cmd.toggleTracking": "Turn tracking on / off",
   "palette.cmd.backupNow": "Back up now",
   "palette.cmd.exportJson": "Export JSON",
-  "card.usual": "Usually {v} on {d}"
+  "card.usual": "Usually {v} on {d}",
+  "tags.budgetPh": "Weekly budget in minutes (optional)",
+  "tags.budgetChip": "{n} min/week",
+  "notif.tagBudgetWarn.title": "Nearing a tag budget",
+  "notif.tagBudgetWarn.body": "You've used 80% of this week's budget for the tag {c} ({n} min).",
+  "notif.tagBudget.title": "Tag budget reached",
+  "notif.tagBudget.body": "You've reached this week's budget for the tag {c} ({n} min)."
 }

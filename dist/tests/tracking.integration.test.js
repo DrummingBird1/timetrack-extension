@@ -288,6 +288,38 @@ test('a weekly category budget fires an 80% warning then a reached notification,
   await Promise.all([chrome.storage.local.remove('ttt_notified'), chrome.storage.session.remove('ttt_snoozed')]);
 });
 
+test('a weekly tag budget fires its 80% warning and reached notification once each, only for sites in the tag', async () => {
+  const { startOfWeek } = await import('../../extension/src/lib/utils.js');
+  await storage.saveSettings({ notifyLimits: true, dailyLimitMinutes: 0, blacklist: [], weekStart: 0 });
+  await storage.setSettingsMapEntry('tags', 'Fun', ['youtube.com']);
+  await storage.setSettingsMapEntry('tagBudgets', 'Fun', 10);                       // 600 s
+  const today = dayKey();
+  const weekKey = dayKey(startOfWeek(new Date(), 0));
+  await chrome.storage.local.remove([`ttt_day_${today}`, 'ttt_index']);
+  await send({ type: 'settingsChanged' });
+
+  await storage.addTime({ dateKey: today, domain: 'youtube.com', seconds: 500, hour: 12 });   // 83%
+  createdNotifications = [];
+  await send({ type: 'flush' });
+  await settle();
+  assert.ok(createdNotifications.some((n) => n.id === `tag:${weekKey}:Fun:80`), 'expected the 80% tag-budget warning');
+
+  await storage.addTime({ dateKey: today, domain: 'youtube.com', seconds: 150, hour: 12 });   // 108%
+  createdNotifications = [];
+  await send({ type: 'flush' });
+  await settle();
+  assert.ok(createdNotifications.some((n) => n.id === `tag:${weekKey}:Fun`), 'expected the tag budget-reached notification');
+
+  createdNotifications = [];
+  await send({ type: 'flush' });
+  await settle();
+  assert.equal(createdNotifications.filter((n) => n.id.startsWith('tag:')).length, 0, 'both are deduped for the week');
+
+  await storage.removeSettingsMapEntry('tagBudgets', 'Fun');
+  await storage.removeSettingsMapEntry('tags', 'Fun');
+  await Promise.all([chrome.storage.local.remove('ttt_notified'), chrome.storage.session.remove('ttt_snoozed')]);
+});
+
 // ---------------------------------------------------------------- 1.7: alarms, hourly jobs, incognito
 test('the tick and backup alarms are each created exactly once on the first start', () => {
   assert.deepEqual([...alarmCreates].sort(), ['ttt_backup', 'ttt_tick']);

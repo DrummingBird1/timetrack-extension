@@ -469,5 +469,11 @@
   "palette.cmd.toggleTracking": "تشغيل / إيقاف التتبع",
   "palette.cmd.backupNow": "نسخ احتياطي الآن",
   "palette.cmd.exportJson": "تصدير JSON",
-  "card.usual": "عادةً {v} يوم {d}"
+  "card.usual": "عادةً {v} يوم {d}",
+  "tags.budgetPh": "ميزانية أسبوعية بالدقائق (اختياري)",
+  "tags.budgetChip": "{n} د/أسبوع",
+  "notif.tagBudgetWarn.title": "اقتراب من ميزانية الوسم",
+  "notif.tagBudgetWarn.body": "استخدمت 80% من ميزانية الوسم {c} لهذا الأسبوع ({n} د).",
+  "notif.tagBudget.title": "تم بلوغ ميزانية الوسم",
+  "notif.tagBudget.body": "بلغت ميزانية الوسم {c} لهذا الأسبوع ({n} د)."
 }
