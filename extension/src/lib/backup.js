@@ -10,7 +10,7 @@ import { exportAll, importAll, getSettings, saveSettings, summarizeSnapshot } fr
 import { encryptJSON, decryptJSON, isEncrypted } from './crypto.js';
 import { gzip, packJSON, unpackJSON, isPacked } from './compress.js';
 import { t, setLang } from './i18n.js';
-import { loadFolderHandle, folderPermission, writeBackupToFolder } from './localbackup.js';
+import { loadFolderHandle, folderPermission, writeBackupToFolder, backupFileName, BACKUP_FILE } from './localbackup.js';
 
 const SYNC_PREFIX = 'ttt_sync_';
 const SYNC_META = 'ttt_sync_meta';
@@ -241,6 +241,100 @@ export async function backupToLocalFolder() {
   return writeBackupToFolder(handle, json, { keep: Math.max(1, Math.min(60, settings.backup.localKeep || 7)) });
 }
 
+// ---- WebDAV-style folder with version history ----
+// Every backup is a NEW file (timetrack-backup-<date>.json) in an https folder, so an earlier
+// good backup is never overwritten, and the newest N are kept. Needs a server that allows
+// cross-origin PUT / GET / DELETE / PROPFIND with Basic auth (Nextcloud, ownCloud, most WebDAV
+// servers behind a CORS-enabling proxy). Names the server returns are only trusted when they
+// match our own file pattern, so a hostile listing can't point us at other paths.
+const DAV_TIMEOUT_S = 30;
+
+/** fetch() with a timeout and errors in the UI language (timeout / network or CORS). */
+async function timedFetch(url, init) {
+  try {
+    return await fetch(url, { ...init, signal: AbortSignal.timeout(DAV_TIMEOUT_S * 1000) });
+  } catch (e) {
+    if (e && (e.name === 'TimeoutError' || e.name === 'AbortError')) throw new Error(t('bk.timeout', { n: DAV_TIMEOUT_S }));
+    throw new Error(t('bk.network'));
+  }
+}
+
+function davTarget(b) {
+  const url = String(b.davUrl || '').trim();
+  if (!url) throw new Error(t('bk.davNoUrl'));
+  if (!/^https:\/\//i.test(url)) throw new Error(t('bk.needHttps'));
+  if (/^https:\/\/[^/]*@/i.test(url)) throw new Error(t('bk.davNoCreds'));   // credentials belong in their own fields
+  const base = url.endsWith('/') ? url : `${url}/`;
+  const headers = {};
+  if (b.davUser) {
+    const bytes = new TextEncoder().encode(`${b.davUser}:${b.davPassword || ''}`);
+    headers.Authorization = `Basic ${btoa(String.fromCharCode(...bytes))}`;
+  }
+  return { base, headers };
+}
+
+/** Backup file names found in a PROPFIND (207) body, newest first. Anything else the server lists is ignored. */
+export function parseDavListing(xml) {
+  const names = new Set();
+  for (const m of String(xml).matchAll(/<(?:\w+:)?href>([^<]+)<\/(?:\w+:)?href>/gi)) {
+    let last = '';
+    try { last = decodeURIComponent(m[1].trim().split('/').filter(Boolean).pop() || ''); } catch { /* undecodable name: skip */ }
+    if (BACKUP_FILE.test(last)) names.add(last);
+  }
+  return [...names].sort().reverse();
+}
+
+/** The backup versions on the server, newest first. */
+export async function listDavVersions() {
+  const { base, headers } = davTarget((await getSettings()).backup);
+  const res = await timedFetch(base, { method: 'PROPFIND', headers: { ...headers, Depth: '1', 'Content-Type': 'application/xml' }, body: '<?xml version="1.0"?><propfind xmlns="DAV:"><prop><getlastmodified/></prop></propfind>' });
+  if (res.status !== 207 && !res.ok) throw new Error(t('bk.httpStatus', { n: res.status }));
+  return parseDavListing(await res.text());
+}
+
+/** Upload a new version, then drop the oldest beyond `davKeep`. A failed cleanup never fails the backup. */
+export async function backupToDav() {
+  const settings = await getSettings();
+  const { base, headers } = davTarget(settings.backup);
+  const { json } = await buildPayload(settings, await exportAll());
+  const name = backupFileName();
+  const res = await timedFetch(base + name, { method: 'PUT', headers: { ...headers, 'Content-Type': 'application/json' }, body: json });
+  if (!res.ok) throw new Error(t('bk.httpStatus', { n: res.status }));
+  let removed = 0;
+  try {
+    const keep = Math.max(1, Math.min(100, settings.backup.davKeep || 10));
+    for (const old of (await listDavVersions()).slice(keep)) {
+      const del = await timedFetch(base + old, { method: 'DELETE', headers });
+      if (del.ok) removed++;
+    }
+  } catch { /* the new version is safely stored; cleanup is retried next time */ }
+  return { name, removed };
+}
+
+/** Download one version and decrypt it. Throws { code: 'ENCRYPTED' } when a passphrase is needed.
+ * @param {string} name
+ * @param {{ passphrase?: string }} [opts]
+ */
+export async function fetchDavVersion(name, { passphrase } = {}) {
+  if (!BACKUP_FILE.test(name)) throw new Error(t('bk.davBadVersion'));
+  const settings = await getSettings();
+  const { base, headers } = davTarget(settings.backup);
+  const res = await timedFetch(base + name, { method: 'GET', headers });
+  if (!res.ok) throw new Error(t('bk.httpStatus', { n: res.status }));
+  let snapshot;
+  try {
+    snapshot = JSON.parse(await res.text());
+  } catch {
+    throw new Error(t('bk.corruptContent'));
+  }
+  if (isEncrypted(snapshot)) {
+    const pass = passphrase || settings.backup.passphrase;
+    if (!pass) { const e = /** @type {Error & { code?: string }} */ (new Error(t('bk.needPassphrase'))); e.code = 'ENCRYPTED'; throw e; }
+    snapshot = await decryptJSON(snapshot, pass);
+  }
+  return snapshot;
+}
+
 export async function backupToEndpoint(url, token) {
   if (!/^https:\/\//i.test(url)) throw new Error(t('bk.needHttps'));
   const settings = await getSettings();
@@ -302,7 +396,16 @@ export async function runAutoBackup({ force = false } = {}) {
       results.push(e.message);
     }
   }
-  if (!b.syncEnabled && !b.endpointUrl && !b.localEnabled) {
+  if (b.davUrl) {
+    try {
+      const r = await backupToDav();
+      results.push(t('bk.davOk', { name: r.name }));
+    } catch (e) {
+      ok = false;
+      results.push(e.message);
+    }
+  }
+  if (!b.syncEnabled && !b.endpointUrl && !b.localEnabled && !b.davUrl) {
     return { ran: false, status: 'לא הוגדר יעד גיבוי' };
   }
 

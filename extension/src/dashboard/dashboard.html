@@ -421,6 +421,18 @@
               </div>
             </div>
             <div class="field-block">
+              <label class="set-label" for="setDavUrl" data-i18n="set.dav">שרת WebDAV עם היסטוריית גרסאות</label>
+              <div class="set-desc" data-i18n="set.davDesc">כל גיבוי נשמר כקובץ חדש בתיקיית https בשרת שלך.</div>
+              <input type="url" id="setDavUrl" data-i18n-ph="set.davUrlPh" placeholder="https://server.example/dav/timetrack/" />
+              <input type="text" id="setDavUser" autocomplete="off" data-i18n-ph="set.davUserPh" placeholder="שם משתמש" />
+              <input type="password" id="setDavPass" autocomplete="off" data-i18n-ph="set.davPassPh" placeholder="סיסמה" />
+              <div class="btn-group">
+                <label class="set-desc" for="setDavKeep" data-i18n="set.davKeep">כמה גרסאות לשמור</label>
+                <input type="number" id="setDavKeep" min="1" max="100" />
+                <button class="btn" id="davVersions" data-i18n="btn.davVersions">גרסאות בשרת</button>
+              </div>
+            </div>
+            <div class="field-block">
               <label class="set-label" for="setEndpoint" data-i18n="set.endpoint">שרת גיבוי מותאם (אופציונלי)</label>
               <input type="url" id="setEndpoint" data-i18n-ph="set.endpointPh" placeholder="https://example.com/timetrack-backup" />
               <input type="password" id="setEndpointToken" data-i18n-ph="set.tokenPh" placeholder="Bearer token (אופציונלי)" />

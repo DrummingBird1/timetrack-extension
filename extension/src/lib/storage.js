@@ -65,6 +65,10 @@ export const DEFAULT_SETTINGS = {
     endpointToken: '',           // bearer token for the endpoint
     encrypt: false,              // encrypt the backup payload with a passphrase
     passphrase: '',              // local-only; never transmitted in clear
+    davUrl: '',                  // https folder of a WebDAV-style server; every backup is a new file there
+    davUser: '',
+    davPassword: '',             // local-only, like passphrase and endpointToken
+    davKeep: 10,                 // versions kept on that server
     localEnabled: false,         // also write a file into the folder chosen in Settings (see localbackup.js)
     localKeep: 7,                // how many backup files to keep in that folder
     autoIntervalHours: 24,
@@ -394,7 +398,7 @@ export async function importSettingsOnly(snapshot) {
  * receives the file.
  */
 function stripSecrets(settings) {
-  return { ...settings, backup: { ...settings.backup, passphrase: '', endpointToken: '' } };
+  return { ...settings, backup: { ...settings.backup, passphrase: '', endpointToken: '', davPassword: '' } };
 }
 
 /**

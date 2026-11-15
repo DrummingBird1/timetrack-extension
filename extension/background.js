@@ -511,7 +511,7 @@ async function maybeWeeklySummary() {
 async function maybeAutoBackup() {
   const settings = await getSettings();
   const b = settings.backup;
-  if (!b.syncEnabled && !b.endpointUrl && !b.localEnabled) return;
+  if (!b.syncEnabled && !b.endpointUrl && !b.localEnabled && !b.davUrl) return;
   const dueAfter = (b.autoIntervalHours || 24) * 3600 * 1000;
   if (Date.now() - (b.lastBackup || 0) < dueAfter) return;
   try {

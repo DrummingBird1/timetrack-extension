@@ -1,7 +1,7 @@
 // Backup restore flow plus file export / import (JSON, CSV).
-import { getSettings, getIndex, getDays, exportAll, importAll, importSettingsOnly, getPreReplaceInfo, undoLastReplace, DEFAULT_SETTINGS } from '../lib/storage.js';
+import { getSettings, getIndex, getDays, exportAll, importAll, importSettingsOnly, summarizeSnapshot, getPreReplaceInfo, undoLastReplace, DEFAULT_SETTINGS } from '../lib/storage.js';
 import { verifySnapshot, filterSnapshotRange } from '../lib/integrity.js';
-import { restoreFromSync, peekSync } from '../lib/backup.js';
+import { restoreFromSync, peekSync, listDavVersions, fetchDavVersion } from '../lib/backup.js';
 import { isEncrypted, decryptJSON } from '../lib/crypto.js';
 import { dayKey, parseDayKey, formatDuration } from '../lib/utils.js';
 import { categorize } from '../lib/categories.js';
@@ -64,7 +64,7 @@ async function afterDataChange() {
   actions.fillSettingsForm();
 }
 
-function showRestorePreview(preview, passphrase) {
+function showRestorePreview(preview, passphrase, onConfirm = (mode) => doRestore(passphrase, mode)) {
   const fmtDay = (k) => k ? parseDayKey(k).toLocaleDateString(locale(), { day: 'numeric', month: 'short' }) : '—';
   const range = preview.dayCount ? `${fmtDay(preview.firstDay)} – ${fmtDay(preview.lastDay)}` : '—';
   const card = $('#restoreModalCard');
@@ -99,7 +99,7 @@ function showRestorePreview(preview, passphrase) {
     const mode = $('#restoreModeSelect').value;
     closeRestoreModal();
     try {
-      await doRestore(passphrase, mode);
+      await onConfirm(mode);
     } catch (e) {
       toast(e.message, 'error');
     }
@@ -120,6 +120,36 @@ async function doRestore(passphrase, mode = 'replace') {
 }
 
 /** Put back the data the last "replace" (import or cloud restore) overwrote. */
+/** The versions kept on the WebDAV server, newest first (the caller shows the list). */
+export const davVersions = listDavVersions;
+
+/** Download one server version, show the same preview as a cloud restore, then restore it. */
+export async function restoreDavVersion(name) {
+  let snapshot;
+  let encrypted = false;
+  try {
+    snapshot = await fetchDavVersion(name);
+  } catch (e) {
+    if (e.code !== 'ENCRYPTED') throw e;
+    encrypted = true;
+    for (let attempt = 0; attempt < 3 && !snapshot; attempt++) {
+      const pass = prompt(t(attempt ? 'prompt.passphraseRetry' : 'prompt.passphrase'));
+      if (!pass) return;
+      try {
+        snapshot = await fetchDavVersion(name, { passphrase: pass });
+      } catch (e2) {
+        if (e2.code !== 'BAD_PASSPHRASE' || attempt === 2) throw e2;
+      }
+    }
+  }
+  const preview = { ...summarizeSnapshot(snapshot), encrypted };
+  showRestorePreview(preview, undefined, async (mode) => {
+    const r = await importAll(snapshot, { mode, includeSettings: true });
+    await afterDataChange();
+    toast(t('toast.restored', { n: r.days }) + importNotes(r), 'success');
+  });
+}
+
 export async function undoReplace() {
   const info = await getPreReplaceInfo();
   if (!info) return;
