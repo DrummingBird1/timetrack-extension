@@ -438,5 +438,20 @@
   "local.chosen": "Backups will be saved to {n}",
   "bk.localNoFolder": "No local backup folder chosen",
   "bk.localPermission": "Backup folder: allow access again in Settings (the \"Allow folder access\" button)",
-  "bk.localOk": "Local folder: saved {name}"
+  "bk.localOk": "Local folder: saved {name}",
+  "bk.davNoUrl": "No WebDAV server address set",
+  "bk.davNoCreds": "Don't put a user name and password in the address — they have their own fields",
+  "bk.davBadVersion": "Invalid backup version name",
+  "bk.needPassphrase": "The backup is encrypted — a passphrase is required",
+  "bk.davOk": "WebDAV server: saved version {name}",
+  "set.dav": "WebDAV server with version history",
+  "set.davDesc": "Each backup is saved as a new file in an https folder on your own server (Nextcloud and others), so an earlier good backup is never overwritten. The server must allow cross-origin (CORS) PUT, GET, DELETE and PROPFIND requests.",
+  "set.davUrlPh": "https://server.example/dav/timetrack/",
+  "set.davUserPh": "User name",
+  "set.davPassPh": "Password (kept on this device only)",
+  "set.davKeep": "Versions to keep",
+  "btn.davVersions": "Versions on server",
+  "dav.title": "Backup versions on the server",
+  "dav.empty": "No versions on the server yet",
+  "dav.restore": "Restore"
 }

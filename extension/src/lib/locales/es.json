@@ -438,5 +438,20 @@
   "local.chosen": "Las copias se guardarán en {n}",
   "bk.localNoFolder": "No se ha elegido carpeta de copias locales",
   "bk.localPermission": "Carpeta de copias: permite el acceso de nuevo en Ajustes (botón «Permitir acceso a la carpeta»)",
-  "bk.localOk": "Carpeta local: guardado {name}"
+  "bk.localOk": "Carpeta local: guardado {name}",
+  "bk.davNoUrl": "No hay dirección de servidor WebDAV",
+  "bk.davNoCreds": "No pongas usuario y contraseña en la dirección: tienen sus propios campos",
+  "bk.davBadVersion": "Nombre de versión de copia no válido",
+  "bk.needPassphrase": "La copia está cifrada: se necesita la contraseña",
+  "bk.davOk": "Servidor WebDAV: versión {name} guardada",
+  "set.dav": "Servidor WebDAV con historial de versiones",
+  "set.davDesc": "Cada copia se guarda como un archivo nuevo en una carpeta https de tu servidor (Nextcloud y otros), así que una copia anterior buena nunca se sobrescribe. El servidor debe permitir solicitudes PUT, GET, DELETE y PROPFIND entre orígenes (CORS).",
+  "set.davUrlPh": "https://server.example/dav/timetrack/",
+  "set.davUserPh": "Usuario",
+  "set.davPassPh": "Contraseña (solo en este dispositivo)",
+  "set.davKeep": "Versiones que conservar",
+  "btn.davVersions": "Versiones en el servidor",
+  "dav.title": "Versiones de copia en el servidor",
+  "dav.empty": "Aún no hay versiones en el servidor",
+  "dav.restore": "Restaurar"
 }

@@ -10,6 +10,7 @@ import {
 import { renderBudgetEditor, wireBudgets } from './budgets.js';
 import { renderTagEditor, wireTags } from './tags.js';
 import { renderLocalFolder, wireLocalFolder } from './localFolder.js';
+import { renderDav, wireDav } from './davVersions.js';
 import { startRestoreFlow, exportData, exportCsv, handleImport, handleVerify, handleCsvImport, undoReplace } from './dataio.js';
 
 // ---------------- SETTINGS ----------------
@@ -56,6 +57,7 @@ export function fillSettingsForm() {
   renderBudgetEditor();
   renderTagEditor();
   renderLocalFolder();
+  renderDav();
   renderBlacklist();
   filterSettings();
 }
@@ -233,6 +235,7 @@ export function wireSettings() {
   wireBudgets();
   wireTags();
   wireLocalFolder();
+  wireDav();
   $('#setFocusStrict').addEventListener('change', (e) => persist({ focus: { strict: e.target.checked } }));
   $('#scheduleAdd').addEventListener('click', addScheduleEntry);
   $('#catAdd').addEventListener('click', addCategoryMapping);

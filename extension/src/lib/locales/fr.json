@@ -438,5 +438,20 @@
   "local.chosen": "Les sauvegardes seront enregistrées dans {n}",
   "bk.localNoFolder": "Aucun dossier de sauvegarde local choisi",
   "bk.localPermission": "Dossier de sauvegarde : autorisez à nouveau l'accès dans les réglages (bouton « Autoriser l'accès au dossier »)",
-  "bk.localOk": "Dossier local : {name} enregistré"
+  "bk.localOk": "Dossier local : {name} enregistré",
+  "bk.davNoUrl": "Aucune adresse de serveur WebDAV définie",
+  "bk.davNoCreds": "Ne mettez pas identifiant et mot de passe dans l'adresse : ils ont leurs propres champs",
+  "bk.davBadVersion": "Nom de version de sauvegarde invalide",
+  "bk.needPassphrase": "La sauvegarde est chiffrée : mot de passe requis",
+  "bk.davOk": "Serveur WebDAV : version {name} enregistrée",
+  "set.dav": "Serveur WebDAV avec historique des versions",
+  "set.davDesc": "Chaque sauvegarde est un nouveau fichier dans un dossier https de votre serveur (Nextcloud, etc.) : une bonne sauvegarde précédente n'est jamais écrasée. Le serveur doit autoriser les requêtes PUT, GET, DELETE et PROPFIND inter-origines (CORS).",
+  "set.davUrlPh": "https://server.example/dav/timetrack/",
+  "set.davUserPh": "Identifiant",
+  "set.davPassPh": "Mot de passe (conservé sur cet appareil uniquement)",
+  "set.davKeep": "Versions à conserver",
+  "btn.davVersions": "Versions sur le serveur",
+  "dav.title": "Versions de sauvegarde sur le serveur",
+  "dav.empty": "Aucune version sur le serveur",
+  "dav.restore": "Restaurer"
 }

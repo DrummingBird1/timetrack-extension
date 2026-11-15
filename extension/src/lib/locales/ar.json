@@ -438,5 +438,20 @@
   "local.chosen": "ستُحفظ النسخ الاحتياطية في {n}",
   "bk.localNoFolder": "لم يتم اختيار مجلد للنسخ المحلي",
   "bk.localPermission": "مجلد النسخ: اسمح بالوصول مجددًا من الإعدادات (زر \"السماح بالوصول إلى المجلد\")",
-  "bk.localOk": "المجلد المحلي: تم حفظ {name}"
+  "bk.localOk": "المجلد المحلي: تم حفظ {name}",
+  "bk.davNoUrl": "لم يتم تعيين عنوان خادم WebDAV",
+  "bk.davNoCreds": "لا تضع اسم المستخدم وكلمة المرور في العنوان — لهما حقلان منفصلان",
+  "bk.davBadVersion": "اسم نسخة احتياطية غير صالح",
+  "bk.needPassphrase": "النسخة مشفّرة — كلمة المرور مطلوبة",
+  "bk.davOk": "خادم WebDAV: تم حفظ النسخة {name}",
+  "set.dav": "خادم WebDAV مع سجل النسخ",
+  "set.davDesc": "يُحفظ كل نسخ احتياطي كملف جديد في مجلد https على خادمك (Nextcloud وغيره) فلا تُستبدل نسخة سليمة سابقة. يجب أن يسمح الخادم بطلبات PUT وGET وDELETE وPROPFIND عبر الأصول (CORS).",
+  "set.davUrlPh": "https://server.example/dav/timetrack/",
+  "set.davUserPh": "اسم المستخدم",
+  "set.davPassPh": "كلمة المرور (تبقى على هذا الجهاز فقط)",
+  "set.davKeep": "عدد النسخ المحفوظة",
+  "btn.davVersions": "النسخ على الخادم",
+  "dav.title": "نسخ احتياطية على الخادم",
+  "dav.empty": "لا توجد نسخ على الخادم بعد",
+  "dav.restore": "استعادة"
 }

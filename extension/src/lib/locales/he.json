@@ -438,5 +438,20 @@
   "local.chosen": "הגיבוי יישמר בתיקייה {n}",
   "bk.localNoFolder": "לא נבחרה תיקיית גיבוי מקומית",
   "bk.localPermission": "תיקיית הגיבוי: צריך לאשר גישה מחדש בהגדרות (כפתור \"אשר גישה לתיקייה\")",
-  "bk.localOk": "תיקייה מקומית: נשמר {name}"
+  "bk.localOk": "תיקייה מקומית: נשמר {name}",
+  "bk.davNoUrl": "לא הוגדרה כתובת שרת WebDAV",
+  "bk.davNoCreds": "אל תכתוב שם משתמש וסיסמה בכתובת — יש להם שדות נפרדים",
+  "bk.davBadVersion": "שם גרסת גיבוי לא תקין",
+  "bk.needPassphrase": "הגיבוי מוצפן — נדרשת סיסמה",
+  "bk.davOk": "שרת WebDAV: נשמרה גרסה {name}",
+  "set.dav": "שרת WebDAV עם היסטוריית גרסאות",
+  "set.davDesc": "כל גיבוי נשמר כקובץ חדש בתיקיית https בשרת שלך (Nextcloud ועוד), כך שגיבוי טוב קודם לא נדרס. השרת צריך לאפשר גישה חוצת-מקור (CORS) לבקשות PUT, GET, DELETE ו-PROPFIND.",
+  "set.davUrlPh": "https://server.example/dav/timetrack/",
+  "set.davUserPh": "שם משתמש",
+  "set.davPassPh": "סיסמה (נשמרת במכשיר הזה בלבד)",
+  "set.davKeep": "כמה גרסאות לשמור",
+  "btn.davVersions": "גרסאות בשרת",
+  "dav.title": "גרסאות גיבוי בשרת",
+  "dav.empty": "אין עדיין גרסאות בשרת",
+  "dav.restore": "שחזר"
 }
