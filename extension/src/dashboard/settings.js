@@ -9,7 +9,7 @@ import {
 } from './settingsEditors.js';
 import { renderBudgetEditor, wireBudgets } from './budgets.js';
 import { renderTagEditor, wireTags } from './tags.js';
-import { startRestoreFlow, exportData, exportCsv, handleImport, handleCsvImport, undoReplace } from './dataio.js';
+import { startRestoreFlow, exportData, exportCsv, handleImport, handleVerify, handleCsvImport, undoReplace } from './dataio.js';
 
 // ---------------- SETTINGS ----------------
 export function fillSettingsForm() {
@@ -208,6 +208,13 @@ export function wireSettings() {
   $('#exportView').addEventListener('click', () => exportCsv(true));
   $('#importBtn').addEventListener('click', () => $('#importFile').click());
   $('#importFile').addEventListener('change', handleImport);
+  $('#importScope').addEventListener('change', () => {
+    const range = $('#importScope').value === 'range';
+    $('#importFrom').classList.toggle('hidden', !range);
+    $('#importTo').classList.toggle('hidden', !range);
+  });
+  $('#verifyBtn').addEventListener('click', () => $('#verifyFile').click());
+  $('#verifyFile').addEventListener('change', handleVerify);
   $('#importCsvBtn').addEventListener('click', () => $('#importCsvFile').click());
   $('#importCsvFile').addEventListener('change', handleCsvImport);
   $('#undoReplaceBtn').addEventListener('click', undoReplace);

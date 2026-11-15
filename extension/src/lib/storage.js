@@ -3,6 +3,7 @@
 // `ttt_index` listing the days that exist.
 
 import { dayKey } from './utils.js';
+import { describeIntegrity } from './integrity.js';
 import { sanitizeSnapshot } from './snapshot.js';
 
 // v2: per-domain hourly map `dh`.  v3: optional per-day session logs (ttt_sess_<day>).
@@ -359,6 +360,32 @@ export async function clearAllData() {
 }
 
 /**
+ * A random id for this install, created on first need and stored in meta. It travels in backups
+ * so a future multi-device merge can tell whose days are whose; it identifies an install, not a person.
+ */
+async function ensureDeviceId() {
+  const meta = await getMeta();
+  if (meta.deviceId) return meta;
+  return saveMeta({ deviceId: crypto.randomUUID() });
+}
+
+/**
+ * Restore only the settings from a backup (history untouched). Credentials and the backup
+ * target never come from a file, exactly as in importAll.
+ */
+export async function importSettingsOnly(snapshot) {
+  const clean = sanitizeSnapshot(snapshot, DEFAULT_SETTINGS);   // throws BAD_SNAPSHOT before any change
+  if (!clean.settings) throw Object.assign(new Error('the backup has no settings'), { code: 'BAD_SNAPSHOT' });
+  await withSettingsLock(async () => {
+    const local = await getSettings();
+    const merged = deepMerge(DEFAULT_SETTINGS, clean.settings);
+    merged.backup = local.backup;
+    await writeSettingsUnlocked(merged);
+  });
+  return { days: 0, dropped: clean.dropped };
+}
+
+/**
  * Credentials stored in settings.backup. They live on this device only: a
  * snapshot (file export, cloud backup, custom endpoint) must never carry them,
  * or a plaintext export would hand the passphrase / bearer token to whoever
@@ -377,14 +404,16 @@ export async function exportAll({ sessions = true } = {}) {
   const settings = stripSecrets(await getSettings());
   const idx = await getIndex();
   const days = await getDays(idx);
-  const meta = await getMeta();
+  const meta = await ensureDeviceId();
   const snapshot = {
     app: 'TimeTrack',
     version: SCHEMA_VERSION,
     exportedAt: Date.now(),
+    device: meta.deviceId,
     meta,
     settings,
     days,
+    integrity: await describeIntegrity(days),
   };
   if (sessions) {
     const logs = await getSessions(idx);

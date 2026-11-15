@@ -637,6 +637,52 @@ test('upgrade note: shown for history that predates the product split, and dismi
 });
 
 
+// ------------------------------------------------------ backup v2: verify and partial restore
+test('backup v2: a file is verified without being restored, and a tampered one is caught', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'tt-e2e-'));
+  try {
+    await openTab('settings');
+    const snap = await ext.run(async (url) => (await import(url)).exportAll(), `${ext.base}src/lib/storage.js`);
+    assert.ok(snap.integrity && snap.device, 'exports carry a checksum and a device id');
+    const good = path.join(dir, 'good.json');
+    fs.writeFileSync(good, JSON.stringify(snap));
+    const before = (await dayData()).idx.length;
+    await (await page.$('#verifyFile')).uploadFile(good);
+    await page.waitForSelector('#toast.show.success');
+    assert.equal((await dayData()).idx.length, before, 'verifying changes nothing');
+
+    const firstDay = Object.keys(snap.days)[0];
+    const firstSite = Object.keys(snap.days[firstDay].domains)[0];
+    snap.days[firstDay].domains[firstSite].t += 999;
+    const bad = path.join(dir, 'bad.json');
+    fs.writeFileSync(bad, JSON.stringify(snap));
+    await page.evaluate(() => document.querySelector('#toast')?.classList.remove('show', 'success', 'error'));
+    await (await page.$('#verifyFile')).uploadFile(bad);
+    await page.waitForSelector('#toast.show.error');
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('backup v2: restoring only the settings leaves the history alone', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'tt-e2e-'));
+  try {
+    await openTab('settings');
+    const snap = await ext.run(async (url) => (await import(url)).exportAll(), `${ext.base}src/lib/storage.js`);
+    snap.settings.dailyGoalMinutes = 77;
+    const file = path.join(dir, 'settings.json');
+    fs.writeFileSync(file, JSON.stringify(snap));
+    const before = (await dayData()).idx.length;
+    await page.select('#importScope', 'settings');
+    await (await page.$('#importFile')).uploadFile(file);
+    await waitFor(async () => (await ext.getSettings()).dailyGoalMinutes === 77, { message: 'setting restored' });
+    assert.equal((await dayData()).idx.length, before, 'history untouched');
+    await page.select('#importScope', 'all');
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 // --------------------------------------------------------- import / clear
 test('import: a JSON backup and a CSV file are imported through the file inputs', async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'tt-e2e-'));

@@ -409,5 +409,19 @@
   "tags.saved": "Tag \"{n}\" saved",
   "tags.removed": "Tag \"{n}\" removed",
   "tags.sites": "{n} sites",
-  "panel.tags": "Time by tag"
+  "panel.tags": "Time by tag",
+  "import.scope": "What to restore from the file",
+  "import.scopeDesc": "A date range only merges and never deletes a day. \"Settings only\" leaves history alone.",
+  "import.scopeAll": "Everything",
+  "import.scopeRange": "Date range",
+  "import.scopeSettings": "Settings only",
+  "import.from": "From date",
+  "import.to": "To date",
+  "import.needRange": "Choose a start or an end date",
+  "toast.settingsRestored": "Settings restored from the file (history unchanged)",
+  "btn.verifyFile": "Verify backup file",
+  "verify.ok": "Backup is intact: {n} days, checksum matches",
+  "verify.okNoChecksum": "The file is valid ({n} days), but it is an older backup with no checksum, so changes can't be ruled out",
+  "verify.mismatch": "Checksum mismatch: the file was changed or damaged after it was made",
+  "verify.invalid": "The file has {n} invalid records that would not be restored"
 }

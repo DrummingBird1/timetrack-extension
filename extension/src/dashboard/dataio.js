@@ -1,5 +1,6 @@
 // Backup restore flow plus file export / import (JSON, CSV).
-import { getSettings, getIndex, getDays, exportAll, importAll, getPreReplaceInfo, undoLastReplace } from '../lib/storage.js';
+import { getSettings, getIndex, getDays, exportAll, importAll, importSettingsOnly, getPreReplaceInfo, undoLastReplace, DEFAULT_SETTINGS } from '../lib/storage.js';
+import { verifySnapshot, filterSnapshotRange } from '../lib/integrity.js';
 import { restoreFromSync, peekSync } from '../lib/backup.js';
 import { isEncrypted, decryptJSON } from '../lib/crypto.js';
 import { dayKey, parseDayKey, formatDuration } from '../lib/utils.js';
@@ -177,8 +178,22 @@ export async function handleImport(e) {
       snapshot = await decryptWithPrompt(snapshot);
       if (!snapshot) { e.target.value = ''; return; }
     }
-    const mode = $('#importMode').value;
-    const r = await importAll(snapshot, { mode, includeSettings: true });
+    const scope = $('#importScope').value;
+    if (scope === 'settings') {
+      await importSettingsOnly(snapshot);
+      await afterDataChange();
+      toast(t('toast.settingsRestored'), 'success');
+      return;
+    }
+    let mode = $('#importMode').value;
+    if (scope === 'range') {
+      const from = $('#importFrom').value;
+      const to = $('#importTo').value;
+      if (!from && !to) { toast(t('import.needRange'), 'error'); return; }
+      snapshot = filterSnapshotRange(snapshot, { from, to });
+      mode = 'merge';                                  // a partial restore must never delete the days outside the range
+    }
+    const r = await importAll(snapshot, { mode, includeSettings: scope !== 'range' });
     await afterDataChange();
     const modeLabel = mode === 'merge' ? t('import.merge') : t('import.replace');
     const msg = mode === 'merge' && r.domainsChanged != null
@@ -187,6 +202,29 @@ export async function handleImport(e) {
     toast(msg + importNotes(r), 'success');
   } catch (err) {
     toast(t('toast.importErr', { e: err instanceof SyntaxError ? t('import.badFile') : importError(err) }), 'error');
+  } finally {
+    e.target.value = '';
+  }
+}
+
+/** Check a backup file (decrypting it if needed) without restoring anything. */
+export async function handleVerify(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  try {
+    let snapshot = JSON.parse(await file.text());
+    if (isEncrypted(snapshot)) {
+      snapshot = await decryptWithPrompt(snapshot);
+      if (!snapshot) return;
+    }
+    const r = await verifySnapshot(snapshot, DEFAULT_SETTINGS);
+    if (!r.ok) {
+      toast(t(r.checksum === 'mismatch' ? 'verify.mismatch' : r.problems.includes('not-a-backup') ? 'import.badFile' : 'verify.invalid', { n: r.dropped }), 'error');
+    } else {
+      toast(t(r.checksum === 'match' ? 'verify.ok' : 'verify.okNoChecksum', { n: r.days }), 'success');
+    }
+  } catch (err) {
+    toast(err instanceof SyntaxError ? t('import.badFile') : err.message, 'error');
   } finally {
     e.target.value = '';
   }

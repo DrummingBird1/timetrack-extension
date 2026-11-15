@@ -451,6 +451,17 @@
                 <select id="importMode" data-i18n-aria="set.import"><option value="merge" data-i18n="import.merge">מיזוג</option><option value="replace" data-i18n="import.replace">החלפה</option></select>
               </div>
             </div>
+            <div class="field-block">
+              <label class="set-label" for="importScope" data-i18n="import.scope">מה לשחזר מהקובץ</label>
+              <div class="set-desc" data-i18n="import.scopeDesc">טווח תאריכים ממזג בלבד ולא מוחק שום יום. "הגדרות בלבד" לא נוגע בהיסטוריה.</div>
+              <div class="btn-group">
+                <select id="importScope"><option value="all" data-i18n="import.scopeAll">הכול</option><option value="range" data-i18n="import.scopeRange">טווח תאריכים</option><option value="settings" data-i18n="import.scopeSettings">הגדרות בלבד</option></select>
+                <input type="date" id="importFrom" class="hidden" data-i18n-aria="import.from" />
+                <input type="date" id="importTo" class="hidden" data-i18n-aria="import.to" />
+                <input type="file" id="verifyFile" accept="application/json" hidden />
+                <button class="btn" id="verifyBtn" data-i18n="btn.verifyFile">אמת קובץ גיבוי</button>
+              </div>
+            </div>
             <div class="field-block hidden" id="undoReplaceBlock">
               <label class="set-label" data-i18n="set.undoReplace">ביטול ההחלפה האחרונה</label>
               <div class="set-desc" id="undoReplaceInfo"></div>

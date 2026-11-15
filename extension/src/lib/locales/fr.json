@@ -409,5 +409,19 @@
   "tags.saved": "Tag « {n} » enregistré",
   "tags.removed": "Tag « {n} » supprimé",
   "tags.sites": "{n} sites",
-  "panel.tags": "Temps par tag"
+  "panel.tags": "Temps par tag",
+  "import.scope": "Que restaurer depuis le fichier",
+  "import.scopeDesc": "Une plage de dates fusionne seulement et ne supprime aucun jour. « Réglages seuls » ne touche pas à l'historique.",
+  "import.scopeAll": "Tout",
+  "import.scopeRange": "Plage de dates",
+  "import.scopeSettings": "Réglages seuls",
+  "import.from": "Du",
+  "import.to": "Au",
+  "import.needRange": "Choisissez une date de début ou de fin",
+  "toast.settingsRestored": "Réglages restaurés depuis le fichier (historique inchangé)",
+  "btn.verifyFile": "Vérifier le fichier de sauvegarde",
+  "verify.ok": "Sauvegarde intacte : {n} jours, somme de contrôle correcte",
+  "verify.okNoChecksum": "Le fichier est valide ({n} jours), mais c'est une ancienne sauvegarde sans somme de contrôle : des modifications ne sont pas exclues",
+  "verify.mismatch": "Somme de contrôle incorrecte : le fichier a été modifié ou endommagé après sa création",
+  "verify.invalid": "Le fichier contient {n} enregistrements invalides qui ne seraient pas restaurés"
 }

@@ -409,5 +409,19 @@
   "tags.saved": "Etiqueta «{n}» guardada",
   "tags.removed": "Etiqueta «{n}» eliminada",
   "tags.sites": "{n} sitios",
-  "panel.tags": "Tiempo por etiqueta"
+  "panel.tags": "Tiempo por etiqueta",
+  "import.scope": "Qué restaurar del archivo",
+  "import.scopeDesc": "Un rango de fechas solo combina y nunca borra un día. «Solo ajustes» no toca el historial.",
+  "import.scopeAll": "Todo",
+  "import.scopeRange": "Rango de fechas",
+  "import.scopeSettings": "Solo ajustes",
+  "import.from": "Desde",
+  "import.to": "Hasta",
+  "import.needRange": "Elige una fecha de inicio o de fin",
+  "toast.settingsRestored": "Ajustes restaurados desde el archivo (historial sin cambios)",
+  "btn.verifyFile": "Verificar archivo de copia",
+  "verify.ok": "Copia íntegra: {n} días, la suma de control coincide",
+  "verify.okNoChecksum": "El archivo es válido ({n} días), pero es una copia antigua sin suma de control; no se descartan cambios",
+  "verify.mismatch": "La suma de control no coincide: el archivo se modificó o dañó tras crearse",
+  "verify.invalid": "El archivo tiene {n} registros no válidos que no se restaurarían"
 }
