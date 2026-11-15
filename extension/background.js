@@ -6,27 +6,18 @@
 // happens while the window is focused, the user is not idle, and the domain is
 // trackable. State survives SW restarts via chrome.storage.session.
 
-import {
-  getSettings, saveSettings, addTime, addVisit, recordSession, addFocusLog, getDay, getDays, pruneOld,
-  saveMeta, getMeta, migrate, storageFootprint, K,
-} from './src/lib/storage.js';
-import { domainFromUrl, dayKey, rangeKeys, addDays, formatDuration, startOfWeek, keysBetween } from './src/lib/utils.js';
-import { runAutoBackup, hasBackupTarget, backupStaleDays } from './src/lib/backup.js';
-import { runScheduledReport } from './src/lib/reportjob.js';
-import { categorize } from './src/lib/categories.js';
-import { aggregateDomains, totalTime, topSites, byCategory, focusScore, categorySeconds, tagSeconds, domainInTag } from './src/lib/stats.js';
+import { getSettings, saveSettings, addTime, addVisit, recordSession, addFocusLog, getDay, pruneOld, saveMeta, getMeta, migrate, K } from './src/lib/storage.js';
+import { domainFromUrl, dayKey } from './src/lib/utils.js';
+import { runAutoBackup } from './src/lib/backup.js';
 import { setLang, t, pickLanguage } from './src/lib/i18n.js';
 import { parseMessage } from './src/lib/messages.js';
+import { checkLimits, notify, setSnoozeKey } from './src/worker/notifications.js';
+import { runHourlyJobs } from './src/worker/jobs.js';
+import { blockingLive, focusView, isBlocked, loadFocus, saveFocus, sessionLive } from './src/worker/focusState.js';
 
 const SESSION_STATE = 'ttt_state';
-const FOCUS_STATE = 'ttt_focus';
-const NOTIFIED = 'ttt_notified';
-const SNOOZED = 'ttt_snoozed';
 const TICK_ALARM = 'ttt_tick';
 const BACKUP_ALARM = 'ttt_backup';
-const SNOOZE_MS = 60 * 60 * 1000;              // "+1h" snooze button on limit notifications
-const STORAGE_WARN_BYTES = 250 * 1024 * 1024;  // soft heads-up threshold (unlimitedStorage has no hard extension cap, but disk is still finite)
-
 // The worker is ephemeral: it cold-starts on most ticks, so a segment is
 // normally committed within ~60s. We cap the credit per commit so a long
 // dormancy (laptop sleep, browser closed) can't be mistaken for active time.
@@ -62,34 +53,6 @@ async function saveState() {
   await chrome.storage.session.set({ [SESSION_STATE]: state });
 }
 
-// ---- focus mode (Pomodoro + site blocking) ----
-// The session snapshots its rules at start so editing settings mid-session
-// doesn't change an in-flight session. It runs work→break cycles; blocking is
-// enforced only during 'work' phases (block-list or allow-list mode).
-async function loadFocus() {
-  const r = await chrome.storage.session.get(FOCUS_STATE);
-  return r[FOCUS_STATE] || { active: false, endsAt: 0, phase: 'work' };
-}
-async function saveFocus(focus) {
-  await chrome.storage.session.set({ [FOCUS_STATE]: focus });
-}
-function sessionLive(focus) {
-  return !!(focus && focus.active && Date.now() < focus.endsAt);
-}
-function blockingLive(focus) {
-  const paused = focus.pausedUntil && Date.now() < focus.pausedUntil;     // "allow 10 minutes" on the block page
-  return sessionLive(focus) && focus.phase === 'work' && !paused;
-}
-function isBlocked(domain, settings, focus) {
-  if (!domain || !blockingLive(focus)) return false;
-  if (focus.mode === 'allow') {
-    if ((focus.allowDomains || []).includes(domain)) return false;
-    if ((focus.allowCategories || []).includes(categorize(domain, settings.categoryMap))) return false;
-    return true; // allow-list: block everything not explicitly allowed
-  }
-  if ((focus.blockDomains || []).includes(domain)) return true;
-  return (focus.blockCategories || []).includes(categorize(domain, settings.categoryMap));
-}
 const BLOCK_PAGE = chrome.runtime.getURL('src/blocked/blocked.html');
 const SELF_PREFIX = chrome.runtime.getURL('');
 
@@ -126,19 +89,6 @@ async function logFocusSession(focus, endedEarly) {
   const workedMs = Math.round(completedCycles * focus.workMs + partialMs);
   if (workedMs < 30000) return;
   await addFocusLog({ start: focus.startedAt || Date.now(), end: Date.now(), cycles: total, completedCycles, workedMs, endedEarly });
-}
-
-function focusView(focus) {
-  return {
-    active: sessionLive(focus),
-    phase: focus.phase || 'work',
-    endsAt: focus.endsAt || 0,
-    remaining: sessionLive(focus) ? Math.max(0, (focus.endsAt - Date.now()) / 1000) : 0,
-    cycle: (focus.cycle || 0) + 1,
-    totalCycles: focus.totalCycles || 1,
-    strict: !!focus.strict,
-    pausedUntil: focus.pausedUntil || 0,
-  };
 }
 
 /** Advance the Pomodoro state machine when a phase ends. Returns current focus. */
@@ -269,161 +219,6 @@ function updateBadge(settings, counting) {
   } catch { /* action may be unavailable */ }
 }
 
-// ---- limit notifications (deduped per day, snoozable) ----
-// Kept in storage.local (not session) so a browser restart doesn't re-fire today's
-// notifications. Values are the time each was sent; entries older than 14 days are dropped.
-const NOTIFIED_TTL_MS = 14 * 24 * 3600 * 1000;
-async function notifiedSet() {
-  const r = await chrome.storage.local.get(NOTIFIED);
-  return r[NOTIFIED] || {};
-}
-async function markNotified(key) {
-  const set = await notifiedSet();
-  const now = Date.now();
-  set[key] = now;
-  for (const [k, at] of Object.entries(set)) if (typeof at === 'number' && now - at > NOTIFIED_TTL_MS) delete set[k];
-  await chrome.storage.local.set({ [NOTIFIED]: set });
-}
-
-async function snoozedSet() {
-  const r = await chrome.storage.session.get(SNOOZED);
-  return r[SNOOZED] || {};
-}
-async function isSnoozedKey(key) {
-  const set = await snoozedSet();
-  return !!(set[key] && Date.now() < set[key]);
-}
-async function setSnoozeKey(key) {
-  const set = await snoozedSet();
-  set[key] = Date.now() + SNOOZE_MS;
-  await chrome.storage.session.set({ [SNOOZED]: set });
-}
-
-/**
- * Checks the daily and per-site limits, firing an 80%-approaching warning and a
- * 100%-reached notification (each deduped once per day via `notified`). A limit
- * key can be snoozed for an hour from either notification's button, which
- * suppresses both the warning and the reached notification for that key.
- */
-async function checkLimits(settings, domain) {
-  if (!settings.notifyLimits) return;
-  await setLang(settings.language || 'he');
-  const today = dayKey();
-  const day = await getDay(today);
-  if (!day) return;
-  const set = await notifiedSet();
-
-  let total = 0;
-  for (const rec of Object.values(day.domains)) total += rec.t || 0;
-
-  if (settings.dailyLimitMinutes > 0) {
-    const limitSec = settings.dailyLimitMinutes * 60;
-    const baseKey = `daily:${today}`;
-    if (!(await isSnoozedKey(baseKey))) {
-      const warnKey = `${baseKey}:80`;
-      if (!set[warnKey] && total >= limitSec * 0.8 && total < limitSec) {
-        notifyLimit(warnKey, t('notif.dailyLimitWarn.title'), t('notif.dailyLimitWarn.body', { n: settings.dailyLimitMinutes }));
-        await markNotified(warnKey);
-      }
-      if (!set[baseKey] && total >= limitSec) {
-        notifyLimit(baseKey, t('notif.dailyLimit.title'), t('notif.dailyLimit.body', { n: settings.dailyLimitMinutes }));
-        await markNotified(baseKey);
-      }
-    }
-  }
-  if (domain && settings.siteLimits[domain] > 0) {
-    const limitSec = settings.siteLimits[domain] * 60;
-    const used = day.domains[domain]?.t || 0;
-    const baseKey = `site:${today}:${domain}`;
-    if (!(await isSnoozedKey(baseKey))) {
-      const warnKey = `${baseKey}:80`;
-      if (!set[warnKey] && used >= limitSec * 0.8 && used < limitSec) {
-        notifyLimit(warnKey, t('notif.siteLimitWarn.title'), t('notif.siteLimitWarn.body', { d: domain, n: settings.siteLimits[domain] }));
-        await markNotified(warnKey);
-      }
-      if (!set[baseKey] && used >= limitSec) {
-        notifyLimit(baseKey, t('notif.siteLimit.title'), t('notif.siteLimit.body', { d: domain, n: settings.siteLimits[domain] }));
-        await markNotified(baseKey);
-      }
-    }
-  }
-
-  // Weekly category budget — only worth reading the week's days when the site being
-  // visited belongs to a budgeted category.
-  const category = domain ? categorize(domain, settings.categoryMap) : null;
-  const budgetMinutes = category ? settings.categoryBudgets?.[category] : 0;
-  if (budgetMinutes > 0) {
-    const weekStart = startOfWeek(new Date(), settings.weekStart);
-    const baseKey = `cat:${dayKey(weekStart)}:${category}`;
-    if (!(await isSnoozedKey(baseKey))) {
-      const limitSec = budgetMinutes * 60;
-      const used = categorySeconds(await getDays(keysBetween(weekStart, new Date())), settings.categoryMap)[category] || 0;
-      const vars = { c: t(`category.${category}`), n: budgetMinutes };
-      const warnKey = `${baseKey}:80`;
-      if (!set[warnKey] && used >= limitSec * 0.8 && used < limitSec) {
-        notifyLimit(warnKey, t('notif.catBudgetWarn.title'), t('notif.catBudgetWarn.body', vars));
-        await markNotified(warnKey);
-      }
-      if (!set[baseKey] && used >= limitSec) {
-        notifyLimit(baseKey, t('notif.catBudget.title'), t('notif.catBudget.body', vars));
-        await markNotified(baseKey);
-      }
-    }
-  }
-
-  // Weekly tag budgets: only for the tags the site being visited belongs to.
-  if (domain) {
-    const weekStart = startOfWeek(new Date(), settings.weekStart);
-    let weekDays = null;
-    for (const [tag, sites] of Object.entries(settings.tags || {})) {
-      const minutes = settings.tagBudgets?.[tag];
-      if (!(minutes > 0) || !sites.some((s) => domainInTag(domain, s))) continue;
-      const baseKey = `tag:${dayKey(weekStart)}:${tag}`;
-      if (await isSnoozedKey(baseKey)) continue;
-      weekDays ||= await getDays(keysBetween(weekStart, new Date()));
-      const used = tagSeconds(weekDays, { [tag]: sites })[0]?.seconds || 0;
-      const limitSec = minutes * 60;
-      const vars = { c: tag, n: minutes };
-      const warnKey = `${baseKey}:80`;
-      if (!set[warnKey] && used >= limitSec * 0.8 && used < limitSec) {
-        notifyLimit(warnKey, t('notif.tagBudgetWarn.title'), t('notif.tagBudgetWarn.body', vars));
-        await markNotified(warnKey);
-      }
-      if (!set[baseKey] && used >= limitSec) {
-        notifyLimit(baseKey, t('notif.tagBudget.title'), t('notif.tagBudget.body', vars));
-        await markNotified(baseKey);
-      }
-    }
-  }
-}
-
-function notify(title, message, id) {
-  try {
-    chrome.notifications.create(id || '', {
-      type: 'basic',
-      iconUrl: chrome.runtime.getURL('icons/icon128.png'),
-      title,
-      message,
-      priority: 1,
-    });
-  } catch { /* notifications permission may be revoked */ }
-}
-
-// Limit notifications use their dedup key as a stable notification id and add a
-// snooze button, so `onButtonClicked` can map a click straight back to the key.
-function notifyLimit(id, title, message) {
-  try {
-    chrome.notifications.create(id, {
-      type: 'basic',
-      iconUrl: chrome.runtime.getURL('icons/icon128.png'),
-      title,
-      message,
-      priority: 1,
-      buttons: [{ title: t('notif.snoozeBtn') }],
-    });
-  } catch { /* notifications permission may be revoked, or buttons unsupported */ }
-}
-
 // Snoozing either the 80%-warning or the 100%-reached notification for a limit
 // suppresses both for the rest of the snooze window (strip a trailing ":80").
 chrome.notifications.onButtonClicked.addListener(async (notificationId, buttonIndex) => {
@@ -434,18 +229,6 @@ chrome.notifications.onButtonClicked.addListener(async (notificationId, buttonIn
     try { chrome.notifications.clear(notificationId); } catch { /* already gone */ }
   }
 });
-
-// One-time (per week) heads-up if local storage is getting large. unlimitedStorage
-// removes Chrome's extension-storage cap, but disk space is still finite.
-async function maybeStorageWarning(settings) {
-  const meta = await getMeta();
-  if (Date.now() - (meta.lastStorageWarning || 0) < 7 * 86400000) return;
-  const bytes = await storageFootprint();
-  if (bytes < STORAGE_WARN_BYTES) return;
-  await setLang(settings.language || 'he');
-  notify(t('notif.storageWarn.title'), t('notif.storageWarn.body', { v: `${(bytes / (1024 * 1024)).toFixed(0)} MB` }));
-  await saveMeta({ lastStorageWarning: Date.now() });
-}
 
 // ---- idle detection ----
 async function applyIdleInterval() {
@@ -495,73 +278,6 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
     await runHourlyJobs({ force: true });
   }
 });
-
-// Auto-backup, the weekly summary and the storage warning. Run from the 60-minute alarm and, as a
-// safety net, from the 1-minute tick (throttled by meta.lastHourlyJobs).
-const HOURLY_MS = 60 * 60 * 1000;
-async function runHourlyJobs({ force = false } = {}) {
-  if (!force) {
-    const meta = await getMeta();
-    if (Date.now() - (meta.lastHourlyJobs || 0) < HOURLY_MS - 30000) return;
-  }
-  await saveMeta({ lastHourlyJobs: Date.now() });
-  await maybeAutoBackup();
-  await maybeWeeklySummary();
-  await runScheduledReport().catch(() => {});     // a report that can't be written is retried at the next hourly run
-  await maybeStorageWarning(await getSettings());
-}
-
-// Fires once on the configured first day of the week, summarizing the prior 7
-// days. Deduped via meta.lastWeeklySummary so the hourly alarm can't repeat it.
-async function maybeWeeklySummary() {
-  const settings = await getSettings();
-  if (!settings.weeklySummary) return;
-  if (new Date().getDay() !== settings.weekStart) return;
-  const meta = await getMeta();
-  if (Date.now() - (meta.lastWeeklySummary || 0) < 6 * 86400000) return;
-  await setLang(settings.language || 'he');
-
-  const keys = rangeKeys(7, addDays(new Date(), -1)); // previous 7 days
-  const days = await getDays(keys);
-  const total = totalTime(days);
-  if (total <= 0) return;
-  const agg = aggregateDomains(days);
-  const top = topSites(agg, 1)[0];
-  const score = focusScore(byCategory(agg, settings.categoryMap));
-  const parts = [t('notif.weekly.total', { v: formatDuration(total) })];
-  if (top) parts.push(t('notif.weekly.top', { d: top.domain }));
-  if (score != null) parts.push(t('notif.weekly.focus', { n: score }));
-  notify(t('notif.weekly.title'), parts.join(' • '));
-  await saveMeta({ lastWeeklySummary: Date.now() });
-}
-
-async function maybeAutoBackup() {
-  let settings = await getSettings();
-  const b = settings.backup;
-  if (!hasBackupTarget(b)) return;
-  const dueAfter = (b.autoIntervalHours || 24) * 3600 * 1000;
-  if (Date.now() - (b.lastBackup || 0) >= dueAfter) {
-    try {
-      await runAutoBackup();
-    } catch (e) {
-      // Not stamping lastBackup: a failed attempt must not look like a fresh backup, and the next hourly run retries.
-      await saveSettings({ backup: { lastBackupStatus: `⚠️ ${e.message}` } });
-    }
-    settings = await getSettings();
-  }
-  await warnIfBackupStale(settings);
-}
-
-/** One notification a day while a configured backup keeps failing (or never ran) for backupWarnDays. */
-async function warnIfBackupStale(settings) {
-  const days = backupStaleDays(settings, (await getMeta()).installedAt);
-  if (!days) return;
-  const key = `backupstale:${dayKey()}`;
-  if ((await notifiedSet())[key]) return;
-  await setLang(settings.language || 'he');
-  notify(t('notif.backupStale.title'), t('notif.backupStale.body', { n: days }));
-  await markNotified(key);
-}
 
 // An alarm that already exists is left alone: chrome.alarms.create() with the same name restarts
 // its countdown, and init() runs on every worker start (most ticks).
