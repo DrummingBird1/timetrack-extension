@@ -27,13 +27,14 @@ export async function waitFor(fn, { timeout = 8000, interval = 50, message = 'co
   }
 }
 
-/** `lang` sets the browser's own UI language (--lang), which is what picks the manifest's _locales folder. */
-export async function launch({ lang } = {}) {
+/** `args` adds Chrome flags (e.g. --ignore-certificate-errors for a local HTTPS test server). `lang` sets the browser's own UI language (--lang), which is what picks the manifest's _locales folder. */
+export async function launch({ lang, args = [], extPath = EXT_PATH, userDataDir } = {}) {
   const browser = await puppeteer.launch({
     headless: true,
     pipe: true,
-    enableExtensions: [EXT_PATH],
-    args: ['--no-sandbox', '--no-first-run', '--window-size=1400,900', ...(lang ? [`--lang=${lang}`] : [])],
+    enableExtensions: [extPath],
+    ...(userDataDir ? { userDataDir } : {}),
+    args: ['--no-sandbox', '--no-first-run', '--window-size=1400,900', ...(lang ? [`--lang=${lang}`] : []), ...args],
     ...(lang ? { env: { ...process.env, LANGUAGE: lang } } : {}),     // Linux reads the UI language from here
   });
 

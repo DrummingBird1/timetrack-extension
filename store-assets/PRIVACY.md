@@ -44,7 +44,7 @@ TimeTrack הוא תוסף דפדפן למעקב אחר זמן הגלישה של�
 1. **חשבון Google שלך** דרך `chrome.storage.sync` — מנגנון הסנכרון המובנה של
    Chrome, המשויך לחשבון שלך. איננו צד בכך.
 2. **שרת מותאם אישית** שכתובתו (HTTPS בלבד) אתה מספק — הנתונים נשלחים לשרת שלך.
-3. **שרת WebDAV** בכתובת HTTPS שאתה מספק — כל גיבוי נשמר שם כקובץ חדש, כך שגיבויים קודמים נשמרים; הנתונים נשלחים לשרת שלך.
+3. **שרת WebDAV** בכתובת HTTPS שאתה מספק — כל גיבוי נשמר שם כקובץ חדש, כך שגיבויים קודמים נשמרים; הנתונים נשלחים לשרת שלך. שם המשתמש והסיסמה נשמרים רק במכשיר הזה ונשלחים רק לשרת הזה לצורך התחברות; הם לעולם אינם חלק מגיבוי.
 
 ניתן להגדיר **הצפנת AES-256 עם סיסמה**; במצב זה הנתונים מוצפנים במכשיר שלך לפני
 היציאה, והיעד רואה רק טקסט מוצפן. הסיסמה נשמרת מקומית בלבד ולעולם אינה נשלחת.
@@ -111,7 +111,7 @@ If you enable backup, data is sent **only** to a target you configure and contro
 1. **Your Google account** via `chrome.storage.sync` — Chrome's built-in sync,
    tied to your account. We are not a party to it.
 2. **A custom server** at an HTTPS URL you provide — data goes to your server.
-3. **A WebDAV server** at an HTTPS address you provide — each backup is a new file there, so earlier ones are kept; data goes to your server.
+3. **A WebDAV server** at an HTTPS address you provide — each backup is a new file there, so earlier ones are kept; data goes to your server. The user name and password are stored only on this device and sent only to that server to sign in; they are never part of a backup.
 
 You may enable **AES-256 passphrase encryption**; data is then encrypted on your
 device before leaving, and the target sees only ciphertext. The passphrase is

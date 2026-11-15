@@ -201,7 +201,8 @@ language, are in [`listing-text/`](listing-text/). They are generated from this 
 - **Data handling:** stored locally; transmitted only to a user-configured backup
   target (Google sync, the user's own HTTPS endpoint, or the user's own WebDAV
   server), optionally AES-256 encrypted. Backups and exports never contain the
-  passphrase, the endpoint token or the WebDAV password. Backup files and summary
+  passphrase, the endpoint token or the WebDAV password (the WebDAV user name and
+  password stay on the device and are sent only to that server, to sign in). Backup files and summary
   reports can also be written into a folder the user picks on their own computer.
   The extension stores a random install ID (included in backups) and the date each
   achievement was reached; neither identifies the user.
