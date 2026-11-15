@@ -395,5 +395,7 @@
   "bk.needHttps": "L'adresse du serveur doit commencer par https://",
   "bk.httpStatus": "Le serveur a répondu {n}",
   "bk.timeout": "Le serveur n'a pas répondu en {n} secondes",
-  "bk.network": "Serveur injoignable (réseau, CORS ou adresse incorrecte)"
+  "bk.network": "Serveur injoignable (réseau, CORS ou adresse incorrecte)",
+  "productNote.text": "Depuis le {d}, des sites comme Gmail, Docs et Drive sont suivis séparément (mail.google.com, etc.) au lieu de google.com. Le temps enregistré avant reste sous le domaine général.",
+  "productNote.dismiss": "Compris"
 }

@@ -7,7 +7,7 @@ import { sanitizeSnapshot } from './snapshot.js';
 
 // v2: per-domain hourly map `dh`.  v3: optional per-day session logs (ttt_sess_<day>).
 // Both are additive — old records need no rewrite.
-export const SCHEMA_VERSION = 3;
+export const SCHEMA_VERSION = 4;
 
 export const K = {
   SETTINGS: 'ttt_settings',
@@ -630,6 +630,11 @@ const MIGRATIONS = [
   // v3 added the opt-in per-day session logs (ttt_sess_<day>) and settings.sessionLog
   // (defaults to false via DEFAULT_SETTINGS). Also additive: nothing to transform.
   { to: 3, run: async () => {} },
+  // v4: multi-product hosts (mail.google.com, docs.google.com…) are now stored under their
+  // product subdomain instead of the bare registrable domain. Old history is NOT rewritten
+  // — time already stored under "google.com" can't be honestly split, so it stays as it is
+  // and the day the split began is recorded for the UI to explain the change.
+  { to: 4, run: async () => { await saveMeta({ productSplitFrom: dayKey() }); } },
 ];
 
 // Keys a migration may rewrite: day records, session logs, focus log, index, settings, meta.

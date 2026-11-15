@@ -395,5 +395,7 @@
   "bk.needHttps": "The server address must start with https://",
   "bk.httpStatus": "The server returned {n}",
   "bk.timeout": "The server did not respond within {n} seconds",
-  "bk.network": "Could not reach the server (network, CORS or wrong address)"
+  "bk.network": "Could not reach the server (network, CORS or wrong address)",
+  "productNote.text": "Since {d}, sites like Gmail, Docs and Drive are tracked separately (mail.google.com and so on) instead of under google.com. Time recorded earlier stays under the general domain.",
+  "productNote.dismiss": "Got it"
 }
