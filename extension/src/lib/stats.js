@@ -200,6 +200,59 @@ export function domainPeakHour(days, domain) {
  * Returns [{ key, vars }] for the UI to localize (cat/wd are raw and localized
  * by the caller). Pure — no i18n/DOM here.
  */
+/**
+ * More observations from the same two weeks, each a rule with a threshold so it only speaks up
+ * when there is something to say. Same shape as generateInsights: raw { key, vars } for the UI to localize.
+ * @param {Record<string, any>} curDays
+ * @param {Record<string, any>} prevDays
+ * @param {{ categoryMap?: Record<string, string>, tags?: Record<string, string[]> }} [opts]
+ * @returns {Array<{ key: string, vars: Record<string, any> }>}
+ */
+export function smartInsights(curDays, prevDays, { categoryMap = {}, tags = {} } = {}) {
+  const out = [];
+  const total = totalTime(curDays);
+  if (total <= 0) return out;
+
+  // Late-night browsing: a real share of the week between midnight and 5 am.
+  const night = sum(Object.values(curDays).map((d) => sum((d.hours || []).slice(0, 5))));
+  if (night >= 1800 && night / total >= 0.15) {
+    out.push({ key: 'insight.lateNight', vars: { pct: Math.round((night / total) * 100) } });
+  }
+
+  // A site that is new in the top of this period: it took real time and had none in the previous one.
+  const cur = aggregateDomains(curDays);
+  const prev = aggregateDomains(prevDays);
+  const fresh = topSites(cur, 5).find((s) => s.t >= 1200 && !(prev[s.domain] && prev[s.domain].t > 0));
+  if (fresh && totalTime(prevDays) > 0) out.push({ key: 'insight.newSite', vars: { site: fresh.domain } });
+
+  // The tag that moved the most (needs at least 30 minutes in the previous period, so a % means something).
+  const nowByTag = Object.fromEntries(tagSeconds(curDays, tags).map((r) => [r.tag, r.seconds]));
+  const beforeByTag = Object.fromEntries(tagSeconds(prevDays, tags).map((r) => [r.tag, r.seconds]));
+  let swing = null;
+  for (const name of Object.keys(tags)) {
+    const before = beforeByTag[name] || 0;
+    if (before < 1800) continue;
+    const pct = Math.round((((nowByTag[name] || 0) - before) / before) * 100);
+    if (Math.abs(pct) >= 40 && (!swing || Math.abs(pct) > Math.abs(swing.pct))) swing = { name, pct };
+  }
+  if (swing) out.push({ key: swing.pct > 0 ? 'insight.tagUp' : 'insight.tagDown', vars: { tag: swing.name, pct: Math.abs(swing.pct) } });
+
+  // The hour of day with the most productive-category time (needs an hour of it overall to be meaningful).
+  const byHour = new Array(24).fill(0);
+  for (const day of Object.values(curDays)) {
+    for (const [domain, rec] of Object.entries(day.domains || {})) {
+      if (!(CATEGORY_DEFS[categorize(domain, categoryMap)]?.score > 0)) continue;
+      for (const [h, secs] of Object.entries(rec.dh || {})) byHour[Number(h)] += secs || 0;
+    }
+  }
+  const productiveTotal = sum(byHour);
+  if (productiveTotal >= 3600) {
+    const best = byHour.indexOf(Math.max(...byHour));
+    out.push({ key: 'insight.bestHour', vars: { h: `${best}:00` } });
+  }
+  return out;
+}
+
 export function generateInsights(curDays, prevDays, categoryMap = {}) {
   const out = [];
   const curTotal = totalTime(curDays);

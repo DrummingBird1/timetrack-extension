@@ -492,5 +492,10 @@
   "ach.score.name": "Una semana con puntuación de enfoque {n}+",
   "ach.score.desc": "Al menos una semana con puntuación semanal de enfoque de {n} o más",
   "ach.backup.name": "Primera copia",
-  "ach.backup.desc": "Tus datos tienen al menos una copia de seguridad"
+  "ach.backup.desc": "Tus datos tienen al menos una copia de seguridad",
+  "insight.lateNight": "El {pct} % de la navegación de esta semana fue entre medianoche y las 5 h",
+  "insight.newSite": "Nuevo en lo más alto: {site} (sin tiempo en el periodo anterior)",
+  "insight.tagUp": "La etiqueta {tag} sube un {pct} % respecto al periodo anterior",
+  "insight.tagDown": "La etiqueta {tag} baja un {pct} % respecto al periodo anterior",
+  "insight.bestHour": "Tu hora más productiva: {h}"
 }
