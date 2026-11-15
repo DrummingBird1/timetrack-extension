@@ -178,3 +178,13 @@ test('the short descriptions fit the Store limit and say something about the mai
     assert.ok(len >= 60 && len <= 132, `${lang}: the short description is ${len} characters (60-132)`);
   }
 });
+
+// ----------------------------------------------------- the Store icon lives with the other Store assets
+test('store-assets/icon has the Store icon, identical to the extension icon, plus the large logo', () => {
+  const same = (a, b) => fs.readFileSync(path.join(root, a)).equals(fs.readFileSync(path.join(root, b)));
+  assert.ok(same('store-assets/icon/store-icon-128.png', 'extension/icons/icon128.png'), 'store-icon-128.png differs from extension/icons/icon128.png: run node dist/tools/icons.mjs');
+  const png = fs.readFileSync(path.join(root, 'store-assets/icon/store-icon-512.png'));
+  assert.equal(png.readUInt32BE(16), 512, 'store-icon-512.png is not 512 px wide');
+  assert.ok(read('store-assets/icon/logo.svg').startsWith('<svg'), 'logo.svg is missing');
+  assert.ok(read('store-assets/STORE_LISTING.md').includes('icon/store-icon-128.png'), 'STORE_LISTING.md does not point at the Store icon');
+});
