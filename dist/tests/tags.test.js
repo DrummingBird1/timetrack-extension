@@ -69,3 +69,26 @@ test('usualForWeekday averages the same weekday over earlier weeks, ignoring emp
   assert.equal(usualForWeekday({}, today), null);
   assert.equal(usualForWeekday(days, today, 1), null, 'only one week requested -> one sample');
 });
+
+// ---- tag budgets ----
+const { tagBudgetStatus } = await import('../../extension/src/lib/stats.js');
+
+test('tagBudgetStatus reports used/limit/percent for budgeted tags that still exist, most used first', () => {
+  const days = { '2026-03-02': rec({ 'github.com': 1800, 'youtube.com': 600 }) };
+  const tags = { Work: ['github.com'], Fun: ['youtube.com'] };
+  const rows = tagBudgetStatus(days, tags, { Work: 60, Fun: 5, Gone: 10, Zero: 0 });
+  assert.deepEqual(rows.map((r) => [r.key, r.usedSeconds, r.limitSeconds, Math.round(r.pct)]), [['Fun', 600, 300, 200], ['Work', 1800, 3600, 50]]);
+});
+
+test('importing settings keeps sane tag budgets and drops hostile or non-positive ones', () => {
+  const raw = JSON.parse('{"tagBudgets":{"Work":90,"__proto__":5,"<b>":5,"Neg":-3,"Huge":999999,"Str":"x"}}');
+  const clean = sanitizeSettings(raw, storage.DEFAULT_SETTINGS);
+  assert.deepEqual(clean.tagBudgets, { Work: 90 });
+  assert.equal(Object.getPrototypeOf(clean.tagBudgets), Object.prototype);
+});
+
+test('tagBudgets is a map setting: only the entry helpers can change it', async () => {
+  await assert.rejects(() => storage.saveSettings({ tagBudgets: { Work: 5 } }), /map setting/);
+  await storage.setSettingsMapEntry('tagBudgets', 'Work', 5);
+  assert.deepEqual((await storage.getSettings()).tagBudgets, { Work: 5 });
+});

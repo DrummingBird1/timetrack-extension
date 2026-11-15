@@ -469,5 +469,11 @@
   "palette.cmd.toggleTracking": "Включить / выключить учёт",
   "palette.cmd.backupNow": "Создать копию сейчас",
   "palette.cmd.exportJson": "Экспорт JSON",
-  "card.usual": "Обычно {v} в {d}"
+  "card.usual": "Обычно {v} в {d}",
+  "tags.budgetPh": "Недельный бюджет, мин (необязательно)",
+  "tags.budgetChip": "{n} мин/нед",
+  "notif.tagBudgetWarn.title": "Бюджет тега почти исчерпан",
+  "notif.tagBudgetWarn.body": "Использовано 80% недельного бюджета тега {c} ({n} мин).",
+  "notif.tagBudget.title": "Бюджет тега исчерпан",
+  "notif.tagBudget.body": "Достигнут недельный бюджет тега {c} ({n} мин)."
 }

@@ -315,6 +315,25 @@ export function tagSeconds(days, tags) {
   return [...used].map(([tag, u]) => ({ tag, seconds: u.seconds, sites: u.sites.size })).filter((r) => r.seconds > 0).sort((a, b) => b.seconds - a.seconds);
 }
 
+/**
+ * Weekly tag budgets against the time used: same shape as budgetStatus, for tags.
+ * @param {Record<string, any>} days
+ * @param {Record<string, string[]>} tags
+ * @param {Record<string, number>} budgets  tag -> minutes
+ * @returns {Array<{ key: string, usedSeconds: number, limitSeconds: number, pct: number }>}
+ */
+export function tagBudgetStatus(days, tags, budgets) {
+  const used = Object.fromEntries(tagSeconds(days, tags).map((r) => [r.tag, r.seconds]));
+  return Object.entries(budgets || {})
+    .filter(([name, minutes]) => minutes > 0 && name in (tags || {}))
+    .map(([key, minutes]) => {
+      const usedSeconds = used[key] || 0;
+      const limitSeconds = minutes * 60;
+      return { key, usedSeconds, limitSeconds, pct: (usedSeconds / limitSeconds) * 100 };
+    })
+    .sort((a, b) => b.pct - a.pct);
+}
+
 export function budgetStatus(days, categoryMap, budgets) {
   const used = categorySeconds(days, categoryMap);
   return Object.entries(budgets || {})

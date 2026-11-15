@@ -442,6 +442,24 @@ test('tags: create in Settings, time per tag shows on Overview, remove hides it'
   await waitFor(async () => Object.keys((await ext.getSettings()).tags).length === 0, { message: 'tag removed' });
 });
 
+test('tag budgets: a budget on a tag shows as a weekly progress row, and removing the tag removes the budget', async () => {
+  await openTab('settings');
+  await page.type('#tagName', 'Focus');
+  await page.type('#tagDomains', 'github.com');
+  await page.type('#tagBudget', '30');
+  await page.click('#tagAdd');
+  await waitFor(async () => (await ext.getSettings()).tagBudgets?.Focus === 30, { message: 'tag budget saved' });
+  assert.match(await page.$eval('#tagList', (e) => e.textContent), /30/);
+  await ext.run(async (url) => { const st = await import(url); await st.addTime({ dateKey: (await import(url.replace('storage.js', 'utils.js'))).dayKey(), domain: 'github.com', seconds: 600, hour: 9 }); }, `${ext.base}src/lib/storage.js`);
+  await page.reload();
+  await openTab('overview');
+  await page.waitForSelector('#budgetWrap:not(.hidden) .cb-row');
+  assert.match(await page.$eval('#budgetPanel', (e) => e.textContent), /Focus/);
+  await openTab('settings');
+  await page.click('#tagList .cat-chip .x');
+  await waitFor(async () => !('Focus' in ((await ext.getSettings()).tagBudgets || {})), { message: 'budget removed with the tag' });
+});
+
 test('category budgets: a non-positive amount is rejected', async () => {
   await openTab('settings');
   await page.type('#budgetMinutes', '0');

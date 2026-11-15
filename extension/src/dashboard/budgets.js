@@ -1,8 +1,8 @@
 // Weekly per-category time budgets: the Settings editor and the Overview progress panel.
 // (Notifications at 80% / 100% are raised by the service worker — see checkLimits().)
 import { getDays, setSettingsMapEntry, removeSettingsMapEntry } from '../lib/storage.js';
-import { startOfWeek, keysBetween, formatDuration } from '../lib/utils.js';
-import { budgetStatus } from '../lib/stats.js';
+import { startOfWeek, keysBetween, formatDuration, esc } from '../lib/utils.js';
+import { budgetStatus, tagBudgetStatus } from '../lib/stats.js';
 import { CATEGORY_ORDER, categoryDef } from '../lib/categories.js';
 import { t, categoryLabel } from '../lib/i18n.js';
 import { $, settings, setSettings, toast, send } from './core.js';
@@ -59,21 +59,26 @@ export async function addBudget() {
 export async function renderBudgetPanel() {
   const wrap = $('#budgetWrap');
   const budgets = settings.categoryBudgets || {};
-  const hasBudgets = Object.values(budgets).some((m) => m > 0);
+  const tagBudgets = settings.tagBudgets || {};
+  const hasBudgets = Object.values(budgets).some((m) => m > 0) || Object.values(tagBudgets).some((m) => m > 0);
   wrap.classList.toggle('hidden', !hasBudgets);
   if (!hasBudgets) return;
 
   const days = await getDays(keysBetween(startOfWeek(new Date(), settings.weekStart), new Date()));
   const host = $('#budgetPanel');
   host.innerHTML = '';
-  for (const s of budgetStatus(days, settings.categoryMap, budgets)) {
-    const color = categoryDef(s.key).color;
+  const rows = [
+    ...budgetStatus(days, settings.categoryMap, budgets).map((s) => ({ ...s, label: categoryLabel(s.key), color: categoryDef(s.key).color })),
+    ...tagBudgetStatus(days, settings.tags || {}, tagBudgets).map((s) => ({ ...s, label: `# ${esc(s.key)}`, color: 'var(--accent)' })),
+  ].sort((a, b) => b.pct - a.pct);
+  for (const s of rows) {
+    const color = s.color;
     const over = s.pct >= 100;
     const row = document.createElement('div');
     row.className = 'cb-row';
     row.innerHTML = `
       <div class="cb-top">
-        <span class="lbl"><span class="cb-dot" style="background:${color}"></span>${categoryLabel(s.key)}</span>
+        <span class="lbl"><span class="cb-dot" style="background:${color}"></span>${s.label}</span>
         <span class="cb-time">${t('budget.used', { used: formatDuration(s.usedSeconds), limit: formatDuration(s.limitSeconds) })} · ${Math.round(s.pct)}%</span>
       </div>
       <div class="cb-track"><div class="cb-fill" style="width:${Math.min(100, Math.max(2, s.pct))}%;background:${over ? 'var(--danger)' : s.pct >= 80 ? 'var(--warn, #fbbf24)' : color}"></div></div>`;

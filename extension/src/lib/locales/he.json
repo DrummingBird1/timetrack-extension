@@ -469,5 +469,11 @@
   "palette.cmd.toggleTracking": "הפעל / עצור מעקב",
   "palette.cmd.backupNow": "גבה עכשיו",
   "palette.cmd.exportJson": "ייצוא JSON",
-  "card.usual": "בדרך כלל {v} ביום {d}"
+  "card.usual": "בדרך כלל {v} ביום {d}",
+  "tags.budgetPh": "תקציב דקות בשבוע (אופציונלי)",
+  "tags.budgetChip": "{n} דק׳ בשבוע",
+  "notif.tagBudgetWarn.title": "מתקרבים לתקציב התגית",
+  "notif.tagBudgetWarn.body": "ניצלת 80% מהתקציב השבועי של התגית {c} ({n} דק׳).",
+  "notif.tagBudget.title": "תקציב התגית הושלם",
+  "notif.tagBudget.body": "הגעת לתקציב השבועי של התגית {c} ({n} דק׳)."
 }

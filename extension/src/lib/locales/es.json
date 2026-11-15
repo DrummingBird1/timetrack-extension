@@ -469,5 +469,11 @@
   "palette.cmd.toggleTracking": "Activar / pausar el seguimiento",
   "palette.cmd.backupNow": "Hacer copia ahora",
   "palette.cmd.exportJson": "Exportar JSON",
-  "card.usual": "Normalmente {v} el {d}"
+  "card.usual": "Normalmente {v} el {d}",
+  "tags.budgetPh": "Presupuesto semanal en minutos (opcional)",
+  "tags.budgetChip": "{n} min/semana",
+  "notif.tagBudgetWarn.title": "Cerca del presupuesto de la etiqueta",
+  "notif.tagBudgetWarn.body": "Has usado el 80 % del presupuesto semanal de la etiqueta {c} ({n} min).",
+  "notif.tagBudget.title": "Presupuesto de etiqueta alcanzado",
+  "notif.tagBudget.body": "Has alcanzado el presupuesto semanal de la etiqueta {c} ({n} min)."
 }
