@@ -627,22 +627,67 @@ const MIGRATIONS = [
   { to: 3, run: async () => {} },
 ];
 
-export async function migrate() {
+// Keys a migration may rewrite: day records, session logs, focus log, index, settings, meta.
+const MIGRATION_BACKUP_KEY = 'ttt_migration_backup';
+const isMigratable = (k) =>
+  k.startsWith('ttt_day_') || k.startsWith('ttt_sess_') ||
+  [K.INDEX, K.SETTINGS, K.META, K.FOCUS_LOG].includes(k);
+
+/** Copy every migratable key into one backup entry (skipped when there is nothing stored yet). */
+async function snapshotForMigration(fromVersion) {
+  const all = await chrome.storage.local.get(null);
+  const data = {};
+  for (const [k, v] of Object.entries(all)) if (isMigratable(k)) data[k] = v;
+  if (!Object.keys(data).length) return false;
+  await chrome.storage.local.set({ [MIGRATION_BACKUP_KEY]: { fromVersion, at: Date.now(), data } });
+  return true;
+}
+
+/**
+ * Put the data back exactly as the last snapshot had it: keys written after the snapshot
+ * are removed, snapshotted keys are restored. Returns false if there is no snapshot.
+ */
+export async function rollbackMigration() {
+  const stored = (await chrome.storage.local.get(MIGRATION_BACKUP_KEY))[MIGRATION_BACKUP_KEY];
+  if (!stored || !stored.data) return false;
+  const all = await chrome.storage.local.get(null);
+  const extra = Object.keys(all).filter((k) => isMigratable(k) && !(k in stored.data));
+  if (extra.length) await chrome.storage.local.remove(extra);
+  await chrome.storage.local.set(stored.data);
+  return true;
+}
+
+/** Drop the snapshot once the migrated data has been used successfully. */
+export async function clearMigrationBackup() {
+  await chrome.storage.local.remove(MIGRATION_BACKUP_KEY);
+}
+
+/**
+ * Runs pending migrations. When one needs to run on existing data, a snapshot is taken
+ * first; if any step throws, the snapshot is restored and the error is rethrown, so a
+ * failed upgrade never leaves half-migrated history behind.
+ */
+export async function migrate({ migrations = MIGRATIONS, target = SCHEMA_VERSION } = {}) {
   const meta = await getMeta();
   const from = meta.version || 0;
-  if (from >= SCHEMA_VERSION) {
-    if (meta.version !== SCHEMA_VERSION) await saveMeta({ version: SCHEMA_VERSION });
-    return { from, to: SCHEMA_VERSION, applied: 0 };
+  if (from >= target) {
+    if (meta.version !== target) await saveMeta({ version: target });
+    return { from, to: target, applied: 0, snapshot: false };
   }
+  const pending = [...migrations].sort((a, b) => a.to - b.to).filter((m) => m.to > from && m.to <= target);
+  const snapshot = from > 0 && pending.length ? await snapshotForMigration(from) : false;
   let applied = 0;
-  for (const m of MIGRATIONS.sort((a, b) => a.to - b.to)) {
-    if (m.to > from && m.to <= SCHEMA_VERSION) {
+  try {
+    for (const m of pending) {
       await m.run();
       applied++;
     }
+    await saveMeta({ version: target });
+  } catch (err) {
+    if (snapshot) await rollbackMigration();
+    throw err;
   }
-  await saveMeta({ version: SCHEMA_VERSION });
-  return { from, to: SCHEMA_VERSION, applied };
+  return { from, to: target, applied, snapshot };
 }
 
 export async function storageFootprint() {
