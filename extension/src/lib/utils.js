@@ -154,11 +154,42 @@ export function registrableDomain(host) {
   return labels.slice(labels.length - suffixLen - 1).join('.');
 }
 
+/**
+ * Hosts that are really several products under one registrable domain. Grouping them into
+ * "google.com" would hide whether the time went to Gmail, Docs or Search, so for these the
+ * product subdomain is kept (mail.google.com, docs.google.com…). The bare domain
+ * (google.com, www.google.com) stays as it was — for Google that is Search. Every other
+ * host is unaffected. Keep the lists short and limited to well-known product hosts.
+ */
+export const PRODUCT_HOSTS = {
+  'google.com': ['mail', 'docs', 'drive', 'sheets', 'slides', 'calendar', 'meet', 'maps', 'translate',
+    'photos', 'keep', 'classroom', 'chat', 'gemini', 'scholar', 'news', 'play', 'myaccount', 'contacts'],
+  'microsoft.com': ['teams', 'learn', 'azure', 'copilot', 'account'],
+  'office.com': ['outlook', 'word', 'excel', 'powerpoint', 'onedrive', 'teams'],
+  'live.com': ['outlook', 'onedrive'],
+  'yahoo.com': ['mail', 'finance', 'sports', 'news'],
+  'amazon.com': ['aws', 'music', 'smile'],
+};
+
+/**
+ * The bucket a host is stored under when subdomains are grouped: its registrable domain,
+ * except for a known multi-product host, where the product subdomain is kept.
+ */
+export function bucketDomain(host) {
+  if (!host) return host;
+  const reg = registrableDomain(host);
+  const products = PRODUCT_HOSTS[reg];
+  if (!products || host === reg) return reg;
+  // The label right before the registrable domain: "x.mail.google.com" -> "mail".
+  const product = host.slice(0, host.length - reg.length - 1).split('.').pop();
+  return products.includes(product) ? `${product}.${reg}` : reg;
+}
+
 /** Resolve a tab URL to the bucket we store time under. */
 export function domainFromUrl(url, groupSubdomains = true) {
   const host = hostnameFromUrl(url);
   if (!host) return null;
-  return groupSubdomains ? registrableDomain(host) : host;
+  return groupSubdomains ? bucketDomain(host) : host;
 }
 
 // Duration unit strings, switchable for the active UI language (set via i18n).

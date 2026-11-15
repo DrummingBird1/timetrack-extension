@@ -59,7 +59,8 @@ test('registrableDomain handles simple and multi-part TLDs', () => {
 });
 
 test('domainFromUrl honors the groupSubdomains flag', () => {
-  assert.equal(domainFromUrl('https://mail.google.com/u/0', true), 'google.com');
+  assert.equal(domainFromUrl('https://mail.google.com/u/0', true), 'mail.google.com');
+  assert.equal(domainFromUrl('https://blog.example.com/x', true), 'example.com');
   assert.equal(domainFromUrl('https://mail.google.com/u/0', false), 'mail.google.com');
   assert.equal(domainFromUrl('chrome://newtab', true), null);
 });
@@ -115,4 +116,25 @@ test('sum and clamp', () => {
   assert.equal(clamp(5, 0, 10), 5);
   assert.equal(clamp(-1, 0, 10), 0);
   assert.equal(clamp(99, 0, 10), 10);
+});
+
+// ---- multi-product hosts (schema v4) ----
+import { bucketDomain, domainFromUrl as dfu } from '../../extension/src/lib/utils.js';
+
+test('multi-product hosts keep their product subdomain; everything else still collapses', () => {
+  assert.equal(bucketDomain('mail.google.com'), 'mail.google.com');
+  assert.equal(bucketDomain('x.docs.google.com'), 'docs.google.com');
+  assert.equal(bucketDomain('google.com'), 'google.com', 'bare domain = Search stays as before');
+  assert.equal(bucketDomain('random.google.com'), 'google.com', 'unlisted subdomain still groups');
+  assert.equal(bucketDomain('outlook.office.com'), 'outlook.office.com');
+  assert.equal(bucketDomain('blog.example.com'), 'example.com');
+  assert.equal(bucketDomain('news.bbc.co.uk'), 'bbc.co.uk');
+  assert.equal(bucketDomain('alice.github.io'), 'alice.github.io');
+  assert.equal(bucketDomain(''), '');
+});
+
+test('domainFromUrl uses product buckets only when subdomains are grouped', () => {
+  assert.equal(dfu('https://docs.google.com/d/1', true), 'docs.google.com');
+  assert.equal(dfu('https://www.google.com/search?q=x', true), 'google.com');
+  assert.equal(dfu('https://mail.google.com/mail', false), 'mail.google.com');
 });

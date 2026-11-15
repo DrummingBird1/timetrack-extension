@@ -67,7 +67,7 @@ test('export includes sessions only when asked and when there are any; import re
   assert.equal('sessions' in (await storage.exportAll({ sessions: false })), false, 'sync backups skip them (100 KB quota)');
   const snap = await storage.exportAll();
   assert.deepEqual(snap.sessions[DAY], [['a.com', 100, 90]]);
-  assert.equal(snap.version, 3);
+  assert.equal(snap.version, storage.SCHEMA_VERSION);
 
   installChrome();                                              // fresh device
   await storage.importAll(snap, { mode: 'replace', includeSettings: false });
@@ -92,13 +92,13 @@ test('mergeDomainAlias renames the domain inside session logs too', async () => 
   assert.deepEqual((await storage.getSessions([DAY]))[DAY], [['new.com', 100, 60], ['other.com', 300, 10]]);
 });
 
-test('migrate() brings a v2 profile to v3 without touching its data', async () => {
+test('migrate() brings a v2 profile up to the current schema without touching its data', async () => {
   await storage.saveMeta({ version: 2 });
   await storage.addTime({ dateKey: DAY, domain: 'a.com', seconds: 60, hour: 9 });
   const r = await storage.migrate();
   assert.equal(r.from, 2);
-  assert.equal(r.to, 3);
-  assert.equal((await storage.getMeta()).version, 3);
+  assert.equal(r.to, storage.SCHEMA_VERSION);
+  assert.equal((await storage.getMeta()).version, storage.SCHEMA_VERSION);
   assert.equal((await storage.getDay(DAY)).domains['a.com'].t, 60);
   assert.equal((await storage.getSettings()).sessionLog, false, 'opt-in: off by default');
 });

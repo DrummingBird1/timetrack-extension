@@ -54,3 +54,14 @@ test('a successful migration keeps the snapshot until it is cleared, and can sti
   await storage.clearMigrationBackup();
   assert.equal(await storage.rollbackMigration(), false, 'nothing left to roll back to');
 });
+
+test('v3 -> v4 keeps all history as-is, snapshots first and records when the product split began', async () => {
+  await seed(3);
+  const r = await storage.migrate();
+  assert.equal(r.to, 4);
+  assert.equal(r.snapshot, true);
+  const all = await chrome.storage.local.get(null);
+  assert.deepEqual(all['ttt_day_2026-01-01'], day);
+  assert.match(all.ttt_meta.productSplitFrom, /^\d{4}-\d{2}-\d{2}$/);
+  assert.equal(all.ttt_meta.version, 4);
+});
