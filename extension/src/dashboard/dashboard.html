@@ -113,6 +113,11 @@
           <div id="budgetPanel" class="cat-breakdown"></div>
         </div>
 
+        <div class="panel hidden" id="tagWrap">
+          <div class="panel-head"><h3 data-i18n="panel.tags">זמן לפי תגית</h3></div>
+          <div id="tagPanel" class="cat-breakdown"></div>
+        </div>
+
         <div class="panel" id="customCompareWrap">
           <div class="panel-head"><h3 data-i18n="compare.custom">השוואת טווחים מותאמת</h3></div>
           <div class="range-pair">
@@ -309,6 +314,16 @@
                 <button class="btn" id="budgetAdd" data-i18n="btn.add">הוסף</button>
               </div>
               <div id="budgetList" class="cat-list"></div>
+            </div>
+            <div class="field-block">
+              <label class="set-label" for="tagName" data-i18n="set.tags">תגיות</label>
+              <div class="set-desc" data-i18n="set.tagsDesc">קבץ אתרים לקבוצות משלך (עבודה, לימודים…) וראה בסקירה כמה זמן לקחה כל קבוצה. אתר יכול לשמש בכמה תגיות.</div>
+              <div class="cat-add">
+                <input type="text" id="tagName" maxlength="30" data-i18n-ph="tags.namePh" placeholder="שם התגית" />
+                <input type="text" id="tagDomains" data-i18n-ph="tags.domainsPh" placeholder="אתרים, מופרדים בפסיק" />
+                <button class="btn" id="tagAdd" data-i18n="btn.add">הוסף</button>
+              </div>
+              <div id="tagList" class="cat-list"></div>
             </div>
             <div class="hint-block" data-i18n="set.goalsHint">💡 ניתן להגדיר מגבלה לכל אתר בנפרד מלשונית "אתרים".</div>
           </div>

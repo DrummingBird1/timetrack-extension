@@ -121,6 +121,14 @@ export function cleanDomain(raw) {
   }
 }
 
+/** A tag name a person typed: trimmed, 1–30 characters, no markup characters, not an object-prototype key. '' when unusable. */
+export function cleanTagName(raw) {
+  const name = String(raw ?? '').trim().replace(/\s+/g, ' ');
+  if (!name || name.length > 30 || /[<>&"'`]/.test(name)) return '';
+  if (['__proto__', 'constructor', 'prototype', 'hasOwnProperty', 'toString'].includes(name)) return '';
+  return name;
+}
+
 /** Escape text for use inside HTML, including attribute values written with either quote. */
 export function esc(value) {
   return String(value ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);

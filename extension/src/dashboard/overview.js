@@ -12,6 +12,7 @@ import { $, settings, currentRange, cache, rangeLabel, iconFor, statCard, ICONS 
 import { openSiteDetail } from './siteDetail.js';
 import { renderCompare } from './compare.js';
 import { renderBudgetPanel } from './budgets.js';
+import { renderTagPanel } from './tags.js';
 
 export async function renderOverview() {
   const { days, agg } = cache;
@@ -71,6 +72,7 @@ export async function renderOverview() {
   await renderInsightsPanel();
   await renderCompare();
   await renderBudgetPanel();
+  renderTagPanel();
   renderTopList($('#overviewTop'), topSites(agg, 8), total);
 }
 

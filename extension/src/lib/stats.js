@@ -266,6 +266,36 @@ export function categorySeconds(days, categoryMap = {}) {
  * @param {Record<string, number>} budgets  category -> minutes
  * @returns {Array<{ key: string, usedSeconds: number, limitSeconds: number, pct: number }>}
  */
+/** Does a tag's domain entry cover this site? An entry matches itself and its subdomains. */
+export function domainInTag(domain, entry) {
+  return domain === entry || domain.endsWith(`.${entry}`);
+}
+
+/**
+ * Seconds per tag over a set of days. A site can carry several tags (each gets the time),
+ * so tag totals can add up to more than the overall total.
+ * @param {Record<string, any>} days
+ * @param {Record<string, string[]>} tags  name -> domain entries
+ * @returns {Array<{ tag: string, seconds: number, sites: number }>} sorted by time, tags with no time omitted
+ */
+export function tagSeconds(days, tags) {
+  const names = Object.keys(tags || {});
+  if (!names.length) return [];
+  const used = new Map(names.map((n) => [n, { seconds: 0, sites: new Set() }]));
+  for (const rec of Object.values(days || {})) {
+    for (const [domain, d] of Object.entries(rec.domains || {})) {
+      for (const name of names) {
+        if (tags[name].some((entry) => domainInTag(domain, entry))) {
+          const u = /** @type {any} */ (used.get(name));
+          u.seconds += d.t || 0;
+          u.sites.add(domain);
+        }
+      }
+    }
+  }
+  return [...used].map(([tag, u]) => ({ tag, seconds: u.seconds, sites: u.sites.size })).filter((r) => r.seconds > 0).sort((a, b) => b.seconds - a.seconds);
+}
+
 export function budgetStatus(days, categoryMap, budgets) {
   const used = categorySeconds(days, categoryMap);
   return Object.entries(budgets || {})

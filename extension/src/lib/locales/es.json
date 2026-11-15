@@ -397,5 +397,17 @@
   "bk.timeout": "El servidor no respondió en {n} segundos",
   "bk.network": "No se pudo contactar con el servidor (red, CORS o dirección incorrecta)",
   "productNote.text": "Desde {d}, sitios como Gmail, Docs y Drive se registran por separado (mail.google.com, etc.) en lugar de bajo google.com. El tiempo anterior permanece bajo el dominio general.",
-  "productNote.dismiss": "Entendido"
+  "productNote.dismiss": "Entendido",
+  "set.tags": "Etiquetas",
+  "set.tagsDesc": "Agrupa sitios en tus propios conjuntos (Trabajo, Estudios…) y mira en el resumen cuánto tiempo ocupó cada uno. Un sitio puede tener varias etiquetas.",
+  "tags.namePh": "Nombre de la etiqueta",
+  "tags.domainsPh": "Sitios, separados por comas",
+  "tags.none": "Aún no hay etiquetas",
+  "tags.badName": "El nombre debe tener 1–30 caracteres, sin < > & ni comillas",
+  "tags.noDomains": "Añade al menos un sitio válido",
+  "tags.tooMany": "Se permiten hasta {n} etiquetas",
+  "tags.saved": "Etiqueta «{n}» guardada",
+  "tags.removed": "Etiqueta «{n}» eliminada",
+  "tags.sites": "{n} sitios",
+  "panel.tags": "Tiempo por etiqueta"
 }

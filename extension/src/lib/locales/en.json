@@ -397,5 +397,17 @@
   "bk.timeout": "The server did not respond within {n} seconds",
   "bk.network": "Could not reach the server (network, CORS or wrong address)",
   "productNote.text": "Since {d}, sites like Gmail, Docs and Drive are tracked separately (mail.google.com and so on) instead of under google.com. Time recorded earlier stays under the general domain.",
-  "productNote.dismiss": "Got it"
+  "productNote.dismiss": "Got it",
+  "set.tags": "Tags",
+  "set.tagsDesc": "Group sites into your own sets (Work, Study…) and see in the Overview how much time each took. A site can have several tags.",
+  "tags.namePh": "Tag name",
+  "tags.domainsPh": "Sites, comma-separated",
+  "tags.none": "No tags yet",
+  "tags.badName": "A tag name must be 1–30 characters, without < > & or quotes",
+  "tags.noDomains": "Add at least one valid site",
+  "tags.tooMany": "Up to {n} tags are allowed",
+  "tags.saved": "Tag \"{n}\" saved",
+  "tags.removed": "Tag \"{n}\" removed",
+  "tags.sites": "{n} sites",
+  "panel.tags": "Time by tag"
 }
