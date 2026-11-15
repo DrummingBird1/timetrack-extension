@@ -114,6 +114,20 @@ export function currentStreak(index, todayKey) {
   return streak;
 }
 
+/** The longest run of consecutive tracked days anywhere in the history. */
+export function longestStreak(index) {
+  const keys = [...new Set(index)].sort();
+  let best = 0;
+  let run = 0;
+  let prev = null;
+  for (const key of keys) {
+    run = prev && toKey(addDays(parseDayKey(prev), 1)) === key ? run + 1 : 1;
+    if (run > best) best = run;
+    prev = key;
+  }
+  return best;
+}
+
 function toKey(date) {
   const p = (n) => (n < 10 ? '0' + n : '' + n);
   return `${date.getFullYear()}-${p(date.getMonth() + 1)}-${p(date.getDate())}`;

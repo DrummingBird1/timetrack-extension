@@ -475,5 +475,22 @@
   "notif.tagBudgetWarn.title": "Budget du tag presque atteint",
   "notif.tagBudgetWarn.body": "Vous avez utilisé 80 % du budget hebdomadaire du tag {c} ({n} min).",
   "notif.tagBudget.title": "Budget du tag atteint",
-  "notif.tagBudget.body": "Vous avez atteint le budget hebdomadaire du tag {c} ({n} min)."
+  "notif.tagBudget.body": "Vous avez atteint le budget hebdomadaire du tag {c} ({n} min).",
+  "ach.title": "Réussites",
+  "ach.hint": "Conservées sur cet appareil uniquement",
+  "ach.locked": "Pas encore atteint",
+  "ach.unlockedOn": "Atteint le {d}",
+  "ach.toast": "Nouvelle réussite : {n}",
+  "ach.streak.name": "Série de {n} jours",
+  "ach.streak.desc": "Suivi {n} jours d'affilée",
+  "ach.goal.name": "Objectif quotidien {n} jours de suite",
+  "ach.goal.desc": "Objectif de temps productif atteint {n} jours d'affilée",
+  "ach.hours.name": "{n} heures suivies",
+  "ach.hours.desc": "Votre temps suivi total a atteint {n} heures",
+  "ach.focus.name": "{n} sessions de concentration",
+  "ach.focus.desc": "{n} sessions de concentration menées à terme",
+  "ach.score.name": "Une semaine avec un score de concentration {n}+",
+  "ach.score.desc": "Au moins une semaine avec un score de concentration hebdomadaire de {n} ou plus",
+  "ach.backup.name": "Première sauvegarde",
+  "ach.backup.desc": "Vos données ont été sauvegardées au moins une fois"
 }

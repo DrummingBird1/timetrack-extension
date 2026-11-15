@@ -475,5 +475,22 @@
   "notif.tagBudgetWarn.title": "Cerca del presupuesto de la etiqueta",
   "notif.tagBudgetWarn.body": "Has usado el 80 % del presupuesto semanal de la etiqueta {c} ({n} min).",
   "notif.tagBudget.title": "Presupuesto de etiqueta alcanzado",
-  "notif.tagBudget.body": "Has alcanzado el presupuesto semanal de la etiqueta {c} ({n} min)."
+  "notif.tagBudget.body": "Has alcanzado el presupuesto semanal de la etiqueta {c} ({n} min).",
+  "ach.title": "Logros",
+  "ach.hint": "Solo se guardan en este dispositivo",
+  "ach.locked": "Aún sin lograr",
+  "ach.unlockedOn": "Logrado el {d}",
+  "ach.toast": "Nuevo logro: {n}",
+  "ach.streak.name": "Racha de {n} días",
+  "ach.streak.desc": "Seguimiento {n} días seguidos",
+  "ach.goal.name": "Objetivo diario {n} días seguidos",
+  "ach.goal.desc": "Cumpliste tu objetivo de tiempo productivo {n} días seguidos",
+  "ach.hours.name": "{n} horas registradas",
+  "ach.hours.desc": "El tiempo total registrado llegó a {n} horas",
+  "ach.focus.name": "{n} sesiones de enfoque",
+  "ach.focus.desc": "Terminaste {n} sesiones de enfoque",
+  "ach.score.name": "Una semana con puntuación de enfoque {n}+",
+  "ach.score.desc": "Al menos una semana con puntuación semanal de enfoque de {n} o más",
+  "ach.backup.name": "Primera copia",
+  "ach.backup.desc": "Tus datos tienen al menos una copia de seguridad"
 }
