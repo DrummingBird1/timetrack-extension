@@ -1,17 +1,31 @@
-TimeTrack mide cuánto tiempo dedica realmente a cada sitio web, con la privacidad y el almacenamiento local por delante. Todos los datos permanecen en su dispositivo; no se envía nada a ningún sitio a menos que active una copia de seguridad que usted controla.
+TimeTrack te muestra adónde va realmente tu tiempo, con la privacidad y el almacenamiento local por delante. Todo se queda en tu dispositivo; nada se envía a ningún sitio salvo que actives una copia de seguridad que tú controlas.
 
-• Seguimiento preciso del tiempo activo: solo cuenta el tiempo con la ventana en primer plano y sin inactividad (opcionalmente, también mientras suena audio)
-• Categorías inteligentes: cientos de sitios populares en cada idioma compatible ya vienen clasificados, y cada categoría se puede editar — además de una puntuación de enfoque de 0 a 100 con tendencia semanal y su mejor semana
-• Mapa de calor día de la semana × hora, resúmenes semanales en lenguaje sencillo y comparación de dos rangos de fechas cualesquiera
-• Detalle por sitio con líneas de tiempo diarias y por hora (y un registro de visitas opcional)
-• Objetivos diarios y semanales, límites por sitio, presupuestos semanales por categoría, avisos al 80 % y resumen semanal
-• Modo concentración (Pomodoro): bloquee categorías o sitios que distraen, o permita solo lo que necesita; programe sesiones, use el modo estricto o tómese un descanso de 10 minutos
-• Pestaña de sitios pensada para historiales grandes: búsqueda en todo el historial, sitios fijados, fusión del historial de un sitio que cambió de nombre y acciones masivas (categorizar, limitar o dejar de seguir)
-• Importación desde CSV (incluidas exportaciones al estilo RescueTime) y exportación a JSON/CSV en cualquier momento
-• Copia de seguridad en la nube en su cuenta de Google o en su propio servidor HTTPS, con cifrado AES-256 opcional y vista previa antes de restaurar
-• Etiquetas, logros y paleta de comandos: agrupa sitios en tus propias etiquetas con presupuestos semanales, consigue logros locales, salta a cualquier parte con Ctrl/Cmd+K y obtén ideas más inteligentes (uso nocturno, sitios nuevos, tu hora más productiva)
-• Más formas de proteger tus datos: copias programadas en una carpeta de tu equipo o en un servidor WebDAV con historial de versiones, verificación de un archivo de copia sin restaurarlo, restauración solo de un rango de fechas o solo de los ajustes, informes HTML semanales o mensuales y un aviso cuando las copias dejan de funcionar
-• Atajos de teclado, accesibilidad para teclado y lectores de pantalla, temas claro y oscuro
-• Seis idiomas con cambio en vivo: hebreo, inglés, árabe, ruso, español y francés (con compatibilidad de derecha a izquierda)
+■ SEGUIMIENTO Y ANÁLISIS
+• Tiempo activo preciso: solo cuenta el tiempo con la ventana en primer plano y sin inactividad (opcionalmente también mientras suena audio)
+• Categorías inteligentes para cientos de sitios populares en cada idioma admitido, todas editables, y una puntuación de enfoque de 0 a 100 con tendencia semanal y tu mejor semana
+• Mapa de calor día × hora, ideas en lenguaje claro (uso nocturno, sitios nuevos, tu hora más productiva) y comparación de dos rangos de fechas cualesquiera
+• Detalle por sitio con líneas de tiempo diarias y por hora, y un registro de visitas opcional
+• Una pestaña de sitios pensada para historiales grandes: busca en todo, fija sitios, fusiona un sitio que cambió de nombre y categoriza, limita o deja de seguir varios a la vez
 
-Sin dependencias externas, sin código remoto, sin analíticas y sin rastreadores de terceros. Los iconos de los sitios se generan localmente, así que ningún dominio que visite sale de su dispositivo. Los datos antiguos se eliminan automáticamente pasado el plazo que usted elija.
+■ OBJETIVOS Y ENFOQUE
+• Objetivos diarios y semanales, límites por sitio y presupuestos semanales para categorías y para tus propias etiquetas, con avisos al 80 % y al 100 %
+• Modo concentración (Pomodoro): bloquea sitios que distraen o permite solo lo que necesitas; sesiones programadas, modo estricto o una pausa de 10 minutos
+• Logros por rachas, sesiones de enfoque y más, guardados solo en tu dispositivo
+
+■ A TU MANERA
+• Etiquetas: agrupa sitios a tu modo (Trabajo, Estudios…) con vista de tiempo por etiqueta y presupuestos semanales
+• Paleta de comandos (Ctrl/Cmd+K): salta a cualquier pantalla o sitio, o ejecuta una acción desde el teclado
+• Informes HTML semanales o mensuales, guardados en la carpeta que elijas o descargados cuando quieras
+
+■ COPIAS DE SEGURIDAD Y TUS DATOS
+• Copias a tu cuenta de Google, a tu propio servidor HTTPS, a un servidor WebDAV con historial de versiones o a una carpeta de tu equipo, programadas y con cifrado AES-256 opcional
+• Verifica una copia sin restaurarla, previsualiza antes de restaurar, restaura solo un rango de fechas o solo los ajustes y recibe un aviso si las copias dejan de funcionar
+• Importa desde CSV (incluidos archivos al estilo RescueTime) y exporta JSON o CSV cuando quieras
+
+■ PRIVADO POR DISEÑO
+• Sin cuenta, sin analíticas, sin código remoto y sin rastreadores de terceros; los iconos de los sitios se generan en local, así que ningún dominio que visitas sale de tu dispositivo
+• Los datos antiguos se borran automáticamente tras el plazo que elijas
+
+■ PARA TODOS
+• Seis idiomas con cambio en vivo: hebreo, inglés, árabe, ruso, español y francés (con escritura de derecha a izquierda)
+• Temas claro y oscuro, atajos de teclado, accesibilidad para teclado y lectores de pantalla y una breve configuración inicial

@@ -100,6 +100,13 @@ which only resolves once the file exists on `main`.
 
 **Releasing** is now mostly automated. The steps for a new version `X.Y.Z`:
 
+0. **Iron rule — descriptions.** The extension's descriptions are always the most up-to-date account of what
+   it offers, and are formatted and ordered: the short descriptions (`extension/_locales/*/messages.json`, ≤132
+   characters), the detailed ones in six languages (`store-assets/STORE_LISTING.md`: an intro, then titled "■"
+   sections of one-line "•" bullets; regenerate `listing-text/` with `node dist/tools/listing-text.mjs`), the six
+   READMEs' feature lists and the site copy. Before every release re-read them against what the extension now
+   does, fix what is stale, then bump the `descriptions-reviewed-for` marker in `STORE_LISTING.md`;
+   `docs.test.js` fails until the marker equals the manifest version and the descriptions keep their shape.
 1. Bump `version` in `extension/manifest.json`, add a `## [X.Y.Z] — date` section to
    `CHANGELOG.md`, generate the banner (above). `docs.test.js` fails until all three
    agree.
