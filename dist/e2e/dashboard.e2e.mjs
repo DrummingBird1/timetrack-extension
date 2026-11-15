@@ -784,6 +784,38 @@ test('command palette: Ctrl+K filters sites and screens, Enter runs the choice, 
   await page.waitForSelector('#paletteModal.hidden');
 });
 
+test('scheduled report: written once per period into the chosen folder, readable HTML, skipped without a folder', async () => {
+  await openTab('settings');
+  const lib = `${ext.base}src/lib/localbackup.js`;
+  const job = `${ext.base}src/lib/reportjob.js`;
+  await ext.run(async (url) => (await import(url)).saveSettings({ reportFrequency: 'weekly' }), `${ext.base}src/lib/storage.js`);
+  await ext.run(async (url) => (await import(url)).saveMeta({ lastReportId: '' }), `${ext.base}src/lib/storage.js`);
+  const run = () => page.evaluate(async (u) => (await import(u)).runScheduledReport(), job);
+
+  await page.evaluate(async (u) => (await import(u)).clearFolderHandle(), lib);
+  assert.equal((await run()).reason, 'no-folder');
+
+  await page.evaluate(async (u) => {
+    const m = await import(u);
+    const root = await navigator.storage.getDirectory();
+    await root.removeEntry('tt-e2e-reports', { recursive: true }).catch(() => {});
+    await m.saveFolderHandle(await root.getDirectoryHandle('tt-e2e-reports', { create: true }));
+  }, lib);
+  const first = await run();
+  assert.equal(first.ran, true, JSON.stringify(first));
+  assert.match(first.name, /^timetrack-report-\d{4}-\d{2}-\d{2}\.html$/);
+  assert.equal((await run()).reason, 'done', 'the same period is not written twice');
+
+  const html = await page.evaluate(async (name) => {
+    const dir = await (await navigator.storage.getDirectory()).getDirectoryHandle('tt-e2e-reports');
+    return (await (await dir.getFileHandle(name)).getFile()).text();
+  }, first.name);
+  assert.match(html, /^<!doctype html>/);
+  assert.ok(!/<script/i.test(html));
+  await page.evaluate(async (u) => (await import(u)).clearFolderHandle(), lib);
+  await ext.run(async (url) => (await import(url)).saveSettings({ reportFrequency: 'off' }), `${ext.base}src/lib/storage.js`);
+});
+
 // --------------------------------------------------------- import / clear
 test('import: a JSON backup and a CSV file are imported through the file inputs', async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'tt-e2e-'));

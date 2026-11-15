@@ -12,6 +12,7 @@ import {
 } from './src/lib/storage.js';
 import { domainFromUrl, dayKey, rangeKeys, addDays, formatDuration, startOfWeek, keysBetween } from './src/lib/utils.js';
 import { runAutoBackup, hasBackupTarget, backupStaleDays } from './src/lib/backup.js';
+import { runScheduledReport } from './src/lib/reportjob.js';
 import { categorize } from './src/lib/categories.js';
 import { aggregateDomains, totalTime, topSites, byCategory, focusScore, categorySeconds, tagSeconds, domainInTag } from './src/lib/stats.js';
 import { setLang, t, pickLanguage } from './src/lib/i18n.js';
@@ -506,6 +507,7 @@ async function runHourlyJobs({ force = false } = {}) {
   await saveMeta({ lastHourlyJobs: Date.now() });
   await maybeAutoBackup();
   await maybeWeeklySummary();
+  await runScheduledReport().catch(() => {});     // a report that can't be written is retried at the next hourly run
   await maybeStorageWarning(await getSettings());
 }
 
