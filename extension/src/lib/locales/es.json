@@ -453,5 +453,10 @@
   "btn.davVersions": "Versiones en el servidor",
   "dav.title": "Versiones de copia en el servidor",
   "dav.empty": "Aún no hay versiones en el servidor",
-  "dav.restore": "Restaurar"
+  "dav.restore": "Restaurar",
+  "set.backupWarn": "Avisar si las copias fallan (días)",
+  "set.backupWarnDesc": "Una notificación al día si una copia configurada no se ha completado en estos días. 0 lo desactiva.",
+  "backup.stale": "⚠️ Sin copia correcta desde hace {n} días",
+  "notif.backupStale.title": "Las copias no se completan",
+  "notif.backupStale.body": "Sin copia correcta desde hace {n} días. Abre Ajustes para ver el estado."
 }

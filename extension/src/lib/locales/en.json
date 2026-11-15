@@ -453,5 +453,10 @@
   "btn.davVersions": "Versions on server",
   "dav.title": "Backup versions on the server",
   "dav.empty": "No versions on the server yet",
-  "dav.restore": "Restore"
+  "dav.restore": "Restore",
+  "set.backupWarn": "Warn when backups keep failing (days)",
+  "set.backupWarnDesc": "One notification a day if a configured backup hasn't succeeded for this many days. 0 turns it off.",
+  "backup.stale": "⚠️ No successful backup for {n} days",
+  "notif.backupStale.title": "Backups aren't succeeding",
+  "notif.backupStale.body": "No successful backup for {n} days. Open Settings to check the status."
 }

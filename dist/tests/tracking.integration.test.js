@@ -356,6 +356,36 @@ test('a storage-quota warning fires once when local storage crosses the threshol
   Date.now = realNow; // restore for any later files (each file is its own process anyway)
 });
 
+test('a backup that keeps failing raises one stale-backup notification a day, and none when warnings are off', async () => {
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async () => { throw new TypeError('offline'); };
+  Date.now = () => clock;
+  try {
+    await storage.saveSettings({ backupWarnDays: 3, backup: { endpointUrl: 'https://backup.example/in', lastBackup: clock - 5 * 86_400_000 } });
+    await chrome.storage.local.remove('ttt_notified');
+    const stale = (list) => list.filter((n) => /הגיבוי לא מצליח|aren't succeeding/.test(n.opts?.title || ''));
+    createdNotifications = [];
+    await listeners.alarm._fire({ name: 'ttt_backup' });
+    await settle();
+    assert.equal(stale(createdNotifications).length, 1, 'warned once');
+    assert.match(createdNotifications.find((n) => /הגיבוי לא מצליח/.test(n.opts?.title || '')).opts.message, /5/);
+    createdNotifications = [];
+    await listeners.alarm._fire({ name: 'ttt_backup' });
+    await settle();
+    assert.equal(stale(createdNotifications).length, 0, 'not again the same day');
+
+    await chrome.storage.local.remove('ttt_notified');
+    await storage.saveSettings({ backupWarnDays: 0 });
+    createdNotifications = [];
+    await listeners.alarm._fire({ name: 'ttt_backup' });
+    await settle();
+    assert.equal(stale(createdNotifications).length, 0, 'warnings switched off');
+  } finally {
+    globalThis.fetch = realFetch;
+    await storage.saveSettings({ backup: { endpointUrl: '', lastBackup: 0 } });
+  }
+});
+
 test('a later worker start leaves the existing alarms alone (re-creating one restarts its countdown)', async () => {
   const before = alarmCreates.length;
   const backupAlarm = alarmRegistry.get('ttt_backup');

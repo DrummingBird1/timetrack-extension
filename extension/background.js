@@ -11,7 +11,7 @@ import {
   saveMeta, getMeta, migrate, storageFootprint, K,
 } from './src/lib/storage.js';
 import { domainFromUrl, dayKey, rangeKeys, addDays, formatDuration, startOfWeek, keysBetween } from './src/lib/utils.js';
-import { runAutoBackup } from './src/lib/backup.js';
+import { runAutoBackup, hasBackupTarget, backupStaleDays } from './src/lib/backup.js';
 import { categorize } from './src/lib/categories.js';
 import { aggregateDomains, totalTime, topSites, byCategory, focusScore, categorySeconds } from './src/lib/stats.js';
 import { setLang, t, pickLanguage } from './src/lib/i18n.js';
@@ -509,17 +509,31 @@ async function maybeWeeklySummary() {
 }
 
 async function maybeAutoBackup() {
-  const settings = await getSettings();
+  let settings = await getSettings();
   const b = settings.backup;
-  if (!b.syncEnabled && !b.endpointUrl && !b.localEnabled && !b.davUrl) return;
+  if (!hasBackupTarget(b)) return;
   const dueAfter = (b.autoIntervalHours || 24) * 3600 * 1000;
-  if (Date.now() - (b.lastBackup || 0) < dueAfter) return;
-  try {
-    await runAutoBackup();
-  } catch (e) {
-    // Not stamping lastBackup: a failed attempt must not look like a fresh backup, and the next hourly run retries.
-    await saveSettings({ backup: { lastBackupStatus: `⚠️ ${e.message}` } });
+  if (Date.now() - (b.lastBackup || 0) >= dueAfter) {
+    try {
+      await runAutoBackup();
+    } catch (e) {
+      // Not stamping lastBackup: a failed attempt must not look like a fresh backup, and the next hourly run retries.
+      await saveSettings({ backup: { lastBackupStatus: `⚠️ ${e.message}` } });
+    }
+    settings = await getSettings();
   }
+  await warnIfBackupStale(settings);
+}
+
+/** One notification a day while a configured backup keeps failing (or never ran) for backupWarnDays. */
+async function warnIfBackupStale(settings) {
+  const days = backupStaleDays(settings, (await getMeta()).installedAt);
+  if (!days) return;
+  const key = `backupstale:${dayKey()}`;
+  if ((await notifiedSet())[key]) return;
+  await setLang(settings.language || 'he');
+  notify(t('notif.backupStale.title'), t('notif.backupStale.body', { n: days }));
+  await markNotified(key);
 }
 
 // An alarm that already exists is left alone: chrome.alarms.create() with the same name restarts

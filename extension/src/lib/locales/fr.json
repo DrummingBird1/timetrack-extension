@@ -453,5 +453,10 @@
   "btn.davVersions": "Versions sur le serveur",
   "dav.title": "Versions de sauvegarde sur le serveur",
   "dav.empty": "Aucune version sur le serveur",
-  "dav.restore": "Restaurer"
+  "dav.restore": "Restaurer",
+  "set.backupWarn": "Avertir si les sauvegardes échouent (jours)",
+  "set.backupWarnDesc": "Une notification par jour si une sauvegarde configurée n'a pas réussi depuis ce nombre de jours. 0 désactive.",
+  "backup.stale": "⚠️ Aucune sauvegarde réussie depuis {n} jours",
+  "notif.backupStale.title": "Les sauvegardes échouent",
+  "notif.backupStale.body": "Aucune sauvegarde réussie depuis {n} jours. Ouvrez les réglages pour vérifier l'état."
 }
