@@ -9,7 +9,8 @@
 import { exportAll, importAll, getSettings, saveSettings, summarizeSnapshot } from './storage.js';
 import { encryptJSON, decryptJSON, isEncrypted } from './crypto.js';
 import { gzip, packJSON, unpackJSON, isPacked } from './compress.js';
-import { t } from './i18n.js';
+import { t, setLang } from './i18n.js';
+import { loadFolderHandle, folderPermission, writeBackupToFolder } from './localbackup.js';
 
 const SYNC_PREFIX = 'ttt_sync_';
 const SYNC_META = 'ttt_sync_meta';
@@ -224,6 +225,22 @@ export async function restoreFromSync({ mode = 'replace', passphrase } = {}) {
   return { days, domainsChanged, ts: meta.ts };
 }
 
+/**
+ * Write a backup file into the folder chosen in Settings. Throws code NEEDS_PERMISSION when the
+ * browser wants the user to allow access again (only a click on the Settings screen can do that),
+ * and NO_FOLDER when none was chosen.
+ */
+export async function backupToLocalFolder() {
+  const settings = await getSettings();
+  const handle = await loadFolderHandle();
+  if (!handle) throw Object.assign(new Error(t('bk.localNoFolder')), { code: 'NO_FOLDER' });
+  if ((await folderPermission(handle)) !== 'granted') {
+    throw Object.assign(new Error(t('bk.localPermission')), { code: 'NEEDS_PERMISSION' });
+  }
+  const { json } = await buildPayload(settings, await exportAll());
+  return writeBackupToFolder(handle, json, { keep: Math.max(1, Math.min(60, settings.backup.localKeep || 7)) });
+}
+
 export async function backupToEndpoint(url, token) {
   if (!/^https:\/\//i.test(url)) throw new Error(t('bk.needHttps'));
   const settings = await getSettings();
@@ -253,6 +270,7 @@ export async function backupToEndpoint(url, token) {
 /** @param {{ force?: boolean }} [opts]  force: a manual "Back up now" (skips the cloud shrink guard) */
 export async function runAutoBackup({ force = false } = {}) {
   const settings = await getSettings();
+  await setLang(settings.language || 'he');   // the worker runs this on its own: status lines are translated
   const b = settings.backup;
   const results = [];
   let ok = true;
@@ -275,7 +293,16 @@ export async function runAutoBackup({ force = false } = {}) {
       results.push(`שגיאת שרת: ${e.message}`);
     }
   }
-  if (!b.syncEnabled && !b.endpointUrl) {
+  if (b.localEnabled) {
+    try {
+      const r = await backupToLocalFolder();
+      results.push(t('bk.localOk', { name: r.name }));
+    } catch (e) {
+      ok = false;
+      results.push(e.message);
+    }
+  }
+  if (!b.syncEnabled && !b.endpointUrl && !b.localEnabled) {
     return { ran: false, status: 'לא הוגדר יעד גיבוי' };
   }
 

@@ -65,6 +65,8 @@ export const DEFAULT_SETTINGS = {
     endpointToken: '',           // bearer token for the endpoint
     encrypt: false,              // encrypt the backup payload with a passphrase
     passphrase: '',              // local-only; never transmitted in clear
+    localEnabled: false,         // also write a file into the folder chosen in Settings (see localbackup.js)
+    localKeep: 7,                // how many backup files to keep in that folder
     autoIntervalHours: 24,
     lastBackup: 0,
     lastBackupStatus: '',

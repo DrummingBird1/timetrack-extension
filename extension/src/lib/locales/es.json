@@ -423,5 +423,20 @@
   "verify.ok": "Copia íntegra: {n} días, la suma de control coincide",
   "verify.okNoChecksum": "El archivo es válido ({n} días), pero es una copia antigua sin suma de control; no se descartan cambios",
   "verify.mismatch": "La suma de control no coincide: el archivo se modificó o dañó tras crearse",
-  "verify.invalid": "El archivo tiene {n} registros no válidos que no se restaurarían"
+  "verify.invalid": "El archivo tiene {n} registros no válidos que no se restaurarían",
+  "set.local": "Copia automática en una carpeta de este equipo",
+  "set.localDesc": "Se escribe un archivo de copia en la carpeta elegida, con la frecuencia indicada arriba. El navegador puede pedir permitir de nuevo el acceso a la carpeta.",
+  "btn.pickFolder": "Elegir carpeta",
+  "btn.grantFolder": "Permitir acceso a la carpeta",
+  "btn.clearFolder": "Desconectar carpeta",
+  "set.localKeep": "Archivos que conservar",
+  "local.none": "Aún no se ha elegido una carpeta",
+  "local.ready": "Carpeta: {n} — lista para copias",
+  "local.needsPermission": "Carpeta: {n} — el navegador necesita que permitas el acceso otra vez antes de la próxima copia",
+  "local.unsupported": "Este navegador no puede elegir una carpeta",
+  "local.pickFirst": "Elige una carpeta para que se puedan hacer copias",
+  "local.chosen": "Las copias se guardarán en {n}",
+  "bk.localNoFolder": "No se ha elegido carpeta de copias locales",
+  "bk.localPermission": "Carpeta de copias: permite el acceso de nuevo en Ajustes (botón «Permitir acceso a la carpeta»)",
+  "bk.localOk": "Carpeta local: guardado {name}"
 }

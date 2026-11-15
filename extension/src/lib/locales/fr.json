@@ -423,5 +423,20 @@
   "verify.ok": "Sauvegarde intacte : {n} jours, somme de contrôle correcte",
   "verify.okNoChecksum": "Le fichier est valide ({n} jours), mais c'est une ancienne sauvegarde sans somme de contrôle : des modifications ne sont pas exclues",
   "verify.mismatch": "Somme de contrôle incorrecte : le fichier a été modifié ou endommagé après sa création",
-  "verify.invalid": "Le fichier contient {n} enregistrements invalides qui ne seraient pas restaurés"
+  "verify.invalid": "Le fichier contient {n} enregistrements invalides qui ne seraient pas restaurés",
+  "set.local": "Sauvegarde automatique dans un dossier de cet ordinateur",
+  "set.localDesc": "Un fichier de sauvegarde est écrit dans le dossier choisi, à la fréquence ci-dessus. Le navigateur peut redemander l'accès au dossier.",
+  "btn.pickFolder": "Choisir un dossier",
+  "btn.grantFolder": "Autoriser l'accès au dossier",
+  "btn.clearFolder": "Déconnecter le dossier",
+  "set.localKeep": "Fichiers à conserver",
+  "local.none": "Aucun dossier choisi",
+  "local.ready": "Dossier : {n} — prêt pour les sauvegardes",
+  "local.needsPermission": "Dossier : {n} — le navigateur demande d'autoriser à nouveau l'accès avant la prochaine sauvegarde",
+  "local.unsupported": "Ce navigateur ne permet pas de choisir un dossier",
+  "local.pickFirst": "Choisissez un dossier pour que les sauvegardes puissent s'exécuter",
+  "local.chosen": "Les sauvegardes seront enregistrées dans {n}",
+  "bk.localNoFolder": "Aucun dossier de sauvegarde local choisi",
+  "bk.localPermission": "Dossier de sauvegarde : autorisez à nouveau l'accès dans les réglages (bouton « Autoriser l'accès au dossier »)",
+  "bk.localOk": "Dossier local : {name} enregistré"
 }

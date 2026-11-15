@@ -406,6 +406,20 @@
               <div><div id="lbl-setBackupInterval" class="set-label" data-i18n="set.backupInterval">תדירות גיבוי (שעות)</div><div id="desc-setBackupInterval" class="set-desc" data-i18n="set.backupIntervalDesc">כל כמה זמן לגבות אוטומטית</div></div>
               <input type="number" id="setBackupInterval" aria-labelledby="lbl-setBackupInterval" aria-describedby="desc-setBackupInterval" min="1" max="168" />
             </div>
+            <div class="setting-row">
+              <div><div id="lbl-setLocalEnabled" class="set-label" data-i18n="set.local">גיבוי אוטומטי לתיקייה במחשב</div><div id="desc-setLocalEnabled" class="set-desc" data-i18n="set.localDesc">קובץ גיבוי נכתב לתיקייה שתבחר, ככל שהתדירות למעלה. הדפדפן עשוי לבקש לאשר גישה לתיקייה מחדש.</div></div>
+              <label class="switch"><input type="checkbox" id="setLocalEnabled" aria-labelledby="lbl-setLocalEnabled" aria-describedby="desc-setLocalEnabled" /><span class="switch-track"><span class="switch-thumb"></span></span></label>
+            </div>
+            <div class="field-block">
+              <div class="set-desc" id="localFolderState" role="status"></div>
+              <div class="btn-group">
+                <button class="btn" id="localPick" data-i18n="btn.pickFolder">בחר תיקייה</button>
+                <button class="btn" id="localGrant" data-i18n="btn.grantFolder">אשר גישה לתיקייה</button>
+                <button class="btn ghost" id="localClear" data-i18n="btn.clearFolder">נתק תיקייה</button>
+                <label class="set-desc" for="setLocalKeep" data-i18n="set.localKeep">כמה קבצים לשמור</label>
+                <input type="number" id="setLocalKeep" min="1" max="60" />
+              </div>
+            </div>
             <div class="field-block">
               <label class="set-label" for="setEndpoint" data-i18n="set.endpoint">שרת גיבוי מותאם (אופציונלי)</label>
               <input type="url" id="setEndpoint" data-i18n-ph="set.endpointPh" placeholder="https://example.com/timetrack-backup" />
