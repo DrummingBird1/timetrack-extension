@@ -43,6 +43,8 @@ Una extensión moderna para Chrome que mide cuánto tiempo activo dedica a cada 
 - **Comparación de períodos y detalle de sitio** — esta semana frente a la semana pasada; al hacer clic en un sitio se abre una línea de tiempo diaria **más un desglose por horas** (las horas de mayor actividad de ese sitio).
 - **Rangos de fechas personalizados** — además de los rangos rápidos (hoy / 7 / 30 / 90 / todo).
 - **Copia de seguridad cifrada en la nube** — sincronización con Google o con un servidor personalizado (HTTPS), con cifrado opcional mediante frase de contraseña AES-256 (de conocimiento cero, con un **medidor de solidez de la frase de contraseña**), y una **vista previa antes de restaurar** (rango de días, tiempo total, número de sitios) para que nunca restaure a ciegas.
+- **Etiquetas, logros y paleta de comandos** — agrupa sitios en tus propias etiquetas con presupuestos semanales, consigue logros locales, salta a cualquier parte con Ctrl/Cmd+K y obtén ideas más inteligentes (uso nocturno, sitios nuevos, tu hora más productiva).
+- **Más formas de proteger tus datos** — copias programadas en una carpeta de tu equipo o en un servidor WebDAV con historial de versiones, verificación de un archivo de copia sin restaurarlo, restauración solo de un rango de fechas o solo de los ajustes, informes HTML semanales o mensuales y un aviso cuando las copias dejan de funcionar.
 - **Exportación/importación** — JSON (copia de seguridad completa) y CSV (todo, o solo la vista actual).
 - **Seis idiomas** — hebreo, inglés, árabe, ruso, español y francés, con cambio en tiempo real.
 - **Privacidad** — sin permisos de host, sin seguimiento externo, sin llamadas de red involuntarias (los iconos se generan localmente), eliminación automática de datos antiguos.

@@ -4,6 +4,59 @@ All notable changes to TimeTrack are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/); this project uses
 [Semantic Versioning](https://semver.org/).
 
+## [2.0.0] — 2026-11-15
+
+The biggest release so far: your own tags and budgets, achievements, a command palette, smarter
+insights and reports, and a much broader backup and restore story. History is kept; one change
+affects how Google, Microsoft and a few other multi-product sites are counted (see "Changed").
+No new browser permissions.
+
+### Added
+- **Tags.** Group sites into your own tags (Work, Study, …) in Settings. The Overview shows time per
+  tag with the change against the previous period, and a tag can have a **weekly budget** with the same
+  80% / 100% notifications as category budgets. A tag covers a site and its subdomains.
+- **Command palette (Ctrl/Cmd+K).** Jump to a screen, open a site's details, or run an action
+  (turn tracking on/off, back up now, export) from the keyboard.
+- **Achievements** on the Insights tab: eleven milestones from your own history (tracking streaks,
+  daily-goal streaks, tracked hours, finished focus sessions, a high weekly focus score, a first
+  backup). Kept on this device only; the first date each was reached is remembered.
+- **Smarter insights:** late-night browsing, a site that is new near the top, the tag that moved most,
+  and your most productive hour — each appears only when it passes a threshold. The "today" card also
+  says what this weekday usually looks like.
+- **Scheduled reports.** A weekly or monthly HTML summary is written into your backup folder (no
+  scripts, no network, right-to-left aware), or download one on demand.
+- **Backup to a folder on your computer** on the existing schedule (choose the folder once; encrypted
+  when backup encryption is on; the newest N files are kept).
+- **Backup to a WebDAV server with version history:** every backup is a new file, earlier ones are kept,
+  and you can restore from any of them.
+- **Verify a backup file without restoring it** (every export now carries a checksum), and **partial
+  restore**: only a date range (never deletes other days) or only the settings.
+- **A warning when backups keep failing** (default 7 days; one notification a day; configurable).
+- **A three-step welcome:** what it is, a quick setup (language, week start, daily goal), and a few tips.
+
+### Changed
+- **Google, Microsoft, Office, Live, Yahoo and Amazon products are counted separately**
+  (`mail.google.com`, `docs.google.com`, `outlook.office.com`, …) instead of as one site. The bare
+  domain keeps its old meaning (Search for Google). History recorded before the upgrade stays under
+  the general domain; the dashboard tells you once.
+- Migrations take a snapshot first and roll back on failure (schema v4).
+- Limit notifications are de-duplicated across browser restarts; the custom backup endpoint has a
+  30-second timeout; backup error messages are translated; settings writes are serialised across the
+  worker, popup and dashboard.
+- Internals: `storage.js` and `background.js` are split into smaller modules (no behaviour change).
+
+### Privacy
+- Still no analytics and no remote code. New local data: your tags and budgets, the date each
+  achievement was reached, and a random install ID that travels inside backups. New optional
+  destinations you choose yourself: a folder on your computer and a WebDAV server. The WebDAV
+  password stays on the device and is never part of an export or backup. The privacy policy, the
+  store listing and the site are updated to say so.
+
+### Known limits
+- The WebDAV server must allow cross-origin PUT, GET, DELETE and PROPFIND requests (CORS). Chrome may
+  ask you to allow access to the backup folder again from time to time; the backup then waits and
+  Settings shows a button to allow it.
+
 ## [1.7.0] — 2026-11-07
 
 A reliability and data-safety release, from an audit of 1.6.0's code and a live walk-through of the

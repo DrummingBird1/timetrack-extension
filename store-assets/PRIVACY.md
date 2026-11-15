@@ -1,6 +1,6 @@
 # Privacy Policy — TimeTrack / מדיניות פרטיות
 
-**Effective date / תאריך תחילה:** 2026-06-25
+**Effective date / תאריך תחילה:** 2026-11-15
 **Contact / יצירת קשר:** via the project's GitHub repository — [open an issue](https://github.com/DrummingBird1/timetrack-extension/issues)
 
 ---
@@ -24,6 +24,7 @@ TimeTrack הוא תוסף דפדפן למעקב אחר זמן הגלישה של�
   ואורך כל ביקור באתר. נשאר מקומי, ואפשר למחוק אותו בכל עת.
 - **היסטוריית סשני פוקוס** — מתי התחיל כל סשן, כמה זמן נמשך והאם הושלם.
 - **ההגדרות שלך** (יעדים, מגבלות, קטגוריות, ערכת נושא וכו׳).
+- **הישגים ומזהה מכשיר** — התאריך שבו הושג כל אבן דרך לראשונה, ומזהה אקראי של ההתקנה הזו שנכלל בגיבויים כדי שאפשר יהיה להבחין בין מכשירים בשחזור. אף אחד מהם לא מזהה אותך.
 
 התוסף **אינו** אוסף: היסטוריית גלישה מלאה (URLs), תוכן דפים, כותרות, הקלדות,
 סיסמאות, מיקום, או כל מזהה אישי.
@@ -34,6 +35,8 @@ TimeTrack הוא תוסף דפדפן למעקב אחר זמן הגלישה של�
 לנו שרת, אין לנו גישה לנתונים שלך, ואיננו מבצעים שום מעקב אנליטי. לתוסף אין קוד
 חיצוני ולא מתבצעות קריאות רשת לא-רצוניות (גם האייקונים נוצרים מקומית).
 
+אם תבחר תיקייה במחשב שלך, קבצי גיבוי ודוחות מסכמים ייכתבו אליה; אלה קבצים רגילים שאתה שולט בהם.
+
 ### גיבוי בענן (אופציונלי, ביוזמתך בלבד)
 
 אם תבחר להפעיל גיבוי, הנתונים יישלחו **אך ורק** ליעד שאתה מגדיר ושולט בו:
@@ -41,6 +44,7 @@ TimeTrack הוא תוסף דפדפן למעקב אחר זמן הגלישה של�
 1. **חשבון Google שלך** דרך `chrome.storage.sync` — מנגנון הסנכרון המובנה של
    Chrome, המשויך לחשבון שלך. איננו צד בכך.
 2. **שרת מותאם אישית** שכתובתו (HTTPS בלבד) אתה מספק — הנתונים נשלחים לשרת שלך.
+3. **שרת WebDAV** בכתובת HTTPS שאתה מספק — כל גיבוי נשמר שם כקובץ חדש, כך שגיבויים קודמים נשמרים; הנתונים נשלחים לשרת שלך.
 
 ניתן להגדיר **הצפנת AES-256 עם סיסמה**; במצב זה הנתונים מוצפנים במכשיר שלך לפני
 היציאה, והיעד רואה רק טקסט מוצפן. הסיסמה נשמרת מקומית בלבד ולעולם אינה נשלחת.
@@ -86,6 +90,7 @@ Locally, and only locally, the extension measures:
 - **Focus-session history** — when each focus session started, how long it lasted and whether
   it was completed.
 - **Your settings** (goals, limits, categories, theme, etc.).
+- **Achievements and a device ID** — the date each milestone was first reached, and a random ID of this install that travels inside backups so a restore can tell devices apart. Neither identifies you.
 
 The extension does **not** collect: full browsing history (URLs), page content,
 titles, keystrokes, passwords, location, or any personal identifier.
@@ -97,6 +102,8 @@ no server, have no access to your data, and run no analytics. The extension
 contains no remote code and makes no involuntary network requests (even site
 icons are generated locally).
 
+If you choose a folder on your computer, backup files and summary reports are written there; they are ordinary files that you control.
+
 ### Cloud backup (optional, user-initiated only)
 
 If you enable backup, data is sent **only** to a target you configure and control:
@@ -104,6 +111,7 @@ If you enable backup, data is sent **only** to a target you configure and contro
 1. **Your Google account** via `chrome.storage.sync` — Chrome's built-in sync,
    tied to your account. We are not a party to it.
 2. **A custom server** at an HTTPS URL you provide — data goes to your server.
+3. **A WebDAV server** at an HTTPS address you provide — each backup is a new file there, so earlier ones are kept; data goes to your server.
 
 You may enable **AES-256 passphrase encryption**; data is then encrypted on your
 device before leaving, and the target sees only ciphertext. The passphrase is

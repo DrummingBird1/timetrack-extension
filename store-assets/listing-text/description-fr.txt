@@ -9,6 +9,8 @@ TimeTrack mesure le temps que vous passez réellement sur chaque site web, en pl
 • Onglet Sites conçu pour les gros historiques : recherche dans tout l'historique, sites épinglés, fusion de l'historique d'un site renommé et actions groupées (catégoriser, limiter, ne plus suivre)
 • Import depuis CSV (y compris les exports de type RescueTime) et export JSON/CSV à tout moment
 • Sauvegarde cloud sur votre compte Google ou votre propre serveur HTTPS, avec chiffrement AES-256 facultatif et aperçu avant restauration
+• Tags, réussites et palette de commandes: regroupez des sites dans vos propres tags avec des budgets hebdomadaires, obtenez des réussites locales, allez partout avec Ctrl/Cmd+K et profitez d'analyses plus fines (usage nocturne, nouveaux sites, votre heure la plus productive)
+• Plus de moyens de protéger vos données: sauvegardes planifiées vers un dossier de votre ordinateur ou un serveur WebDAV avec historique des versions, vérification d'un fichier de sauvegarde sans le restaurer, restauration d'une plage de dates ou des réglages seulement, rapports HTML hebdomadaires ou mensuels, et alerte quand les sauvegardes cessent de fonctionner
 • Raccourcis clavier, accessibilité au clavier et aux lecteurs d'écran, thèmes clair et sombre
 • Six langues avec changement à la volée : hébreu, anglais, arabe, russe, espagnol, français (écriture de droite à gauche prise en charge)
 

@@ -76,6 +76,8 @@ analytics, goals, cloud backup, and data export.
   optional AES-256 passphrase encryption (zero-knowledge, with a **passphrase
   strength meter**), and a **preview before restoring** (day range, total time,
   site count) so you never restore blind.
+- **Tags, achievements & command palette** — group sites into your own tags with weekly budgets, earn local achievements, jump anywhere with Ctrl/Cmd+K, and get smarter insights (late-night use, new sites, your most productive hour).
+- **More ways to protect your data** — scheduled backups to a folder on your computer or a WebDAV server with version history, verify a backup file without restoring it, restore just a date range or just the settings, weekly or monthly HTML reports, and a warning when backups stop working.
 - **Export/import** — JSON (full backup) and CSV (everything, or just the
   current view).
 - **Six languages** — Hebrew, English, Arabic, Russian, Spanish, and French,

@@ -332,6 +332,7 @@
         <li><strong>Session log (optional, off by default)</strong> — if you turn it on: the start time and length of each visit to a site. It stays local and can be deleted at any time.</li>
         <li><strong>Focus-session history</strong> — when each focus session started, how long it lasted and whether it was completed.</li>
         <li><strong>Your settings</strong> (goals, limits, categories, theme, etc.).</li>
+        <li><strong>Achievements and a device ID</strong> — the date each milestone was first reached, and a random ID of this install that travels inside backups so a restore can tell devices apart. Neither identifies you.</li>
       </ul>
       <p>The extension does <strong>not</strong> collect: full browsing history (URLs),
       page content, titles, keystrokes, passwords, location, or any personal identifier.</p>
@@ -341,6 +342,7 @@
       browser. We operate no server, have no access to your data, and run no
       analytics. The extension contains no remote code and makes no involuntary
       network requests (even site icons are generated locally).</p>
+      <p>If you choose a folder on your computer, backup files and summary reports are written there; they are ordinary files that you control.</p>
 
       <h3>Cloud backup (optional, user-initiated only)</h3>
       <p>If you enable backup, data is sent <strong>only</strong> to a target you
@@ -348,6 +350,7 @@
       <ul>
         <li><strong>Your Google account</strong> via <code>chrome.storage.sync</code> — Chrome's built-in sync, tied to your account. We are not a party to it.</li>
         <li><strong>A custom server</strong> at an HTTPS URL you provide — data goes to your server.</li>
+        <li><strong>A WebDAV server</strong> at an HTTPS address you provide — each backup is a new file there, so earlier ones are kept; data goes to your server.</li>
       </ul>
       <p>You may enable <strong>AES-256 passphrase encryption</strong>; data is then
       encrypted on your device before leaving, and the target sees only ciphertext.
@@ -385,6 +388,7 @@
         <li><strong>יומן ביקורים (אופציונלי, כבוי כברירת מחדל)</strong> — אם תפעיל אותו: שעת ההתחלה ואורך כל ביקור באתר. נשאר מקומי, ואפשר למחוק אותו בכל עת.</li>
         <li><strong>היסטוריית סשני פוקוס</strong> — מתי התחיל כל סשן, כמה זמן נמשך והאם הושלם.</li>
         <li><strong>ההגדרות שלך</strong> (יעדים, מגבלות, קטגוריות, ערכת נושא וכו׳).</li>
+        <li><strong>הישגים ומזהה מכשיר</strong> — התאריך שבו הושג כל אבן דרך לראשונה, ומזהה אקראי של ההתקנה הזו שנכלל בגיבויים כדי שאפשר יהיה להבחין בין מכשירים בשחזור. אף אחד מהם לא מזהה אותך.</li>
       </ul>
       <p>התוסף <strong>אינו</strong> אוסף: היסטוריית גלישה מלאה (URLs), תוכן דפים,
       כותרות, הקלדות, סיסמאות, מיקום, או כל מזהה אישי.</p>
@@ -394,12 +398,14 @@
       הדפדפן שלך. אין לנו שרת, אין לנו גישה לנתונים שלך, ואיננו מבצעים שום מעקב
       אנליטי. לתוסף אין קוד חיצוני ולא מתבצעות קריאות רשת לא-רצוניות (גם האייקונים
       נוצרים מקומית).</p>
+      <p>אם תבחר תיקייה במחשב שלך, קבצי גיבוי ודוחות מסכמים ייכתבו אליה; אלה קבצים רגילים שאתה שולט בהם.</p>
 
       <h3>גיבוי בענן (אופציונלי, ביוזמתך בלבד)</h3>
       <p>אם תבחר להפעיל גיבוי, הנתונים יישלחו <strong>אך ורק</strong> ליעד שאתה מגדיר ושולט בו:</p>
       <ul>
         <li><strong>חשבון Google שלך</strong> דרך <code>chrome.storage.sync</code> — מנגנון הסנכרון המובנה של Chrome, המשויך לחשבון שלך. איננו צד בכך.</li>
         <li><strong>שרת מותאם אישית</strong> בכתובת HTTPS שאתה מספק — הנתונים נשלחים לשרת שלך.</li>
+        <li><strong>שרת WebDAV</strong> בכתובת HTTPS שאתה מספק — כל גיבוי נשמר שם כקובץ חדש, כך שגיבויים קודמים נשמרים; הנתונים נשלחים לשרת שלך.</li>
       </ul>
       <p>ניתן להגדיר <strong>הצפנת AES-256 עם סיסמה</strong>; במצב זה הנתונים מוצפנים במכשיר שלך לפני היציאה, והיעד רואה רק טקסט מוצפן. הסיסמה נשמרת מקומית בלבד ולעולם אינה נשלחת.</p>
 
@@ -429,17 +435,20 @@
         <li><strong>سجل الزيارات (اختياري، متوقف افتراضيًا)</strong> — إذا فعّلته: وقت بدء كل زيارة لموقع ومدتها. يبقى محليًا ويمكن حذفه في أي وقت.</li>
         <li><strong>سجل جلسات التركيز</strong> — وقت بدء كل جلسة ومدتها وهل اكتملت.</li>
         <li><strong>إعداداتك</strong> (الأهداف، الحدود، التصنيفات، السمة، وما إلى ذلك).</li>
+        <li><strong>الإنجازات ومعرّف الجهاز</strong> — تاريخ بلوغ كل إنجاز لأول مرة، ومعرّف عشوائي لهذا التثبيت يُضمَّن في النسخ الاحتياطية ليمكن التمييز بين الأجهزة عند الاستعادة. لا يحدّد أيٌّ منهما هويتك.</li>
       </ul>
       <p>الإضافة <strong>لا</strong> تجمع: سجل التصفح الكامل (عناوين URL)، محتوى الصفحات، العناوين، ضغطات المفاتيح، كلمات المرور، الموقع الجغرافي، أو أي معرّف شخصي.</p>
 
       <h3>أين تُخزَّن البيانات</h3>
       <p>تعيش جميع البيانات محليًا عبر <code>chrome.storage.local</code> داخل متصفحك. نحن لا نُشغّل أي خادم، وليس لدينا وصول إلى بياناتك، ولا نُشغّل أي تحليلات. لا تحتوي الإضافة على أي كود عن بُعد ولا تُجري أي طلبات شبكة غير إرادية (حتى أيقونات المواقع تُنشأ محليًا).</p>
+      <p>إذا اخترت مجلدًا على حاسوبك، تُكتب فيه ملفات النسخ الاحتياطي والتقارير الملخصة؛ وهي ملفات عادية تتحكم بها أنت.</p>
 
       <h3>النسخ الاحتياطي السحابي (اختياري، بمبادرة المستخدم فقط)</h3>
       <p>إذا فعّلت النسخ الاحتياطي، تُرسَل البيانات <strong>فقط</strong> إلى وجهة تُهيّئها وتتحكم بها بنفسك:</p>
       <ul>
         <li><strong>حساب Google الخاص بك</strong> عبر <code>chrome.storage.sync</code> — مزامنة Chrome المدمجة، المرتبطة بحسابك. نحن لسنا طرفًا في هذه العملية.</li>
         <li><strong>خادم مخصص</strong> على عنوان HTTPS تُقدّمه أنت — تُرسَل البيانات إلى خادمك.</li>
+        <li><strong>خادم WebDAV</strong> على عنوان HTTPS تقدّمه — يُحفظ كل نسخ احتياطي هناك كملف جديد فتبقى النسخ السابقة؛ تُرسل البيانات إلى خادمك.</li>
       </ul>
       <p>يمكنك تفعيل <strong>تشفير AES-256 بعبارة مرور</strong>؛ عندئذٍ تُشفَّر البيانات على جهازك قبل مغادرته، ولا ترى الوجهة سوى نص مشفّر. تُخزَّن عبارة المرور محليًا ولا تُنقَل أبدًا.</p>
 
@@ -465,17 +474,20 @@
         <li><strong>Журнал визитов (опционально, по умолчанию выключен)</strong> — если включить: время начала и длительность каждого визита на сайт. Остаётся локально и может быть удалён в любой момент.</li>
         <li><strong>История сессий фокусировки</strong> — когда началась каждая сессия, сколько длилась и была ли завершена.</li>
         <li><strong>Ваши настройки</strong> (цели, лимиты, категории, тема оформления и т. д.).</li>
+        <li><strong>Достижения и идентификатор устройства</strong> — дата первого достижения каждой отметки и случайный идентификатор этой установки, который попадает в копии, чтобы при восстановлении различать устройства. Ни то, ни другое не идентифицирует вас.</li>
       </ul>
       <p>Расширение <strong>не</strong> собирает: полную историю браузера (URL-адреса), содержимое страниц, заголовки, нажатия клавиш, пароли, местоположение или какие-либо личные идентификаторы.</p>
 
       <h3>Где хранятся данные</h3>
       <p>Все данные хранятся локально через <code>chrome.storage.local</code> внутри вашего браузера. Мы не эксплуатируем никакой сервер, не имеем доступа к вашим данным и не используем никакую аналитику. Расширение не содержит удалённого кода и не выполняет непроизвольных сетевых запросов (даже иконки сайтов генерируются локально).</p>
+      <p>Если вы выберете папку на компьютере, туда будут записываться файлы копий и сводные отчёты; это обычные файлы, которыми вы управляете.</p>
 
       <h3>Облачное резервное копирование (опционально, только по инициативе пользователя)</h3>
       <p>Если вы включите резервное копирование, данные отправляются <strong>только</strong> на цель, которую вы сами настраиваете и контролируете:</p>
       <ul>
         <li><strong>Ваш аккаунт Google</strong> через <code>chrome.storage.sync</code> — встроенную синхронизацию Chrome, привязанную к вашему аккаунту. Мы не являемся стороной этого процесса.</li>
         <li><strong>Собственный сервер</strong> по указанному вами адресу <code>HTTPS</code> — данные отправляются на ваш сервер.</li>
+        <li><strong>Сервер WebDAV</strong> по HTTPS-адресу, который вы укажете — каждая копия сохраняется там новым файлом, поэтому прежние остаются; данные уходят на ваш сервер.</li>
       </ul>
       <p>Вы можете включить <strong>шифрование AES-256 по парольной фразе</strong>; в этом случае данные шифруются на вашем устройстве перед отправкой, и цель резервного копирования видит только зашифрованный текст. Парольная фраза хранится локально и никогда не передаётся.</p>
 
@@ -501,17 +513,20 @@
         <li><strong>Registro de visitas (opcional, desactivado por defecto)</strong> — si lo activa: la hora de inicio y la duración de cada visita a un sitio. Permanece local y puede eliminarse en cualquier momento.</li>
         <li><strong>Historial de sesiones de enfoque</strong> — cuándo empezó cada sesión, cuánto duró y si se completó.</li>
         <li><strong>Su configuración</strong> (objetivos, límites, categorías, tema, etc.).</li>
+        <li><strong>Logros e identificador de dispositivo</strong> — la fecha en que se alcanzó cada hito por primera vez y un identificador aleatorio de esta instalación que viaja dentro de las copias para distinguir dispositivos al restaurar. Ninguno de los dos te identifica.</li>
       </ul>
       <p>La extensión <strong>no</strong> recopila: historial de navegación completo (URL), contenido de las páginas, títulos, pulsaciones de teclado, contraseñas, ubicación ni ningún identificador personal.</p>
 
       <h3>Dónde se almacenan los datos</h3>
       <p>Todos los datos residen localmente mediante <code>chrome.storage.local</code> dentro de su navegador. No operamos ningún servidor, no tenemos acceso a sus datos y no ejecutamos ningún tipo de analítica. La extensión no contiene código remoto y no realiza solicitudes de red involuntarias (incluso los iconos de los sitios se generan localmente).</p>
+      <p>Si eliges una carpeta de tu equipo, allí se escriben archivos de copia e informes resumen; son archivos normales que tú controlas.</p>
 
       <h3>Copia de seguridad en la nube (opcional, solo por iniciativa del usuario)</h3>
       <p>Si activa la copia de seguridad, los datos se envían <strong>únicamente</strong> al destino que usted configure y controle:</p>
       <ul>
         <li><strong>Su cuenta de Google</strong> mediante <code>chrome.storage.sync</code> — la sincronización integrada de Chrome, vinculada a su cuenta. No somos parte de este proceso.</li>
         <li><strong>Un servidor personalizado</strong> en una URL <code>HTTPS</code> que usted proporcione — los datos se envían a su servidor.</li>
+        <li><strong>Un servidor WebDAV</strong> en una dirección HTTPS que tú indicas: cada copia es allí un archivo nuevo, así que se conservan las anteriores; los datos van a tu servidor.</li>
       </ul>
       <p>Puede activar el <strong>cifrado mediante frase de contraseña AES-256</strong>; en ese caso, los datos se cifran en su dispositivo antes de salir, y el destino solo recibe texto cifrado. La frase de contraseña se almacena localmente y nunca se transmite.</p>
 
@@ -537,17 +552,20 @@
         <li><strong>Journal des visites (optionnel, désactivé par défaut)</strong> — si vous l’activez : l’heure de début et la durée de chaque visite d’un site. Il reste local et peut être supprimé à tout moment.</li>
         <li><strong>Historique des sessions de concentration</strong> — quand chaque session a commencé, sa durée et si elle est allée à son terme.</li>
         <li><strong>Vos paramètres</strong> (objectifs, limites, catégories, thème, etc.).</li>
+        <li><strong>Réussites et identifiant d'appareil</strong> — la date à laquelle chaque étape a été atteinte pour la première fois, et un identifiant aléatoire de cette installation qui voyage dans les sauvegardes pour distinguer les appareils lors d'une restauration. Aucun des deux ne vous identifie.</li>
       </ul>
       <p>L'extension ne collecte <strong>pas</strong> : l'historique de navigation complet (URL), le contenu des pages, les titres, les frappes clavier, les mots de passe, la localisation, ni aucun identifiant personnel.</p>
 
       <h3>Où les données sont stockées</h3>
       <p>Toutes les données résident localement via <code>chrome.storage.local</code>, dans votre navigateur. Nous n'exploitons aucun serveur, n'avons aucun accès à vos données et n'utilisons aucun outil d'analyse. L'extension ne contient aucun code distant et n'effectue aucune requête réseau involontaire (même les icônes de site sont générées localement).</p>
+      <p>Si vous choisissez un dossier sur votre ordinateur, les fichiers de sauvegarde et les rapports de synthèse y sont écrits ; ce sont des fichiers ordinaires que vous contrôlez.</p>
 
       <h3>Sauvegarde cloud (optionnelle, à l'initiative de l'utilisateur uniquement)</h3>
       <p>Si vous activez la sauvegarde, les données ne sont envoyées <strong>qu'</strong>à une destination que vous configurez et contrôlez :</p>
       <ul>
         <li><strong>Votre compte Google</strong> via <code>chrome.storage.sync</code> — la synchronisation intégrée de Chrome, liée à votre compte. Nous n'intervenons à aucun moment dans ce processus.</li>
         <li><strong>Un serveur personnalisé</strong>, à une URL HTTPS que vous fournissez — les données sont envoyées vers votre serveur.</li>
+        <li><strong>Un serveur WebDAV</strong> à une adresse HTTPS que vous fournissez : chaque sauvegarde y est un nouveau fichier, donc les précédentes sont conservées ; les données vont vers votre serveur.</li>
       </ul>
       <p>Vous pouvez activer le <strong>chiffrement par phrase secrète AES-256</strong> ; les données sont alors chiffrées sur votre appareil avant leur envoi, et la destination ne reçoit que du texte chiffré. La phrase secrète est stockée localement et n'est jamais transmise.</p>
 
