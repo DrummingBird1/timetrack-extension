@@ -409,5 +409,19 @@
   "tags.saved": "התגית \"{n}\" נשמרה",
   "tags.removed": "התגית \"{n}\" הוסרה",
   "tags.sites": "{n} אתרים",
-  "panel.tags": "זמן לפי תגית"
+  "panel.tags": "זמן לפי תגית",
+  "import.scope": "מה לשחזר מהקובץ",
+  "import.scopeDesc": "טווח תאריכים ממזג בלבד ולא מוחק שום יום. \"הגדרות בלבד\" לא נוגע בהיסטוריה.",
+  "import.scopeAll": "הכול",
+  "import.scopeRange": "טווח תאריכים",
+  "import.scopeSettings": "הגדרות בלבד",
+  "import.from": "מתאריך",
+  "import.to": "עד תאריך",
+  "import.needRange": "בחר לפחות תאריך התחלה או סיום",
+  "toast.settingsRestored": "ההגדרות שוחזרו מהקובץ (ההיסטוריה לא שונתה)",
+  "btn.verifyFile": "אמת קובץ גיבוי",
+  "verify.ok": "הגיבוי תקין: {n} ימים, סכום הבקרה תואם",
+  "verify.okNoChecksum": "הקובץ תקין ({n} ימים), אבל גיבוי ישן בלי סכום בקרה — אי אפשר לוודא שלא השתנה",
+  "verify.mismatch": "סכום הבקרה לא תואם: הקובץ שונה או פגום אחרי שנוצר",
+  "verify.invalid": "בקובץ יש {n} רשומות לא תקינות שלא ישוחזרו"
 }
