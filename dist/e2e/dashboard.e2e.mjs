@@ -421,6 +421,27 @@ test('category budgets: add in Settings, progress shows on Overview, remove hide
   await page.waitForSelector('#budgetWrap.hidden');
 });
 
+test('tags: create in Settings, time per tag shows on Overview, remove hides it', async () => {
+  await openTab('settings');
+  await page.type('#tagName', 'Work');
+  await page.type('#tagDomains', 'github.com, not a site');
+  await page.click('#tagAdd');
+  await waitFor(async () => (await ext.getSettings()).tags.Work?.includes('github.com'), { message: 'tag saved' });
+  assert.equal(await count('#tagList .cat-chip'), 1);
+  await page.type('#tagName', '<b>x</b>');
+  await page.type('#tagDomains', 'a.com');
+  await page.click('#tagAdd');
+  assert.equal(Object.keys((await ext.getSettings()).tags).length, 1, 'markup in a name is rejected');
+  await ext.run(async (url) => (await import(url)).addTime({ dateKey: (await import(url.replace('storage.js', 'utils.js'))).dayKey(), domain: 'github.com', seconds: 300, hour: 9 }), `${ext.base}src/lib/storage.js`);
+  await openTab('overview');
+  await page.reload();
+  await page.waitForSelector('#tagWrap:not(.hidden) .cb-row');
+  assert.match(await page.$eval('#tagPanel', (e) => e.textContent), /Work/);
+  await openTab('settings');
+  await page.click('#tagList .cat-chip .x');
+  await waitFor(async () => Object.keys((await ext.getSettings()).tags).length === 0, { message: 'tag removed' });
+});
+
 test('category budgets: a non-positive amount is rejected', async () => {
   await openTab('settings');
   await page.type('#budgetMinutes', '0');

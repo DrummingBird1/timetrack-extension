@@ -6,7 +6,7 @@
 // reaches the day records the tracker later adds to (a malformed "today" used to make every
 // commit throw).
 
-import { isTrackableHost } from './utils.js';
+import { isTrackableHost, cleanTagName } from './utils.js';
 import { CATEGORY_DEFS } from './categories.js';
 import { SUPPORTED_LANGS } from './i18n.js';
 
@@ -108,7 +108,11 @@ function coerce(path, value, def) {
     if (!isObj(value)) return undefined;
     const out = {};
     for (const [k, v] of Object.entries(value)) {
-      if (path === 'categoryBudgets') { if (k in CATEGORY_DEFS && isNum(v, 10080) && v > 0) out[k] = v; }
+      if (path === 'tags') {
+        const name = cleanTagName(k);
+        if (name && name === k && Array.isArray(v)) out[k] = [...new Set(v.filter((d) => isTrackableHost(d)))].slice(0, 200);
+      }
+      else if (path === 'categoryBudgets') { if (k in CATEGORY_DEFS && isNum(v, 10080) && v > 0) out[k] = v; }
       else if (path === 'siteLimits') { if (isTrackableHost(k) && isNum(v, 1440) && v > 0) out[k] = v; }
       else if (isTrackableHost(k) && typeof v === 'string' && v in CATEGORY_DEFS) out[k] = v;   // categoryMap
     }

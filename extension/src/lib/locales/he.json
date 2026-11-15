@@ -397,5 +397,17 @@
   "bk.timeout": "השרת לא הגיב תוך {n} שניות",
   "bk.network": "אין חיבור לשרת (רשת, CORS או כתובת שגויה)",
   "productNote.text": "מאז {d} אתרים כמו Gmail, Docs ו-Drive נספרים בנפרד (mail.google.com ועוד) במקום תחת google.com. הזמן שנצבר קודם נשאר תחת הדומיין הכללי.",
-  "productNote.dismiss": "הבנתי"
+  "productNote.dismiss": "הבנתי",
+  "set.tags": "תגיות",
+  "set.tagsDesc": "קבץ אתרים לקבוצות משלך (עבודה, לימודים…) וראה בסקירה כמה זמן לקחה כל קבוצה. אתר יכול לשמש בכמה תגיות.",
+  "tags.namePh": "שם התגית",
+  "tags.domainsPh": "אתרים, מופרדים בפסיק",
+  "tags.none": "עדיין אין תגיות",
+  "tags.badName": "שם תגית חייב להיות 1–30 תווים, בלי < > & או מירכאות",
+  "tags.noDomains": "הוסף לפחות אתר אחד תקין",
+  "tags.tooMany": "אפשר עד {n} תגיות",
+  "tags.saved": "התגית \"{n}\" נשמרה",
+  "tags.removed": "התגית \"{n}\" הוסרה",
+  "tags.sites": "{n} אתרים",
+  "panel.tags": "זמן לפי תגית"
 }

@@ -397,5 +397,17 @@
   "bk.timeout": "Le serveur n'a pas répondu en {n} secondes",
   "bk.network": "Serveur injoignable (réseau, CORS ou adresse incorrecte)",
   "productNote.text": "Depuis le {d}, des sites comme Gmail, Docs et Drive sont suivis séparément (mail.google.com, etc.) au lieu de google.com. Le temps enregistré avant reste sous le domaine général.",
-  "productNote.dismiss": "Compris"
+  "productNote.dismiss": "Compris",
+  "set.tags": "Tags",
+  "set.tagsDesc": "Regroupez des sites dans vos propres ensembles (Travail, Études…) et voyez dans l'aperçu le temps passé sur chacun. Un site peut avoir plusieurs tags.",
+  "tags.namePh": "Nom du tag",
+  "tags.domainsPh": "Sites, séparés par des virgules",
+  "tags.none": "Aucun tag pour l'instant",
+  "tags.badName": "Le nom du tag doit avoir 1–30 caractères, sans < > & ni guillemets",
+  "tags.noDomains": "Ajoutez au moins un site valide",
+  "tags.tooMany": "Jusqu'à {n} tags autorisés",
+  "tags.saved": "Tag « {n} » enregistré",
+  "tags.removed": "Tag « {n} » supprimé",
+  "tags.sites": "{n} sites",
+  "panel.tags": "Temps par tag"
 }
