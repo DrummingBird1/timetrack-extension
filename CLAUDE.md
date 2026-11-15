@@ -12,7 +12,7 @@ cloud backup, and data export.
 All data lives **locally** in `chrome.storage.local`. Nothing is sent anywhere
 unless the user explicitly enables a backup target. The UI is available in six
 languages (Hebrew is the default and the source language; Hebrew and Arabic are RTL).
-Current version: **2.0.0** (see `CHANGELOG.md`).
+Current version: **2.0.1** (see `CHANGELOG.md`).
 
 ## Repository layout
 
@@ -604,7 +604,7 @@ backup endpoint.
 
 Kept in sync with the Trello board's **🔜 Next up** and **🗄️ Backlog** lists.
 
-- **Chrome Web Store submission** of `timetrack-v2.0.0.zip` (1.7.0 is already in the
+- **Chrome Web Store submission** of `timetrack-v2.0.1.zip` (1.7.0 is already in the
   Store; the owner has a developer account) — pack in `store-assets/STORE_LISTING.md`.
 - **Multi-device merge** — needs a design decision first (which device wins, how to
   merge day records, whether `storage.sync` is the transport).
