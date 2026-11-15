@@ -24,7 +24,7 @@ Four top-level folders, plus `.github/` and root docs (`README*.md`, `CHANGELOG.
   `_locales/`, `src/`.
 - **`store-assets/`** — everything for the Chrome Web Store listing itself:
   `PRIVACY.md`, `STORE_LISTING.md`, `BROWSER_SUPPORT.md` (Edge/Firefox notes — not
-  tested), `promo/` (promo graphics + per-release banners), `screenshots/` (he/en
+  tested), `icon/` (the Store icon, a 512 px logo and the SVG), `promo/` (promo graphics + per-release banners), `screenshots/` (he/en
   committed, generated), `listing-text/` (one paste-ready plain-text description per
   language, generated from `STORE_LISTING.md`), and `site/` (the marketing website
   source, deployed to the `gh-pages` branch — see below).

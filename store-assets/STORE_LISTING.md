@@ -307,7 +307,7 @@ language, are in [`listing-text/`](listing-text/). They are generated from this 
 
 | Asset | Spec | Status |
 |-------|------|--------|
-| Store icon | 128×128 PNG | ✅ `../extension/icons/icon128.png` |
+| Store icon | 128×128 PNG | ✅ `icon/store-icon-128.png` (the same file as the extension's `icon128.png`; a 512×512 version and the SVG are beside it) |
 | Screenshots | 1280×800 JPEG/PNG, 1–5 images | ✅ `screenshots/he/` and `screenshots/en/` (5 each) |
 | Small promo tile | 440×280 PNG/JPEG | ✅ `promo/promo-tile-440x280.png` |
 | Marquee promo (optional) | 1400×560 | ✅ `promo/promo-marquee-1400x560.png` |
@@ -318,7 +318,8 @@ refreshed after any UI change:
 ```bash
 cd dist
 node tools/screenshots.mjs          # he + en; --langs all for the other four (git-ignored)
-node tools/promo-tiles.mjs          # tile + marquee (uses screenshots/en/01-overview.jpg)
+node tools/promo-tiles.mjs          # tile, marquee, link preview (uses screenshots/en/*.jpg)
+node tools/icons.mjs                # toolbar icons + icon/ (Store icon, 512 px logo, SVG)
 ```
 
 Upload `screenshots/he/*` to the Hebrew listing and `screenshots/en/*` to the English one.
