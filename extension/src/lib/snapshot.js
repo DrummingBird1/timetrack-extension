@@ -97,6 +97,7 @@ function cleanList(path, list) {
 function coerce(path, value, def) {
   if (path === 'language') return SUPPORTED_LANGS.includes(value) ? value : undefined;
   if (path === 'theme') return THEMES.includes(value) ? value : undefined;
+  if (path === 'reportFrequency') return ['off', 'weekly', 'monthly'].includes(value) ? value : undefined;
   if (path === 'focus.mode') return value === 'block' || value === 'allow' ? value : undefined;
   if (path === 'weekStart') return Number.isInteger(value) && value >= 0 && value <= 6 ? value : undefined;
   if (path === 'retentionDays') return value === 0 || (Number.isInteger(value) && value >= 7 && value <= 3650) ? value : undefined;

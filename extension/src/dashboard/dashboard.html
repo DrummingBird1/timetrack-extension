@@ -420,6 +420,13 @@
               <div><div id="lbl-setLocalEnabled" class="set-label" data-i18n="set.local">גיבוי אוטומטי לתיקייה במחשב</div><div id="desc-setLocalEnabled" class="set-desc" data-i18n="set.localDesc">קובץ גיבוי נכתב לתיקייה שתבחר, ככל שהתדירות למעלה. הדפדפן עשוי לבקש לאשר גישה לתיקייה מחדש.</div></div>
               <label class="switch"><input type="checkbox" id="setLocalEnabled" aria-labelledby="lbl-setLocalEnabled" aria-describedby="desc-setLocalEnabled" /><span class="switch-track"><span class="switch-thumb"></span></span></label>
             </div>
+            <div class="setting-row">
+              <div><div id="lbl-setReportFreq" class="set-label" data-i18n="set.reportFreq">דוח מסכם אוטומטי</div><div id="desc-setReportFreq" class="set-desc" data-i18n="set.reportFreqDesc">קובץ HTML עם הסיכום נכתב לתיקיית הגיבוי שבחרת (שבועי או חודשי). אפשר גם להוריד עכשיו.</div><div class="set-desc" id="reportStatus" role="status"></div></div>
+              <div class="btn-group">
+                <select id="setReportFreq" aria-labelledby="lbl-setReportFreq" aria-describedby="desc-setReportFreq"><option value="off" data-i18n="report.off">כבוי</option><option value="weekly" data-i18n="report.weekly">שבועי</option><option value="monthly" data-i18n="report.monthly">חודשי</option></select>
+                <button class="btn" id="reportNow" data-i18n="btn.reportNow">הורד דוח</button>
+              </div>
+            </div>
             <div class="field-block">
               <div class="set-desc" id="localFolderState" role="status"></div>
               <div class="btn-group">

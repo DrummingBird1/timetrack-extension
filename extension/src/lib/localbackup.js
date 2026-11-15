@@ -8,6 +8,7 @@ const DB_NAME = 'ttt_local_backup';
 const STORE = 'handles';
 const KEY = 'folder';
 export const BACKUP_FILE = /^timetrack-backup-\d{4}-\d{2}-\d{2}-\d{4}\.json$/;
+export const REPORT_FILE = /^timetrack-report-\d{4}-\d{2}-\d{2}\.html$/;
 
 function openDb() {
   return new Promise((resolve, reject) => {
@@ -69,19 +70,28 @@ export function backupFileName(date = new Date()) {
  * @returns {Promise<{ name: string, removed: number }>}
  */
 export async function writeBackupToFolder(dir, json, { keep = 7, now = new Date() } = {}) {
-  const name = backupFileName(now);
+  return writeAndRotate(dir, backupFileName(now), json, BACKUP_FILE, keep);
+}
+
+/** Write a report into the folder and keep only the newest `keep` reports (our own file pattern only). */
+export async function writeReportToFolder(dir, name, html, { keep = 12 } = {}) {
+  if (!REPORT_FILE.test(name)) throw new Error('unexpected report file name');
+  return writeAndRotate(dir, name, html, REPORT_FILE, keep);
+}
+
+async function writeAndRotate(dir, name, content, pattern, keep) {
   const file = await dir.getFileHandle(name, { create: true });
   const writable = await file.createWritable();
   try {
-    await writable.write(json);
+    await writable.write(content);
   } finally {
     await writable.close();
   }
   const names = [];
   for await (const [entryName, entry] of dir.entries()) {
-    if (entry.kind === 'file' && BACKUP_FILE.test(entryName)) names.push(entryName);
+    if (entry.kind === 'file' && pattern.test(entryName)) names.push(entryName);
   }
-  names.sort().reverse();                                   // newest first (the name sorts by time)
+  names.sort().reverse();                                   // newest first (the names sort by date)
   const stale = names.slice(Math.max(1, keep));
   for (const old of stale) await dir.removeEntry(old);
   return { name, removed: stale.length };

@@ -41,6 +41,7 @@ export const DEFAULT_SETTINGS = {
   tagBudgets: {},                // tag name -> minutes/week (notifies at 80% and 100%)
   notifyLimits: true,            // fire notifications when limits are hit
   weeklySummary: true,           // weekly digest notification
+  reportFrequency: 'off',        // off | weekly | monthly: an HTML report written into the backup folder
   backupWarnDays: 7,             // warn when a configured backup hasn't succeeded for this many days (0 = off)
   categoryMap: {},               // domain -> category override
   blacklist: [],                 // domains never tracked
