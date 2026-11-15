@@ -4,7 +4,7 @@
     "description": "Extension name shown in the Chrome Web Store and chrome://extensions (max 75 characters)."
   },
   "appDescription": {
-    "message": "Mesurez votre temps actif par site : analyses, budgets, mode concentration et sauvegarde chiffrée. Privé, local, sans compte.",
+    "message": "Mesurez votre temps actif par site : analyses, tags, budgets, mode concentration et sauvegardes à vous. Privé, local, sans compte.",
     "description": "Short description shown in the Chrome Web Store (max 132 characters). Keep in sync with store-assets/STORE_LISTING.md."
   },
   "cmdToggleTracking": {

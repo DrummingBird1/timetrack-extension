@@ -1,17 +1,31 @@
-TimeTrack mesure le temps que vous passez réellement sur chaque site web, en plaçant la confidentialité et le stockage local au premier plan. Toutes les données restent sur votre appareil ; rien n'est envoyé nulle part, sauf si vous activez une sauvegarde que vous contrôlez.
+TimeTrack montre où va vraiment votre temps, en privilégiant la confidentialité et le stockage local. Tout reste sur votre appareil ; rien n'est envoyé nulle part sauf si vous activez une sauvegarde que vous contrôlez.
 
-• Suivi précis du temps actif : seul compte le temps où la fenêtre est active et où vous n'êtes pas inactif (en option, aussi pendant la lecture audio)
-• Catégories intelligentes : des centaines de sites populaires dans chaque langue prise en charge sont déjà classés, et chaque catégorie est modifiable — ainsi qu'un score de concentration de 0 à 100 avec tendance hebdomadaire et votre meilleure semaine
-• Carte de chaleur jour de la semaine × heure, analyses hebdomadaires en langage clair et comparaison de deux périodes au choix
-• Détail par site avec chronologies quotidienne et horaire (et un journal des visites facultatif)
-• Objectifs quotidiens et hebdomadaires, limites par site, budgets hebdomadaires par catégorie, alertes à 80 % et résumé hebdomadaire
-• Mode concentration (Pomodoro) : bloquez les catégories ou les sites qui distraient, ou n'autorisez que l'essentiel ; planifiez des sessions, utilisez le mode strict ou accordez-vous une pause de 10 minutes
-• Onglet Sites conçu pour les gros historiques : recherche dans tout l'historique, sites épinglés, fusion de l'historique d'un site renommé et actions groupées (catégoriser, limiter, ne plus suivre)
-• Import depuis CSV (y compris les exports de type RescueTime) et export JSON/CSV à tout moment
-• Sauvegarde cloud sur votre compte Google ou votre propre serveur HTTPS, avec chiffrement AES-256 facultatif et aperçu avant restauration
-• Tags, réussites et palette de commandes: regroupez des sites dans vos propres tags avec des budgets hebdomadaires, obtenez des réussites locales, allez partout avec Ctrl/Cmd+K et profitez d'analyses plus fines (usage nocturne, nouveaux sites, votre heure la plus productive)
-• Plus de moyens de protéger vos données: sauvegardes planifiées vers un dossier de votre ordinateur ou un serveur WebDAV avec historique des versions, vérification d'un fichier de sauvegarde sans le restaurer, restauration d'une plage de dates ou des réglages seulement, rapports HTML hebdomadaires ou mensuels, et alerte quand les sauvegardes cessent de fonctionner
-• Raccourcis clavier, accessibilité au clavier et aux lecteurs d'écran, thèmes clair et sombre
-• Six langues avec changement à la volée : hébreu, anglais, arabe, russe, espagnol, français (écriture de droite à gauche prise en charge)
+■ SUIVI ET ANALYSES
+• Temps actif précis : seul compte le temps où la fenêtre est au premier plan et où vous n'êtes pas inactif (en option, aussi pendant la lecture audio)
+• Catégories intelligentes pour des centaines de sites populaires dans chaque langue prise en charge, toutes modifiables, avec un score de concentration de 0 à 100, sa tendance hebdomadaire et votre meilleure semaine
+• Carte thermique jour × heure, analyses en langage clair (usage nocturne, nouveaux sites, votre heure la plus productive) et comparaison de deux plages de dates au choix
+• Détail par site avec chronologies quotidienne et horaire, et un journal de visites facultatif
+• Un onglet Sites conçu pour les gros historiques : recherche partout, épinglage, fusion d'un site renommé, et catégorisation, limite ou exclusion de plusieurs sites à la fois
 
-Sans dépendances externes, sans code distant, sans analytique et sans traceurs tiers. Les icônes des sites sont générées localement : aucun domaine que vous visitez ne quitte votre appareil. Les anciennes données sont supprimées automatiquement après la durée de votre choix.
+■ OBJECTIFS ET CONCENTRATION
+• Objectifs quotidiens et hebdomadaires, limites par site et budgets hebdomadaires pour les catégories et pour vos propres tags, avec alertes à 80 % et 100 %
+• Mode concentration (Pomodoro) : bloquez les sites distrayants ou n'autorisez que l'essentiel ; sessions planifiées, mode strict ou pause de 10 minutes
+• Des réussites pour les séries, les sessions de concentration et plus, conservées uniquement sur votre appareil
+
+■ À VOTRE FAÇON
+• Tags : regroupez les sites à votre manière (Travail, Études…) avec une vue du temps par tag et des budgets hebdomadaires
+• Palette de commandes (Ctrl/Cmd+K) : accédez à n'importe quel écran ou site, ou lancez une action au clavier
+• Rapports HTML hebdomadaires ou mensuels, enregistrés dans le dossier de votre choix ou téléchargés à la demande
+
+■ SAUVEGARDE ET VOS DONNÉES
+• Sauvegardes vers votre compte Google, votre propre serveur HTTPS, un serveur WebDAV avec historique des versions ou un dossier de votre ordinateur, planifiées et avec chiffrement AES-256 facultatif
+• Vérifiez une sauvegarde sans la restaurer, prévisualisez avant de restaurer, restaurez seulement une plage de dates ou les réglages, et soyez averti quand les sauvegardes cessent de fonctionner
+• Import depuis CSV (y compris les fichiers de type RescueTime) et export JSON ou CSV à tout moment
+
+■ CONFIDENTIEL PAR CONCEPTION
+• Pas de compte, pas d'analytique, pas de code distant, pas de traceurs tiers ; les icônes de sites sont générées localement, donc aucun domaine visité ne quitte votre appareil
+• Les anciennes données sont supprimées automatiquement après la durée que vous choisissez
+
+■ POUR TOUS
+• Six langues avec changement en direct : hébreu, anglais, arabe, russe, espagnol, français (écriture de droite à gauche prise en charge)
+• Thèmes clair et sombre, raccourcis clavier, accessibilité au clavier et aux lecteurs d'écran, et une courte configuration au premier lancement

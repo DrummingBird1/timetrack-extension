@@ -4,7 +4,7 @@
     "description": "Extension name shown in the Chrome Web Store and chrome://extensions (max 75 characters)."
   },
   "appDescription": {
-    "message": "Mide tu tiempo activo por sitio: análisis, presupuestos, modo concentración y copia cifrada. Privado y local, sin cuenta.",
+    "message": "Mide tu tiempo activo por sitio: análisis, etiquetas, presupuestos, enfoque y copias que controlas. Privado y local, sin cuenta.",
     "description": "Short description shown in the Chrome Web Store (max 132 characters). Keep in sync with store-assets/STORE_LISTING.md."
   },
   "cmdToggleTracking": {

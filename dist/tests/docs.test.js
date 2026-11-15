@@ -129,3 +129,52 @@ test('manifest, CHANGELOG and the release banner agree on the current version', 
   assert.ok(fs.existsSync(path.join(root, `store-assets/promo/releases/v${version}.svg`)),
     `missing release banner — run: node dist/make-release-banner.mjs ${version} <theme> "<tagline>"`);
 });
+
+// ----------------------------------------------------- descriptions: current, tidy, in every language
+// Iron rule: the extension's descriptions are always the most up-to-date account of what it offers, and are formatted
+// and ordered. The version marker forces a re-read at every release; the shape tests keep them tidy in all six languages.
+const manifestVersion = () => JSON.parse(read('extension/manifest.json')).version;
+
+test('the descriptions were reviewed for the current version (bump the marker in STORE_LISTING.md after re-reading them)', () => {
+  const m = read('store-assets/STORE_LISTING.md').match(/<!-- descriptions-reviewed-for: (\d+\.\d+\.\d+) -->/);
+  assert.ok(m, 'STORE_LISTING.md has no "descriptions-reviewed-for" marker');
+  assert.equal(m[1], manifestVersion(),
+    `manifest.json is ${manifestVersion()} but the descriptions were last reviewed for ${m[1]}. Re-read them against what the extension offers now: `
+    + 'the short descriptions (_locales), the detailed ones (STORE_LISTING.md, then node dist/tools/listing-text.mjs), the six READMEs and the site copy; fix what is stale, then update the marker.');
+});
+
+test('every detailed description is structured the same way: an intro, then titled sections of one-line bullets', () => {
+  const texts = buildListingTexts(read('store-assets/STORE_LISTING.md'));
+  const NL = String.fromCharCode(10);
+  const shapeOf = (text) => {
+    const blocks = text.trim().split(NL + NL);
+    return { intro: blocks[0], sections: blocks.slice(1).map((b) => b.split(NL)) };
+  };
+  const reference = shapeOf(texts.en);
+  assert.ok(reference.sections.length >= 5, 'the English description should have at least five sections');
+  for (const lang of LANGS) {
+    const { intro, sections } = shapeOf(texts[lang]);
+    assert.ok(intro.length > 40 && !intro.startsWith('•') && !intro.startsWith('■'), `${lang}: the description must open with an introduction`);
+    assert.equal(sections.length, reference.sections.length, `${lang}: a different number of sections than English`);
+    sections.forEach((lines, i) => {
+      assert.ok(lines[0].startsWith('■ '), `${lang}: section ${i + 1} must start with a "■ " title, got "${lines[0].slice(0, 30)}"`);
+      assert.equal(lines.length, reference.sections[i].length, `${lang}: section ${i + 1} has a different number of bullets than English`);
+      for (const bullet of lines.slice(1)) {
+        assert.ok(bullet.startsWith('• '), `${lang}: "${bullet.slice(0, 40)}" is not a "• " bullet`);
+        assert.ok(bullet.length <= 300, `${lang}: a bullet is ${bullet.length} characters; split it`);
+      }
+    });
+    const text = texts[lang];
+    assert.ok(text.length <= 16000, `${lang}: the Store allows 16,000 characters, this is ${text.length}`);
+    assert.ok(!/\*\*|`|^#|  +$/m.test(text), `${lang}: the plain-text description contains Markdown or trailing spaces`);
+    assert.ok(!text.includes(String.fromCharCode(13)), `${lang}: stray carriage returns`);
+  }
+});
+
+test('the short descriptions fit the Store limit and say something about the main features', () => {
+  for (const lang of LANGS) {
+    const { appDescription } = JSON.parse(read(`extension/_locales/${lang}/messages.json`));
+    const len = [...appDescription.message].length;
+    assert.ok(len >= 60 && len <= 132, `${lang}: the short description is ${len} characters (60-132)`);
+  }
+});
