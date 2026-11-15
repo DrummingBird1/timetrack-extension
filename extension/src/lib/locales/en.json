@@ -492,5 +492,10 @@
   "ach.score.name": "A week with focus score {n}+",
   "ach.score.desc": "At least one week with a weekly focus score of {n} or more",
   "ach.backup.name": "First backup",
-  "ach.backup.desc": "Your data is backed up at least once"
+  "ach.backup.desc": "Your data is backed up at least once",
+  "insight.lateNight": "{pct}% of this week's browsing happened between midnight and 5 am",
+  "insight.newSite": "New near the top: {site} (none in the previous period)",
+  "insight.tagUp": "The tag {tag} is up {pct}% vs the previous period",
+  "insight.tagDown": "The tag {tag} is down {pct}% vs the previous period",
+  "insight.bestHour": "Your most productive hour: {h}"
 }

@@ -104,3 +104,51 @@ test('siteChanges ranks sites by the size of their change between two periods', 
   assert.deepEqual(siteChanges({}, {}), []);
   assert.deepEqual(siteChanges(undefined, undefined), []);
 });
+
+// ---- 2.0 smarter insights ----
+import { smartInsights as smart } from '../../extension/src/lib/stats.js';
+
+const dayRec = (domains, hours = new Array(24).fill(0)) => ({
+  domains: Object.fromEntries(Object.entries(domains).map(([d, v]) => [d, typeof v === 'number' ? { t: v, v: 1 } : v])),
+  hours,
+});
+const keysOf = (items) => items.map((i) => i.key);
+
+test('smartInsights stays quiet when there is nothing notable or no data', () => {
+  assert.deepEqual(smart({}, {}), []);
+  const flat = { '2026-03-02': dayRec({ 'a.com': 3600 }, Object.assign(new Array(24).fill(0), { 10: 3600 })) };
+  assert.deepEqual(smart(flat, flat), []);
+});
+
+test('smartInsights flags late-night browsing only when it is a real share', () => {
+  const night = (secs) => ({ '2026-03-02': dayRec({ 'a.com': 3600 }, Object.assign(new Array(24).fill(0), { 2: secs, 10: 3600 - secs })) });
+  assert.deepEqual(smart(night(1900), {}).find((i) => i.key === 'insight.lateNight').vars, { pct: 53 });
+  assert.ok(!keysOf(smart(night(600), {})).includes('insight.lateNight'), 'ten minutes is not a pattern');
+});
+
+test('smartInsights names a site that is new near the top, but not when there is no earlier period to compare', () => {
+  const cur = { '2026-03-09': dayRec({ 'old.com': 3000, 'new.com': 2400 }) };
+  const prev = { '2026-03-02': dayRec({ 'old.com': 3000 }) };
+  assert.deepEqual(smart(cur, prev).find((i) => i.key === 'insight.newSite').vars, { site: 'new.com' });
+  assert.ok(!keysOf(smart(cur, {})).includes('insight.newSite'));
+  assert.ok(!keysOf(smart({ '2026-03-09': dayRec({ 'old.com': 3000, 'new.com': 600 }) }, prev)).includes('insight.newSite'), 'ten minutes is not "near the top"');
+});
+
+test('smartInsights reports the tag that moved most, needing 30 min before and a 40% swing', () => {
+  const tags = { Work: ['w.com'], Fun: ['f.com'], Tiny: ['t.com'] };
+  const prev = { '2026-03-02': dayRec({ 'w.com': 3600, 'f.com': 3600, 't.com': 600 }) };
+  const cur = { '2026-03-09': dayRec({ 'w.com': 7200, 'f.com': 1800, 't.com': 6000 }) };
+  const swing = smart(cur, prev, { tags }).find((i) => i.key.startsWith('insight.tag'));
+  assert.deepEqual(swing, { key: 'insight.tagUp', vars: { tag: 'Work', pct: 100 } }, 'Tiny had under 30 minutes before, so it cannot win');
+  const down = smart({ '2026-03-09': dayRec({ 'w.com': 3600, 'f.com': 600 }) }, prev, { tags }).find((i) => i.key.startsWith('insight.tag'));
+  assert.deepEqual(down, { key: 'insight.tagDown', vars: { tag: 'Fun', pct: 83 } });
+});
+
+test('smartInsights finds the most productive hour from productive-category sites only', () => {
+  const cur = { '2026-03-09': dayRec({
+    'github.com': { t: 5400, v: 1, dh: { 9: 1800, 14: 3600 } },
+    'youtube.com': { t: 7200, v: 1, dh: { 21: 7200 } },
+  }) };
+  assert.deepEqual(smart(cur, {}).find((i) => i.key === 'insight.bestHour').vars, { h: '14:00' });
+  assert.ok(!keysOf(smart({ '2026-03-09': dayRec({ 'github.com': { t: 600, v: 1, dh: { 9: 600 } } }) }, {})).includes('insight.bestHour'), 'under an hour of productive time');
+});

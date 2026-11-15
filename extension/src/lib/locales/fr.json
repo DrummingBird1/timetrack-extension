@@ -492,5 +492,10 @@
   "ach.score.name": "Une semaine avec un score de concentration {n}+",
   "ach.score.desc": "Au moins une semaine avec un score de concentration hebdomadaire de {n} ou plus",
   "ach.backup.name": "Première sauvegarde",
-  "ach.backup.desc": "Vos données ont été sauvegardées au moins une fois"
+  "ach.backup.desc": "Vos données ont été sauvegardées au moins une fois",
+  "insight.lateNight": "{pct} % de la navigation de cette semaine a eu lieu entre minuit et 5 h",
+  "insight.newSite": "Nouveau en tête : {site} (absent de la période précédente)",
+  "insight.tagUp": "Le tag {tag} est en hausse de {pct} % par rapport à la période précédente",
+  "insight.tagDown": "Le tag {tag} est en baisse de {pct} % par rapport à la période précédente",
+  "insight.bestHour": "Votre heure la plus productive : {h}"
 }

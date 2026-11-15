@@ -3,7 +3,7 @@ import { getIndex, getDays, getDay } from '../lib/storage.js';
 import { dayKey, rangeKeys, parseDayKey, addDays, formatDuration, sum, weekdaysFull, esc } from '../lib/utils.js';
 import {
   totalTime, topSites, byCategory, focusScore, dailyTotals,
-  activeDaysCount, currentStreak, goalStreak, trend, generateInsights, usualForWeekday,
+  activeDaysCount, currentStreak, goalStreak, trend, generateInsights, smartInsights, usualForWeekday,
 } from '../lib/stats.js';
 import { categorize, categoryDef } from '../lib/categories.js';
 import { barChart, donutChart } from '../lib/charts.js';
@@ -86,7 +86,7 @@ async function renderInsightsPanel() {
   const thisKeys = rangeKeys(7);
   const lastKeys = rangeKeys(7, addDays(parseDayKey(thisKeys[0]), -1));
   const [tw, lw] = await Promise.all([getDays(thisKeys), getDays(lastKeys)]);
-  const items = generateInsights(tw, lw, settings.categoryMap);
+  const items = [...generateInsights(tw, lw, settings.categoryMap), ...smartInsights(tw, lw, { categoryMap: settings.categoryMap, tags: settings.tags })].slice(0, 6);
   const host = $('#insightsPanel');
   host.innerHTML = '';
   if (!items.length) { host.innerHTML = `<div class="empty">${t('insight.none')}</div>`; return; }
@@ -96,6 +96,7 @@ async function renderInsightsPanel() {
     if (vars.wd != null) vars.wd = weekdaysFull(settings.language)[vars.wd];
     const row = document.createElement('div');
     row.className = 'insight-item';
+    for (const k of Object.keys(vars)) if (typeof vars[k] === 'string') vars[k] = esc(vars[k]);   // site and tag names are user data
     row.innerHTML = `<span class="insight-ic">💡</span><span>${t(it.key, vars)}</span>`;
     host.appendChild(row);
   }
