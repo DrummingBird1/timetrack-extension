@@ -468,6 +468,17 @@ test('category budgets: a non-positive amount is rejected', async () => {
   assert.deepEqual((await ext.getSettings()).categoryBudgets, {});
 });
 
+test('achievements: the Insights panel lists the catalog, marks reached ones, and remembers their first date', async () => {
+  await ext.run(async (url) => (await import(url)).saveMeta({ achievements: {} }), `${ext.base}src/lib/storage.js`);
+  await openTab('insights');
+  await page.waitForSelector('#achievementList .ach');
+  assert.equal(await count('#achievementList .ach'), 11);
+  await waitFor(async () => (await count('#achievementList .ach.on')) >= 1, { message: 'the 90-day history reaches at least the 7-day streak' });
+  const saved = await ext.run(async (url) => (await (await import(url)).getMeta()).achievements, `${ext.base}src/lib/storage.js`);
+  assert.ok(saved.streak7 && /^\d{4}-\d{2}-\d{2}$/.test(saved.streak7), 'first date is stored');
+  assert.equal(await count('#achievementList .ach.on'), Object.keys(saved).length, 'every stored achievement shows as reached');
+});
+
 test('insights: the weekly focus-score trend shows the last 12 weeks and the best week', async () => {
   await openTab('insights');
   await page.waitForSelector('#focusTrendChart svg');

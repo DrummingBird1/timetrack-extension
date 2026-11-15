@@ -3,12 +3,14 @@ import { getDays, getFocusLog } from '../lib/storage.js';
 import { formatDuration, weekdaysShort, rangeKeys, parseDayKey } from '../lib/utils.js';
 import { hourlyDistribution, busiestHour, byCategory, focusScore, weekHourHeatmap, weeklyFocusScores, bestWeek, focusLogStats } from '../lib/stats.js';
 import { barChart, heatmap } from '../lib/charts.js';
+import { renderAchievements } from './achievements.js';
 import { t, locale, categoryLabel } from '../lib/i18n.js';
 import { $, settings, cache, statCard, ICONS, productiveTime, distractingTime } from './core.js';
 
 export async function renderInsights() {
   renderFocusTrend();
   renderFocusLog();
+  renderAchievements();
   const { days, agg } = cache;
   const dist = hourlyDistribution(days);
   const peak = busiestHour(dist);

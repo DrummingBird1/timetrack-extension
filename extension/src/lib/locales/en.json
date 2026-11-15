@@ -475,5 +475,22 @@
   "notif.tagBudgetWarn.title": "Nearing a tag budget",
   "notif.tagBudgetWarn.body": "You've used 80% of this week's budget for the tag {c} ({n} min).",
   "notif.tagBudget.title": "Tag budget reached",
-  "notif.tagBudget.body": "You've reached this week's budget for the tag {c} ({n} min)."
+  "notif.tagBudget.body": "You've reached this week's budget for the tag {c} ({n} min).",
+  "ach.title": "Achievements",
+  "ach.hint": "Kept on this device only",
+  "ach.locked": "Not reached yet",
+  "ach.unlockedOn": "Reached on {d}",
+  "ach.toast": "New achievement: {n}",
+  "ach.streak.name": "{n}-day streak",
+  "ach.streak.desc": "Tracked {n} days in a row",
+  "ach.goal.name": "Daily goal, {n} days running",
+  "ach.goal.desc": "Met your productive-time goal {n} days in a row",
+  "ach.hours.name": "{n} hours tracked",
+  "ach.hours.desc": "Your total tracked time reached {n} hours",
+  "ach.focus.name": "{n} focus sessions",
+  "ach.focus.desc": "Finished {n} focus sessions to the end",
+  "ach.score.name": "A week with focus score {n}+",
+  "ach.score.desc": "At least one week with a weekly focus score of {n} or more",
+  "ach.backup.name": "First backup",
+  "ach.backup.desc": "Your data is backed up at least once"
 }

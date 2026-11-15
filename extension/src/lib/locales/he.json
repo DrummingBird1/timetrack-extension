@@ -475,5 +475,22 @@
   "notif.tagBudgetWarn.title": "מתקרבים לתקציב התגית",
   "notif.tagBudgetWarn.body": "ניצלת 80% מהתקציב השבועי של התגית {c} ({n} דק׳).",
   "notif.tagBudget.title": "תקציב התגית הושלם",
-  "notif.tagBudget.body": "הגעת לתקציב השבועי של התגית {c} ({n} דק׳)."
+  "notif.tagBudget.body": "הגעת לתקציב השבועי של התגית {c} ({n} דק׳).",
+  "ach.title": "הישגים",
+  "ach.hint": "נשמרים במכשיר הזה בלבד",
+  "ach.locked": "עדיין לא הושג",
+  "ach.unlockedOn": "הושג ב-{d}",
+  "ach.toast": "הישג חדש: {n}",
+  "ach.streak.name": "רצף של {n} ימים",
+  "ach.streak.desc": "עקבת {n} ימים ברציפות",
+  "ach.goal.name": "יעד יומי {n} ימים ברצף",
+  "ach.goal.desc": "עמדת ביעד הזמן היצרני {n} ימים ברציפות",
+  "ach.hours.name": "{n} שעות נמדדו",
+  "ach.hours.desc": "סך הזמן הפעיל שנמדד הגיע ל-{n} שעות",
+  "ach.focus.name": "{n} סשני פוקוס",
+  "ach.focus.desc": "סיימת {n} סשני פוקוס עד הסוף",
+  "ach.score.name": "שבוע עם ציון פוקוס {n}+",
+  "ach.score.desc": "שבוע אחד לפחות עם ציון פוקוס שבועי של {n} ומעלה",
+  "ach.backup.name": "גיבוי ראשון",
+  "ach.backup.desc": "הנתונים שלך מגובים לפחות פעם אחת"
 }

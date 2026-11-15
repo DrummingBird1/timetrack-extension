@@ -475,5 +475,22 @@
   "notif.tagBudgetWarn.title": "اقتراب من ميزانية الوسم",
   "notif.tagBudgetWarn.body": "استخدمت 80% من ميزانية الوسم {c} لهذا الأسبوع ({n} د).",
   "notif.tagBudget.title": "تم بلوغ ميزانية الوسم",
-  "notif.tagBudget.body": "بلغت ميزانية الوسم {c} لهذا الأسبوع ({n} د)."
+  "notif.tagBudget.body": "بلغت ميزانية الوسم {c} لهذا الأسبوع ({n} د).",
+  "ach.title": "الإنجازات",
+  "ach.hint": "تبقى على هذا الجهاز فقط",
+  "ach.locked": "لم يتحقق بعد",
+  "ach.unlockedOn": "تحقق في {d}",
+  "ach.toast": "إنجاز جديد: {n}",
+  "ach.streak.name": "سلسلة {n} يومًا",
+  "ach.streak.desc": "تتبعت {n} يومًا متتاليًا",
+  "ach.goal.name": "الهدف اليومي {n} يومًا متتاليًا",
+  "ach.goal.desc": "حققت هدف الوقت المنتج {n} يومًا متتاليًا",
+  "ach.hours.name": "تم تتبع {n} ساعة",
+  "ach.hours.desc": "بلغ إجمالي الوقت المتتبَّع {n} ساعة",
+  "ach.focus.name": "{n} جلسات تركيز",
+  "ach.focus.desc": "أنهيت {n} جلسات تركيز حتى النهاية",
+  "ach.score.name": "أسبوع بدرجة تركيز {n}+",
+  "ach.score.desc": "أسبوع واحد على الأقل بدرجة تركيز أسبوعية {n} أو أكثر",
+  "ach.backup.name": "أول نسخة احتياطية",
+  "ach.backup.desc": "بياناتك محفوظة نسخًا احتياطيًا مرة واحدة على الأقل"
 }
