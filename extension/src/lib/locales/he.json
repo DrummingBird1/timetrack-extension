@@ -518,5 +518,17 @@
   "report.status.empty": "הדוח האחרון דולג: לא נמדד זמן בתקופה",
   "report.status.ok": "הדוח האחרון נשמר: {name}",
   "report.empty": "לא נמדד זמן בתקופת הדוח, ולכן הדוח ריק",
-  "report.downloaded": "הדוח הורד"
+  "report.downloaded": "הדוח הורד",
+  "welcome.next": "הבא",
+  "welcome.back": "חזרה",
+  "welcome.skip": "דלג",
+  "welcome.step": "שלב {n} מתוך {total}",
+  "welcome.setupTitle": "התאמה מהירה",
+  "welcome.setupBody": "אפשר לשנות הכול אחר כך בהגדרות.",
+  "welcome.goal": "יעד זמן פרודוקטיבי ביום",
+  "welcome.goalNone": "ללא יעד",
+  "welcome.tipsTitle": "כמה דברים שכדאי לדעת",
+  "welcome.tip1": "⌨️ Ctrl/Cmd+K פותח חיפוש ופקודות מכל מקום בלוח הבקרה",
+  "welcome.tip2": "🏷️ בהגדרות אפשר לקבץ אתרים לתגיות ולתת להן תקציב שבועי",
+  "welcome.tip3": "💾 בחר תיקיית גיבוי כדי לקבל גיבוי ודוח מסכם אוטומטיים"
 }

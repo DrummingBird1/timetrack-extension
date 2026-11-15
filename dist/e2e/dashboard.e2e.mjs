@@ -427,6 +427,7 @@ test('tags: create in Settings, time per tag shows on Overview, remove hides it'
   await page.type('#tagDomains', 'github.com, not a site');
   await page.click('#tagAdd');
   await waitFor(async () => (await ext.getSettings()).tags.Work?.includes('github.com'), { message: 'tag saved' });
+  await page.waitForFunction(() => document.querySelector('#tagName').value === '' && document.querySelector('#tagList .cat-chip'));   // addTag finishes after the write: it clears the form and redraws the list
   assert.equal(await count('#tagList .cat-chip'), 1);
   await page.type('#tagName', '<b>x</b>');
   await page.type('#tagDomains', 'a.com');
@@ -449,6 +450,7 @@ test('tag budgets: a budget on a tag shows as a weekly progress row, and removin
   await page.type('#tagBudget', '30');
   await page.click('#tagAdd');
   await waitFor(async () => (await ext.getSettings()).tagBudgets?.Focus === 30, { message: 'tag budget saved' });
+  await page.waitForFunction(() => document.querySelector('#tagName').value === '' && document.querySelector('#tagList .cat-chip'));   // addTag finishes after the write: it clears the form and redraws the list
   assert.match(await page.$eval('#tagList', (e) => e.textContent), /30/);
   await ext.run(async (url) => { const st = await import(url); await st.addTime({ dateKey: (await import(url.replace('storage.js', 'utils.js'))).dayKey(), domain: 'github.com', seconds: 600, hour: 9 }); }, `${ext.base}src/lib/storage.js`);
   await page.reload();
@@ -634,6 +636,38 @@ test('onboarding: demo data loads from the welcome screen and is removed from th
   await page.click('#demoRemove');
   await page.waitForSelector('#demoBanner.hidden');
   assert.deepEqual((await dayData()).idx, ['2099-01-01'], 'only the demo days are removed');
+});
+
+test('onboarding: three steps, quick setup saves through Settings, back and skip work', async () => {
+  await page.close();
+  await ext.reset();
+  const original = (await ext.getSettings()).language;
+  page = await ext.openPage('src/dashboard/dashboard.html#welcome');
+  try {
+    await page.waitForSelector('#welcomeModal:not(.hidden) .welcome-step[data-step="1"]:not(.hidden)');
+    assert.match(await page.$eval('#welcomeProgress', (e) => e.textContent), /1/);
+    await page.click('#welcomeNext1');
+    await page.waitForSelector('.welcome-step[data-step="2"]:not(.hidden)');
+    await page.select('#wGoal', '120');
+    await page.select('#wWeek', '1');
+    await waitFor(async () => { const s = await ext.getSettings(); return s.dailyGoalMinutes === 120 && s.weekStart === 1; }, { message: 'setup choices saved by the Settings handlers' });
+    await page.click('#welcomeBack2');
+    await page.waitForSelector('.welcome-step[data-step="1"]:not(.hidden)');
+    await page.click('#welcomeNext1');
+    await page.click('#welcomeNext2');
+    await page.waitForSelector('.welcome-step[data-step="3"]:not(.hidden)');
+    assert.ok(await page.$('#welcomeSkip.hidden'), 'skip is hidden on the last step');
+    await page.click('#welcomeCta');
+    await page.waitForSelector('#welcomeModal.hidden');
+
+    await page.evaluate(() => { location.hash = '#welcome'; });
+    await page.reload();
+    await page.waitForSelector('#welcomeModal:not(.hidden)');
+    await page.click('#welcomeSkip');
+    await page.waitForSelector('#welcomeModal.hidden');
+  } finally {
+    await ext.saveSettings({ language: original, dailyGoalMinutes: 0, weekStart: 0 });
+  }
 });
 
 test('onboarding: demo data refuses to mix with existing history', async () => {

@@ -518,5 +518,17 @@
   "report.status.empty": "Le dernier rapport a été ignoré : aucun temps suivi sur la période",
   "report.status.ok": "Dernier rapport enregistré : {name}",
   "report.empty": "Aucun temps suivi sur la période : le rapport est vide",
-  "report.downloaded": "Rapport téléchargé"
+  "report.downloaded": "Rapport téléchargé",
+  "welcome.next": "Suivant",
+  "welcome.back": "Retour",
+  "welcome.skip": "Passer",
+  "welcome.step": "Étape {n} sur {total}",
+  "welcome.setupTitle": "Réglage rapide",
+  "welcome.setupBody": "Vous pourrez tout modifier plus tard dans les réglages.",
+  "welcome.goal": "Objectif quotidien de temps productif",
+  "welcome.goalNone": "Pas d'objectif",
+  "welcome.tipsTitle": "Quelques astuces",
+  "welcome.tip1": "⌨️ Ctrl/Cmd+K ouvre la recherche et les commandes partout dans le tableau de bord",
+  "welcome.tip2": "🏷️ Dans les réglages, regroupez des sites en tags et donnez-leur un budget hebdomadaire",
+  "welcome.tip3": "💾 Choisissez un dossier de sauvegarde pour obtenir des sauvegardes et un rapport de synthèse automatiques"
 }

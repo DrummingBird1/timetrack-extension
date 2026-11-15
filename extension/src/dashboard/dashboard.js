@@ -13,6 +13,7 @@ import { wireCustomCompare } from './compare.js';
 import { wireDemo, updateDemoBanner } from './demo.js';
 import { wireProductNote, updateProductNote } from './productNote.js';
 import { wirePalette } from './palette.js';
+import { wireWelcome, showWelcome } from './welcome.js';
 import { fillSettingsForm, filterSettings, renderStorageInfo, wireSettings } from './settings.js';
 
 function applyTheme() {
@@ -146,6 +147,7 @@ async function init() {
   wireDemo();
   wireProductNote();
   wirePalette();
+  wireWelcome();
   wireCustomCompare();
 
   // modal dismissal
@@ -160,7 +162,7 @@ async function init() {
 
   if (location.hash === '#settings') switchTab('settings');
   else switchTab('overview');
-  if (location.hash === '#welcome') $('#welcomeModal').classList.remove('hidden');
+  if (location.hash === '#welcome') showWelcome();
 
   updateTrackState();
   updateDemoBanner();

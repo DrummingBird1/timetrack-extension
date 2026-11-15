@@ -518,5 +518,17 @@
   "report.status.empty": "Se omitió el último informe: no hubo tiempo registrado en ese periodo",
   "report.status.ok": "Último informe guardado: {name}",
   "report.empty": "No hubo tiempo registrado en el periodo, el informe está vacío",
-  "report.downloaded": "Informe descargado"
+  "report.downloaded": "Informe descargado",
+  "welcome.next": "Siguiente",
+  "welcome.back": "Atrás",
+  "welcome.skip": "Omitir",
+  "welcome.step": "Paso {n} de {total}",
+  "welcome.setupTitle": "Ajuste rápido",
+  "welcome.setupBody": "Puedes cambiarlo todo más tarde en Ajustes.",
+  "welcome.goal": "Objetivo diario de tiempo productivo",
+  "welcome.goalNone": "Sin objetivo",
+  "welcome.tipsTitle": "Algunas cosas útiles",
+  "welcome.tip1": "⌨️ Ctrl/Cmd+K abre la búsqueda y los comandos en todo el panel",
+  "welcome.tip2": "🏷️ En Ajustes puedes agrupar sitios en etiquetas y darles un presupuesto semanal",
+  "welcome.tip3": "💾 Elige una carpeta de copias para tener copias automáticas y un informe resumen"
 }
