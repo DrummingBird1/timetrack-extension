@@ -458,5 +458,16 @@
   "set.backupWarnDesc": "إشعار واحد يوميًا إذا لم ينجح نسخ احتياطي مُعدّ لهذا العدد من الأيام. 0 يعطّله.",
   "backup.stale": "⚠️ لا توجد نسخة احتياطية ناجحة منذ {n} يومًا",
   "notif.backupStale.title": "النسخ الاحتياطي لا ينجح",
-  "notif.backupStale.body": "لا توجد نسخة احتياطية ناجحة منذ {n} يومًا. افتح الإعدادات للتحقق من الحالة."
+  "notif.backupStale.body": "لا توجد نسخة احتياطية ناجحة منذ {n} يومًا. افتح الإعدادات للتحقق من الحالة.",
+  "palette.title": "بحث وأوامر",
+  "palette.placeholder": "انتقل إلى شاشة أو موقع أو إجراء…",
+  "palette.hint": "↑↓ للاختيار · Enter للفتح · Esc للإغلاق",
+  "palette.empty": "لا توجد نتائج",
+  "palette.kind.page": "شاشة",
+  "palette.kind.action": "إجراء",
+  "palette.kind.site": "موقع",
+  "palette.cmd.toggleTracking": "تشغيل / إيقاف التتبع",
+  "palette.cmd.backupNow": "نسخ احتياطي الآن",
+  "palette.cmd.exportJson": "تصدير JSON",
+  "card.usual": "عادةً {v} يوم {d}"
 }

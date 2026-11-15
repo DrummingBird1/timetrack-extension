@@ -3,7 +3,7 @@ import { getIndex, getDays, getDay } from '../lib/storage.js';
 import { dayKey, rangeKeys, parseDayKey, addDays, formatDuration, sum, weekdaysFull, esc } from '../lib/utils.js';
 import {
   totalTime, topSites, byCategory, focusScore, dailyTotals,
-  activeDaysCount, currentStreak, goalStreak, trend, generateInsights,
+  activeDaysCount, currentStreak, goalStreak, trend, generateInsights, usualForWeekday,
 } from '../lib/stats.js';
 import { categorize, categoryDef } from '../lib/categories.js';
 import { barChart, donutChart } from '../lib/charts.js';
@@ -30,6 +30,12 @@ export async function renderOverview() {
     deltaPct = trend(total, totalTime(prevDays));
   }
 
+  // "Today vs your usual": the same weekday over the last 8 weeks (hidden until there are two such days).
+  const usual = usualForWeekday(await getDays(rangeKeys(57)), new Date());
+  const usualNote = usual
+    ? t('card.usual', { v: formatDuration(usual.seconds), d: weekdaysFull(settings.language)[new Date().getDay()] })
+    : '';
+
   const cats = byCategory(agg, settings.categoryMap);
   const score = focusScore(cats);
   const idx = await getIndex();
@@ -38,7 +44,7 @@ export async function renderOverview() {
   const goalDays = goalSeconds > 0 ? goalStreak(await getDays(idx.slice(-180)), goalSeconds, settings.categoryMap, dayKey()) : null;
 
   $('#summaryCards').innerHTML = [
-    statCard({ icon: ICONS.clock, val: formatDuration(todayTotal), lbl: t('card.today') }),
+    statCard({ icon: ICONS.clock, val: formatDuration(todayTotal), lbl: t('card.today'), note: esc(usualNote) }),
     statCard({ icon: ICONS.cal, val: formatDuration(total), lbl: rangeLabel(), delta: deltaPct }),
     statCard({ icon: ICONS.avg, val: formatDuration(total / activeDays), lbl: t('card.avg') }),
     statCard({ icon: ICONS.focus, val: score == null ? '—' : `${score}`, lbl: t('card.focus') }),

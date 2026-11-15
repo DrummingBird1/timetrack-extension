@@ -19,9 +19,9 @@ beforeEach(async () => {
 });
 
 /** Run axe on the current page. CDP evaluation is not subject to the extension-page CSP. */
-async function scan(page) {
+async function scan(page, selector = null) {
   await page.evaluate(axeSource);
-  const result = await page.evaluate(() => axe.run(document, { resultTypes: ['violations'] }));
+  const result = await page.evaluate((sel) => axe.run(sel ? document.querySelector(sel) : document, { resultTypes: ['violations'] }), selector);
   return result.violations
     .filter((v) => v.impact === 'serious' || v.impact === 'critical' || v.impact === 'moderate')
     .map((v) => `${v.impact} · ${v.id}: ${v.help}\n      ${v.nodes.slice(0, 4).map((n) => n.target.join(' ')).join('\n      ')}`);
@@ -53,6 +53,23 @@ test('dashboard in an RTL language (Arabic) has no accessibility violations', as
   await page.close();
   assert.deepEqual(violations, [], `\n${violations.join('\n')}`);
 });
+
+for (const [theme, language] of [['dark', 'en'], ['light', 'he']]) {
+  test(`command palette (${theme}, ${language}) opens with Ctrl+K and has no accessibility violations`, async () => {
+    await ext.saveSettings({ theme, language });
+    const page = await ext.openPage('src/dashboard/dashboard.html');
+    await page.waitForSelector('#summaryCards .stat-card');
+    await page.keyboard.down('Control');
+    await page.keyboard.press('k');
+    await page.keyboard.up('Control');
+    await page.waitForSelector('#paletteModal:not(.hidden) .palette-item');
+    assert.equal(await page.evaluate(() => document.activeElement.id), 'paletteInput', 'focus moves to the search box');
+    await new Promise((r) => setTimeout(r, 500));                    // let the open animation finish (mid-fade colours fail contrast)
+    const violations = await scan(page, '#paletteModal .palette');   // the dialog itself: the dimmed page behind it is not what is judged
+    await page.close();
+    assert.deepEqual(violations, [], `\n${violations.join('\n')}`);
+  });
+}
 
 test('popup has no accessibility violations', async () => {
   await ext.saveSettings({ language: 'en' });

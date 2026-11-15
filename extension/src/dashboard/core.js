@@ -98,8 +98,8 @@ export function rangeLabel() {
   return t(`range.${currentRange}`);
 }
 
-/** @param {{ icon: string, val: string | number, lbl: string, delta?: number | null }} card */
-export function statCard({ icon, val, lbl, delta }) {
+/** @param {{ icon: string, val: string | number, lbl: string, delta?: number | null, note?: string }} card */
+export function statCard({ icon, val, lbl, delta, note = '' }) {
   const deltaHtml = delta == null ? '' :
     `<div class="delta ${delta > 0 ? 'up' : delta < 0 ? 'down' : 'flat'}">
        ${delta > 0 ? '▲' : delta < 0 ? '▼' : '•'} ${Math.abs(delta)}% ${t('delta.prev')}
@@ -108,6 +108,7 @@ export function statCard({ icon, val, lbl, delta }) {
     <div class="ic">${icon}</div>
     <div class="val">${val}</div>
     <div class="lbl">${lbl}</div>
+    ${note ? `<div class="lbl">${note}</div>` : ''}
     ${deltaHtml}
   </div>`;
 }
@@ -126,6 +127,7 @@ export function closeModal() {
   $('#siteModal').classList.add('hidden');
   $('#welcomeModal').classList.add('hidden');
   $('#restoreModal').classList.add('hidden');
+  $('#paletteModal').classList.add('hidden');
 }
 
 export function debounce(fn, ms) {

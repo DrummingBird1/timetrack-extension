@@ -266,6 +266,25 @@ export function categorySeconds(days, categoryMap = {}) {
  * @param {Record<string, number>} budgets  category -> minutes
  * @returns {Array<{ key: string, usedSeconds: number, limitSeconds: number, pct: number }>}
  */
+/**
+ * What a given weekday usually looks like: the average tracked time on the same weekday over the
+ * previous `weeks` weeks, counting only days that have data. null with fewer than two such days —
+ * one day is an anecdote, not a "usual".
+ * @param {Record<string, any>} days
+ * @param {Date} today
+ * @returns {{ seconds: number, samples: number } | null}
+ */
+export function usualForWeekday(days, today, weeks = 8) {
+  const totals = [];
+  for (let i = 1; i <= weeks; i++) {
+    const rec = days[dayKey(addDays(today, -7 * i))];
+    const t = rec ? sum(Object.values(rec.domains || {}).map((d) => d.t || 0)) : 0;
+    if (t > 0) totals.push(t);
+  }
+  if (totals.length < 2) return null;
+  return { seconds: sum(totals) / totals.length, samples: totals.length };
+}
+
 /** Does a tag's domain entry cover this site? An entry matches itself and its subdomains. */
 export function domainInTag(domain, entry) {
   return domain === entry || domain.endsWith(`.${entry}`);

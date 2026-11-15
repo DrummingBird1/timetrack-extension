@@ -458,5 +458,16 @@
   "set.backupWarnDesc": "One notification a day if a configured backup hasn't succeeded for this many days. 0 turns it off.",
   "backup.stale": "⚠️ No successful backup for {n} days",
   "notif.backupStale.title": "Backups aren't succeeding",
-  "notif.backupStale.body": "No successful backup for {n} days. Open Settings to check the status."
+  "notif.backupStale.body": "No successful backup for {n} days. Open Settings to check the status.",
+  "palette.title": "Search and commands",
+  "palette.placeholder": "Go to a screen, a site or an action…",
+  "palette.hint": "↑↓ to choose · Enter to open · Esc to close",
+  "palette.empty": "No results",
+  "palette.kind.page": "Screen",
+  "palette.kind.action": "Action",
+  "palette.kind.site": "Site",
+  "palette.cmd.toggleTracking": "Turn tracking on / off",
+  "palette.cmd.backupNow": "Back up now",
+  "palette.cmd.exportJson": "Export JSON",
+  "card.usual": "Usually {v} on {d}"
 }

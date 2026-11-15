@@ -52,3 +52,20 @@ test('importing settings keeps good tags and drops hostile names and bad domains
   assert.equal(Object.getPrototypeOf(clean.tags), Object.prototype);
   assert.equal(({}).evil, undefined);
 });
+
+// ---- "today vs your usual" ----
+const { usualForWeekday } = await import('../../extension/src/lib/stats.js');
+
+test('usualForWeekday averages the same weekday over earlier weeks, ignoring empty days, and needs two samples', () => {
+  const today = new Date(2026, 2, 18);                         // a Wednesday
+  const days = {
+    '2026-03-11': rec({ 'a.com': 3600 }),                      // 1 week ago
+    '2026-03-04': rec({ 'a.com': 1800, 'b.com': 1800 }),       // 2 weeks ago
+    '2026-02-25': rec({}),                                     // 3 weeks ago: nothing tracked
+    '2026-03-12': rec({ 'a.com': 9999 }),                      // a Thursday: not the same weekday
+  };
+  assert.deepEqual(usualForWeekday(days, today), { seconds: 3600, samples: 2 });
+  assert.equal(usualForWeekday({ '2026-03-11': rec({ 'a.com': 3600 }) }, today), null, 'one day is not a "usual"');
+  assert.equal(usualForWeekday({}, today), null);
+  assert.equal(usualForWeekday(days, today, 1), null, 'only one week requested -> one sample');
+});

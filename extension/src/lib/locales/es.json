@@ -458,5 +458,16 @@
   "set.backupWarnDesc": "Una notificación al día si una copia configurada no se ha completado en estos días. 0 lo desactiva.",
   "backup.stale": "⚠️ Sin copia correcta desde hace {n} días",
   "notif.backupStale.title": "Las copias no se completan",
-  "notif.backupStale.body": "Sin copia correcta desde hace {n} días. Abre Ajustes para ver el estado."
+  "notif.backupStale.body": "Sin copia correcta desde hace {n} días. Abre Ajustes para ver el estado.",
+  "palette.title": "Búsqueda y comandos",
+  "palette.placeholder": "Ir a una pantalla, un sitio o una acción…",
+  "palette.hint": "↑↓ elegir · Enter abrir · Esc cerrar",
+  "palette.empty": "Sin resultados",
+  "palette.kind.page": "Pantalla",
+  "palette.kind.action": "Acción",
+  "palette.kind.site": "Sitio",
+  "palette.cmd.toggleTracking": "Activar / pausar el seguimiento",
+  "palette.cmd.backupNow": "Hacer copia ahora",
+  "palette.cmd.exportJson": "Exportar JSON",
+  "card.usual": "Normalmente {v} el {d}"
 }

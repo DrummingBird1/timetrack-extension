@@ -728,6 +728,33 @@ test('local backup: the worker writes backup files into the chosen folder, rotat
   await ext.run(async (url) => (await import(url)).saveSettings({ backup: { localEnabled: false } }), `${ext.base}src/lib/storage.js`);
 });
 
+// ------------------------------------------------------ command palette
+test('command palette: Ctrl+K filters sites and screens, Enter runs the choice, Escape closes it', async () => {
+  await openTab('overview');
+  await page.keyboard.down('Control');
+  await page.keyboard.press('k');
+  await page.keyboard.up('Control');
+  await page.waitForSelector('#paletteModal:not(.hidden)');
+  const site = await page.evaluate(() => [...document.querySelectorAll('.palette-item')].map((e) => e.firstChild.textContent).find((t) => t.includes('.')));
+  assert.ok(site, 'sites are offered');
+  await page.type('#paletteInput', site);
+  assert.equal(await page.evaluate(() => document.querySelector('.palette-item').firstChild.textContent), site);
+  await page.keyboard.press('Enter');
+  await page.waitForSelector('#paletteModal.hidden');
+  await page.waitForSelector('#siteModal:not(.hidden)');
+  await page.keyboard.press('Escape');
+  await page.waitForSelector('#siteModal.hidden');
+
+  await page.keyboard.down('Control');
+  await page.keyboard.press('k');
+  await page.keyboard.up('Control');
+  await page.type('#paletteInput', 'zzzz-no-such-thing');
+  assert.equal(await count('.palette-item'), 0);
+  assert.ok(await page.$('.palette-empty'));
+  await page.keyboard.press('Escape');
+  await page.waitForSelector('#paletteModal.hidden');
+});
+
 // --------------------------------------------------------- import / clear
 test('import: a JSON backup and a CSV file are imported through the file inputs', async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'tt-e2e-'));
