@@ -11,6 +11,7 @@ import { renderSites, wireSites } from './sites.js';
 import { renderInsights } from './insights.js';
 import { wireCustomCompare } from './compare.js';
 import { wireDemo, updateDemoBanner } from './demo.js';
+import { wireProductNote, updateProductNote } from './productNote.js';
 import { fillSettingsForm, filterSettings, renderStorageInfo, wireSettings } from './settings.js';
 
 function applyTheme() {
@@ -69,6 +70,7 @@ async function refresh() {
   await loadRange();
   renderCurrentTab();
   updateDemoBanner();
+  updateProductNote();
 }
 
 async function updateTrackState() {
@@ -141,6 +143,7 @@ async function init() {
   wireSettings();
   wireSites();
   wireDemo();
+  wireProductNote();
   wireCustomCompare();
 
   // modal dismissal
@@ -159,6 +162,7 @@ async function init() {
 
   updateTrackState();
   updateDemoBanner();
+  updateProductNote();
   setInterval(updateTrackState, 30000);
 
   matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => {

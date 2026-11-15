@@ -395,5 +395,7 @@
   "bk.needHttps": "La dirección del servidor debe empezar por https://",
   "bk.httpStatus": "El servidor devolvió {n}",
   "bk.timeout": "El servidor no respondió en {n} segundos",
-  "bk.network": "No se pudo contactar con el servidor (red, CORS o dirección incorrecta)"
+  "bk.network": "No se pudo contactar con el servidor (red, CORS o dirección incorrecta)",
+  "productNote.text": "Desde {d}, sitios como Gmail, Docs y Drive se registran por separado (mail.google.com, etc.) en lugar de bajo google.com. El tiempo anterior permanece bajo el dominio general.",
+  "productNote.dismiss": "Entendido"
 }

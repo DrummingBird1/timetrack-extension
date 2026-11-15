@@ -395,5 +395,7 @@
   "bk.needHttps": "يجب أن يبدأ عنوان الخادم بـ https://",
   "bk.httpStatus": "أعاد الخادم {n}",
   "bk.timeout": "لم يستجب الخادم خلال {n} ثانية",
-  "bk.network": "تعذّر الوصول إلى الخادم (الشبكة أو CORS أو عنوان خاطئ)"
+  "bk.network": "تعذّر الوصول إلى الخادم (الشبكة أو CORS أو عنوان خاطئ)",
+  "productNote.text": "منذ {d} تُحتسب مواقع مثل Gmail وDocs وDrive بشكل منفصل (mail.google.com وغيرها) بدلًا من google.com. يبقى الوقت المسجَّل سابقًا تحت النطاق العام.",
+  "productNote.dismiss": "فهمت"
 }

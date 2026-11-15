@@ -395,5 +395,7 @@
   "bk.needHttps": "כתובת השרת חייבת להתחיל ב-https://",
   "bk.httpStatus": "השרת החזיר {n}",
   "bk.timeout": "השרת לא הגיב תוך {n} שניות",
-  "bk.network": "אין חיבור לשרת (רשת, CORS או כתובת שגויה)"
+  "bk.network": "אין חיבור לשרת (רשת, CORS או כתובת שגויה)",
+  "productNote.text": "מאז {d} אתרים כמו Gmail, Docs ו-Drive נספרים בנפרד (mail.google.com ועוד) במקום תחת google.com. הזמן שנצבר קודם נשאר תחת הדומיין הכללי.",
+  "productNote.dismiss": "הבנתי"
 }

@@ -597,6 +597,25 @@ test('onboarding: demo data refuses to mix with existing history', async () => {
   assert.ok(await page.$('#demoBanner.hidden'));
 });
 
+// ---------------------------------------------------------- schema v4 note
+test('upgrade note: shown for history that predates the product split, and dismissible for good', async () => {
+  await page.close();
+  await ext.reset();
+  await ext.run(async (url) => {
+    const st = await import(url);
+    await st.addTime({ dateKey: '2020-01-01', domain: 'google.com', seconds: 600, hour: 9 });
+    await st.saveMeta({ productSplitFrom: '2026-11-20' });
+  }, `${ext.base}src/lib/storage.js`);
+  page = await ext.openPage('src/dashboard/dashboard.html');
+  await page.waitForSelector('#productNote:not(.hidden)');
+  assert.match(await page.$eval('#productNoteText', (e) => e.textContent), /2026-11-20/);
+  await page.click('#productNoteDismiss');
+  await page.waitForSelector('#productNote.hidden');
+  await page.reload();
+  await page.waitForSelector('#productNote.hidden', { timeout: 3000 });
+});
+
+
 // --------------------------------------------------------- import / clear
 test('import: a JSON backup and a CSV file are imported through the file inputs', async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'tt-e2e-'));
