@@ -23,7 +23,7 @@ Four top-level folders, plus `.github/` and root docs (`README*.md`, `CHANGELOG.
   zip for the store). Self-contained: `manifest.json`, `background.js`, `icons/`,
   `_locales/`, `src/`.
 - **`store-assets/`** — everything for the Chrome Web Store listing itself:
-  `PRIVACY.md`, `STORE_LISTING.md`, `BROWSER_SUPPORT.md` (Edge/Firefox notes — not
+  `PRIVACY.md` (English, primary) and `PRIVACY.he.md`, `STORE_LISTING.md` (English), `BROWSER_SUPPORT.md` (Edge/Firefox notes — not
   tested), `icon/` (the Store icon, a 512 px logo and the SVG), `promo/` (promo graphics + per-release banners), `screenshots/` (he/en
   committed, generated), `listing-text/` (one paste-ready plain-text description per
   language, generated from `STORE_LISTING.md`), and `site/` (the marketing website
@@ -53,7 +53,7 @@ separate, much smaller pattern from `extension/src/lib/i18n.js` (the site isn't
 part of the shippable extension bundle, so it has its own compact dictionary,
 ~25 keys vs. the extension's ~380). The privacy-policy section shows only the
 currently-selected language's card (translated per language, not just en/he
-shown side-by-side); its content mirrors `store-assets/PRIVACY.md` — keep both
+shown side-by-side); its content mirrors `store-assets/PRIVACY.md` (and `PRIVACY.he.md`) — keep them
 in sync (across **all six languages**) when the policy changes. Any change to what
 data is stored or where it can go (e.g. the optional session log, the focus
 history) **must** update the policy, the six site cards and `STORE_LISTING.md`'s
@@ -102,9 +102,11 @@ which only resolves once the file exists on `main`.
 
 0. **Iron rule — descriptions.** The extension's descriptions are always the most up-to-date account of what
    it offers, and are formatted and ordered: the short descriptions (`extension/_locales/*/messages.json`, ≤132
-   characters), the detailed ones in six languages (`store-assets/STORE_LISTING.md`: an intro, then titled "■"
-   sections of one-line "•" bullets; regenerate `listing-text/` with `node dist/tools/listing-text.mjs`), the six
-   READMEs' feature lists and the site copy. Before every release re-read them against what the extension now
+   characters), the detailed ones (English in `store-assets/STORE_LISTING.md`: an intro, then titled "■"
+   sections of one-line "•" bullets; regenerate `listing-text/description-en.txt` with
+   `node dist/tools/listing-text.mjs`; the other five languages are hand-edited
+   `listing-text/description-<lang>.txt` files with the same structure), the six READMEs' feature lists and
+   the site copy. Before every release re-read them against what the extension now
    does, fix what is stale, then bump the `descriptions-reviewed-for` marker in `STORE_LISTING.md`;
    `docs.test.js` fails until the marker equals the manifest version and the descriptions keep their shape.
 1. Bump `version` in `extension/manifest.json`, add a `## [X.Y.Z] — date` section to
@@ -142,7 +144,7 @@ There is **no build step** — it's plain ES modules, no bundler, no dependencie
 2. Enable **Developer mode**
 3. **Load unpacked** → select the **`extension/`** folder
 4. Pin the extension; click it for the popup, or open the dashboard from the
-   popup's "פתח לוח בקרה מלא" button (it's the `options_ui` page).
+   popup's "Open full dashboard" button (it's the `options_ui` page).
 
 After editing code: click the **reload** icon on the extension card. For the
 service worker, use the "service worker" link on that card to open its DevTools
@@ -289,7 +291,7 @@ IPv4/IPv6 addresses and single-label hosts (`localhost`) are never grouped.
 | `dist/package.json` | Dev-only (scripts + devDependencies, `"type":"module"`); the extension has no deps/build. |
 | `dist/build.ps1` | Builds `timetrack-v<version>.zip` from `extension/` (store upload) and moves earlier versions' zips to `archive/old-builds/`. |
 | `dist/make-release-banner.mjs` | Generates a themed per-version GitHub Release banner SVG — see "READMEs and release banners". |
-| `store-assets/PRIVACY.md` / `STORE_LISTING.md` / `BROWSER_SUPPORT.md` | Privacy policy, Chrome Web Store submission pack, Edge/Firefox notes. |
+| `store-assets/PRIVACY.md` / `PRIVACY.he.md` / `STORE_LISTING.md` / `BROWSER_SUPPORT.md` | Privacy policy (English primary, Hebrew in its own file), Chrome Web Store submission pack (English; other languages in `listing-text/description-<lang>.txt`), Edge/Firefox notes. |
 | `icons/*` | Generated gradient clock icons (16/32/48/128). |
 
 ## Conventions & constraints
@@ -343,6 +345,10 @@ IPv4/IPv6 addresses and single-label hosts (`localhost`) are never grouped.
   (`dashboard.js`, `popup.js`, `blocked.js`); don't reintroduce a raw binary
   check when adding a fourth. Durations format via `formatDuration`/
   `formatClock`; dates via `locale()`.
+- **Documents are English-primary.** READMEs, the roadmap, the changelog, guides, the privacy policy, the store
+  listing and these instruction files are written in English. Another language is only a separate file named by
+  language code (`README.he.md`, `PRIVACY.he.md`, `listing-text/description-ar.txt`); the main file is always
+  English. Internal working notes in Hebrew do not belong in this public repository.
 - **Time math:** all day-keys are **local** dates. Use `dayKey()` / `parseDayKey()`,
   never hand-roll date strings (UTC drift bugs).
 

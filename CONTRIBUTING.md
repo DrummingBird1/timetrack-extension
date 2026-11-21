@@ -64,8 +64,9 @@ say so in the PR so a native speaker can review.
 3. Add an `<option>` to the language picker in `extension/src/dashboard/dashboard.html`.
 4. Add `extension/_locales/<code>/messages.json` (copy `en`, translate the five keys; the name
    must stay within 75 characters and the description within 132). This is what makes the Web
-   Store dashboard offer a listing in that language. Add its short description and a detailed
-   description to `store-assets/STORE_LISTING.md`, then run `node dist/tools/listing-text.mjs`.
+   Store dashboard offer a listing in that language. Add its detailed description as
+   `store-assets/listing-text/description-<code>.txt`, with the same structure as the English one
+   (documents stay English-primary: other languages are separate files by language code).
 5. Add the language to the marketing site (`store-assets/site/index.html`: the `STR` dictionary,
    a `privacy-card`, the picker) and a `README.<code>.md`; the language switcher in every README links to it.
 6. Update the `LANGS` list in `dist/tests/i18n.test.js` and `dist/tests/docs.test.js`.
@@ -84,7 +85,7 @@ The tests tell you what you missed.
 - **Colours:** use the text-safe tokens (`--text-dim`, `--accent-text`, …) for text, not the raw
   brand colours, or the contrast test fails.
 - **Privacy:** anything that records a new kind of data must be opt-in or documented in
-  `store-assets/PRIVACY.md` **and** the six privacy cards on the site — in the same PR.
+  `store-assets/PRIVACY.md` (and its Hebrew copy `PRIVACY.he.md`) **and** the six privacy cards on the site — in the same PR.
 
 ## Releases (maintainers)
 

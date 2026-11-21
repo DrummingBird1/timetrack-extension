@@ -1,7 +1,5 @@
 # Roadmap
 
-> עברית: מפת הדרכים של TimeTrack בקצרה (באנגלית). אין התחייבות לתאריכים.
-
 A status list for **TimeTrack**, the privacy-first, local-first time tracker for Chrome. It shows what has shipped, what needs a decision and what is only an idea. There are no dates, and items can change or be dropped. The detailed history is in the [CHANGELOG](CHANGELOG.md).
 
 ## Shipped
