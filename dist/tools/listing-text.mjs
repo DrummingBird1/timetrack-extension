@@ -1,11 +1,14 @@
-// Writes one copy-ready plain-text file per language from the detailed descriptions in
-// store-assets/STORE_LISTING.md (the source of truth), into store-assets/listing-text/.
+// Writes the English store description as a copy-ready plain-text file from the "Detailed description"
+// in store-assets/STORE_LISTING.md (the primary text, in English), into store-assets/listing-text/.
 //
 //   node dist/tools/listing-text.mjs
 //
+// Every other language is its own hand-edited file by language code (description-he.txt, -ar, -ru, -es, -fr),
+// kept to the same structure as the English one; readListingTexts() loads all six so the tests can compare them.
+//
 // The Store's description box is plain text, so the Markdown blockquote markers go away and
 // hard-wrapped lines are joined back into one line per paragraph and per bullet.
-// docs.test.js regenerates these in memory and fails when the files on disk are stale.
+// docs.test.js regenerates the English file in memory and fails when it is stale.
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -14,7 +17,7 @@ import { fileURLToPath } from 'node:url';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const outDir = path.join(root, 'store-assets/listing-text');
 
-const LANG_OF = { English: 'en', 'עברית': 'he', 'العربية': 'ar', 'Русский': 'ru', 'Español': 'es', 'Français': 'fr' };
+export const LANGS = ['en', 'he', 'ar', 'ru', 'es', 'fr'];
 
 /** One "> "-quoted block → plain text: no markers, one line per paragraph / bullet. */
 function toPlain(block) {
@@ -32,27 +35,26 @@ function toPlain(block) {
   return `${out.join('\n').trim()}\n`;
 }
 
-/** { en, he, ar, ru, es, fr } → plain-text description, read from STORE_LISTING.md's text. */
-export function buildListingTexts(markdown) {
+/** The English plain-text description, read from STORE_LISTING.md's text. */
+export function buildEnglishListingText(markdown) {
   const text = markdown.replace(/\r\n/g, '\n');
   const start = text.indexOf('### Detailed description');
   if (start < 0) throw new Error('STORE_LISTING.md has no "### Detailed description" section');
   const section = text.slice(start, text.indexOf('\n---', start));
   const parts = section.split(/^\*\*(.+)\*\*$/m).slice(1);
-  const texts = {};
-  for (let i = 0; i < parts.length; i += 2) {
-    const lang = LANG_OF[parts[i]];
-    if (!lang) throw new Error(`unknown language heading "${parts[i]}"`);
-    texts[lang] = toPlain(parts[i + 1]);
-  }
-  return texts;
+  if (parts[0] !== 'English' || parts.length !== 2) throw new Error('the "Detailed description" section must hold exactly one block, "**English**"');
+  return toPlain(parts[1]);
+}
+
+/** { en, he, ar, ru, es, fr } → the plain-text description files as they are on disk. */
+export function readListingTexts() {
+  return Object.fromEntries(LANGS.map((lang) => [lang, fs.readFileSync(path.join(outDir, `description-${lang}.txt`), 'utf8').replace(/\r\n/g, '\n')]));
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const texts = buildListingTexts(fs.readFileSync(path.join(root, 'store-assets/STORE_LISTING.md'), 'utf8'));
+  const body = buildEnglishListingText(fs.readFileSync(path.join(root, 'store-assets/STORE_LISTING.md'), 'utf8'));
   fs.mkdirSync(outDir, { recursive: true });
-  for (const [lang, body] of Object.entries(texts)) {
-    fs.writeFileSync(path.join(outDir, `description-${lang}.txt`), body);
-    console.log(`description-${lang}.txt  ${[...body].length} characters`);
-  }
+  fs.writeFileSync(path.join(outDir, 'description-en.txt'), body);
+  console.log(`description-en.txt  ${[...body].length} characters`);
+  console.log('The other languages are hand-edited: description-<lang>.txt for he, ar, ru, es, fr.');
 }

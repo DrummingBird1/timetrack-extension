@@ -26,7 +26,7 @@
 
 **[🌐 אתר התוסף](https://drummingbird1.github.io/timetrack-extension/)** ·
 **[📋 יומן שינויים](CHANGELOG.md)** ·
-**[🔒 מדיניות פרטיות](store-assets/PRIVACY.md)**
+**[🔒 מדיניות פרטיות](store-assets/PRIVACY.he.md)**
 
 > כל הנתונים נשמרים **מקומית** במחשב שלכם. שום דבר לא נשלח לאף שרת אלא אם
 > תפעילו במפורש גיבוי בענן.

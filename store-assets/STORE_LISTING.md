@@ -29,21 +29,20 @@ the Store).
 ### Short description (≤132 chars)
 
 The Store takes the title and this summary from the package, not from a dashboard field:
-they are `appName` / `appDescription` in `extension/_locales/<lang>/messages.json`. Edit
-them there; `docs.test.js` fails if this list and those files disagree.
+they are `appName` / `appDescription` in `extension/_locales/<lang>/messages.json`, one file per
+language (`en`, `he`, `ar`, `ru`, `es`, `fr`). The English one is shown here; edit them in the
+package. `docs.test.js` fails if the English text here and `_locales/en` disagree, and checks that every
+language's summary is 60-132 characters.
 
 - **EN (122):** Track active time per site — analytics, tags, budgets, focus mode & backups you control. Private, local-first, no account.
-- **HE (106):** מעקב זמן גלישה פעיל לכל אתר — ניתוח חכם, תגיות, תקציבים, מצב פוקוס וגיבוי בשליטתך. פרטי ומקומי, ללא חשבון.
-- **AR (112):** تتبّع وقت التصفح الفعلي لكل موقع — تحليلات ووسوم وميزانيات ووضع تركيز ونسخ احتياطي بإشرافك. خاص ومحلي، بلا حساب.
-- **RU (120):** Учёт активного времени по сайтам: аналитика, теги, бюджеты, режим фокуса, свои бэкапы. Приватно, локально, без аккаунта.
-- **ES (128):** Mide tu tiempo activo por sitio: análisis, etiquetas, presupuestos, enfoque y copias que controlas. Privado y local, sin cuenta.
-- **FR (130):** Mesurez votre temps actif par site : analyses, tags, budgets, mode concentration et sauvegardes à vous. Privé, local, sans compte.
 
 ### Detailed description
 
-Plain text: the Store's description box has no Markdown. Ready-to-paste copies, one file per
-language, are in [`listing-text/`](listing-text/). They are generated from this section with
-`node dist/tools/listing-text.mjs`, and `docs.test.js` fails if they go stale.
+Plain text: the Store's description box has no Markdown. English is written here and is the primary text;
+`listing-text/description-en.txt` is generated from it with `node dist/tools/listing-text.mjs`, and
+`docs.test.js` fails if it goes stale. Every other language is its own plain-text file by language code,
+`listing-text/description-<lang>.txt` (`he`, `ar`, `ru`, `es`, `fr`), edited by hand and kept to the same
+structure (an intro, then the same titled sections and bullets); the test checks that.
 
 **English**
 
@@ -78,181 +77,6 @@ language, are in [`listing-text/`](listing-text/). They are generated from this 
 > ■ FOR EVERYONE
 > • Six languages with live switching: Hebrew, English, Arabic, Russian, Spanish, French (right-to-left supported)
 > • Light and dark themes, keyboard shortcuts, keyboard and screen-reader accessibility, and a short first-run setup
-
-
-**עברית**
-
-> TimeTrack מראה לאן הזמן שלך באמת הולך — בגישה שמכבדת פרטיות ושומרת הכול מקומית. כל הנתונים נשארים במכשיר שלך; שום דבר לא נשלח לשום מקום, אלא אם תפעיל גיבוי שאתה שולט בו.
->
-> ■ מעקב ותובנות
-> • מדידה מדויקת של זמן פעיל: נספר רק זמן שבו החלון בפוקוס ואתה לא במצב חוסר פעילות (אפשר גם בזמן השמעת אודיו)
-> • קטגוריות חכמות למאות אתרים פופולריים בכל אחת מהשפות הנתמכות, כולן ניתנות לעריכה, וגם ציון פוקוס 0–100 עם מגמה שבועית והשבוע הטוב ביותר שלך
-> • מפת חום יום × שעה, תובנות בשפה פשוטה (גלישה בלילה, אתרים חדשים, השעה היצרנית ביותר שלך) והשוואה בין כל שני טווחי תאריכים
-> • פירוט לכל אתר עם ציר זמן יומי ושעתי, ויומן ביקורים אופציונלי
-> • לשונית אתרים שמותאמת להיסטוריה גדולה: חיפוש בהכול, הצמדת אתרים, מיזוג אתר ששינה שם, וסיווג, הגבלה או הסרה ממעקב של כמה אתרים בבת אחת
->
-> ■ יעדים ופוקוס
-> • יעדים יומיים ושבועיים, מגבלות לכל אתר ותקציבים שבועיים לקטגוריות ולתגיות שלך, עם התראות ב-80% וב-100%
-> • מצב פוקוס (Pomodoro): חסימת אתרים מסיחים או רשימת היתר בלבד; סשנים מתוזמנים, מצב קפדני או הפסקה של 10 דקות
-> • הישגים על רצפים, סשני פוקוס ועוד, שנשמרים במכשיר שלך בלבד
->
-> ■ התאמה אישית
-> • תגיות: קבץ אתרים בדרך שלך (עבודה, לימודים…) עם תצוגת זמן לפי תגית ותקציבים שבועיים
-> • פלטת פקודות (Ctrl/Cmd+K): קפיצה לכל מסך או אתר, או הפעלת פעולה מהמקלדת
-> • דוחות HTML שבועיים או חודשיים, שנשמרים בתיקייה שבחרת או מורדים לפי דרישה
->
-> ■ גיבוי והנתונים שלך
-> • גיבוי לחשבון Google שלך, לשרת HTTPS משלך, לשרת WebDAV עם היסטוריית גרסאות או לתיקייה במחשב, בתזמון ועם הצפנת AES-256 אופציונלית
-> • אימות גיבוי בלי לשחזר אותו, תצוגה מקדימה לפני שחזור, שחזור של טווח תאריכים או של ההגדרות בלבד, והתראה כשהגיבוי מפסיק לעבוד
-> • ייבוא מ-CSV (כולל קבצים בסגנון RescueTime) וייצוא JSON או CSV בכל עת
->
-> ■ פרטיות מעיקרון
-> • ללא חשבון, ללא אנליטיקס, ללא קוד מרוחק וללא מעקב צד-שלישי; סמלי האתרים נוצרים מקומית, כך שאף דומיין שאתה מבקר בו לא עוזב את המכשיר
-> • נתונים ישנים נמחקים אוטומטית אחרי תקופה שתבחר
->
-> ■ לכולם
-> • שש שפות עם החלפה חיה: עברית, אנגלית, ערבית, רוסית, ספרדית, צרפתית (כולל כתיבה מימין לשמאל)
-> • ערכות נושא בהיר וכהה, קיצורי מקלדת, נגישות למקלדת ולקוראי מסך, והתאמה ראשונית קצרה בהפעלה הראשונה
-
-
-**العربية**
-
-> يُظهر TimeTrack أين يذهب وقتك فعلًا — مع إعطاء الأولوية للخصوصية والتخزين المحلي. تبقى كل البيانات على جهازك، ولا يُرسل أي شيء إلى أي مكان ما لم تفعّل نسخًا احتياطيًا تتحكم به أنت.
->
-> ■ التتبّع والرؤى
-> • قياس دقيق للوقت الفعلي: يُحتسب فقط الوقت الذي تكون فيه النافذة في المقدمة وأنت غير خامل (واختياريًا أثناء تشغيل الصوت)
-> • تصنيفات ذكية لمئات المواقع الشائعة بكل لغة مدعومة، وكلها قابلة للتعديل، مع درجة تركيز من 0 إلى 100 واتجاه أسبوعي وأفضل أسبوع لديك
-> • خريطة حرارية للأيام × الساعات، ورؤى بلغة بسيطة (الاستخدام الليلي، المواقع الجديدة، ساعتك الأكثر إنتاجية) ومقارنة بين أي نطاقين زمنيين
-> • تفاصيل لكل موقع مع مخططات زمنية يومية وبالساعة، وسجل زيارات اختياري
-> • تبويب مواقع مصمم للسجلات الكبيرة: بحث في كل شيء، وتثبيت المواقع، ودمج موقع غيّر اسمه، وتصنيف عدة مواقع أو تقييدها أو إيقاف تتبّعها دفعة واحدة
->
-> ■ الأهداف والتركيز
-> • أهداف يومية وأسبوعية، وحدود لكل موقع، وميزانيات أسبوعية للتصنيفات ولوسومك الخاصة، مع تنبيهات عند 80% و100%
-> • وضع التركيز (Pomodoro): احجب المواقع المشتّتة أو اسمح فقط بما تحتاجه؛ جدولة الجلسات، والوضع الصارم، أو استراحة لعشر دقائق
-> • إنجازات للسلاسل المتتالية وجلسات التركيز وغيرها، تبقى على جهازك فقط
->
-> ■ اجعله على طريقتك
-> • الوسوم: جمّع المواقع بطريقتك (عمل، دراسة…) مع عرض الوقت حسب الوسم وميزانيات أسبوعية
-> • لوحة الأوامر (Ctrl/Cmd+K): انتقل إلى أي شاشة أو موقع، أو نفّذ إجراءً من لوحة المفاتيح
-> • تقارير HTML أسبوعية أو شهرية، تُحفظ في مجلد تختاره أو تُنزَّل عند الطلب
->
-> ■ النسخ الاحتياطي وبياناتك
-> • نسخ احتياطي إلى حساب Google أو إلى خادم HTTPS خاص بك أو إلى خادم WebDAV مع سجل إصدارات أو إلى مجلد على حاسوبك، بجدولة وتشفير AES-256 اختياري
-> • تحقّق من نسخة احتياطية دون استعادتها، وعاين قبل الاستعادة، واستعد نطاق تواريخ فقط أو الإعدادات فقط، وتلقَّ تحذيرًا عند توقف النسخ الاحتياطي
-> • استيراد من CSV (بما في ذلك ملفات بنمط RescueTime) وتصدير JSON أو CSV في أي وقت
->
-> ■ الخصوصية بالتصميم
-> • بلا حساب، وبلا تحليلات، وبلا شيفرة بعيدة، وبلا متتبّعات من أطراف ثالثة؛ تُنشأ أيقونات المواقع محليًا فلا يغادر جهازك أي نطاق تزوره
-> • تُحذف البيانات القديمة تلقائيًا بعد المدة التي تختارها
->
-> ■ للجميع
-> • ست لغات مع تبديل فوري: العبرية والإنجليزية والعربية والروسية والإسبانية والفرنسية (مع دعم الكتابة من اليمين إلى اليسار)
-> • سمتان فاتحة وداكنة، واختصارات لوحة المفاتيح، وإتاحة للوحة المفاتيح وقارئات الشاشة، وإعداد أولي قصير عند أول تشغيل
-
-
-**Русский**
-
-> TimeTrack показывает, куда на самом деле уходит ваше время — с упором на приватность и локальное хранение. Все данные остаются на вашем устройстве; ничто никуда не отправляется, пока вы сами не включите резервное копирование.
->
-> ■ УЧЁТ И АНАЛИТИКА
-> • Точный учёт активного времени: считается только время, когда окно в фокусе и вы не бездействуете (по желанию — и пока играет звук)
-> • Умные категории для сотен популярных сайтов на всех поддерживаемых языках, все редактируются; плюс оценка фокуса 0–100 с недельным трендом и лучшей неделей
-> • Тепловая карта «день недели × час», выводы простым языком (ночное использование, новые сайты, самый продуктивный час) и сравнение любых двух периодов
-> • Подробности по каждому сайту с дневной и почасовой шкалой и необязательным журналом визитов
-> • Вкладка «Сайты» для больших историй: поиск по всему, закрепление, объединение переименованного сайта, массовая категоризация, лимиты и исключение из учёта
->
-> ■ ЦЕЛИ И ФОКУС
-> • Дневные и недельные цели, лимиты на сайты, недельные бюджеты для категорий и ваших тегов, уведомления на 80% и 100%
-> • Режим фокуса (Pomodoro): блокируйте отвлекающие сайты или разрешайте только нужные; сессии по расписанию, строгий режим или 10-минутный пропуск
-> • Достижения за серии, сессии фокуса и не только — хранятся только на вашем устройстве
->
-> ■ НАСТРОЙТЕ ПОД СЕБЯ
-> • Теги: объединяйте сайты по-своему (Работа, Учёба…) с просмотром времени по тегам и недельными бюджетами
-> • Палитра команд (Ctrl/Cmd+K): переход на любой экран или сайт и запуск действий с клавиатуры
-> • Еженедельные или ежемесячные HTML-отчёты: в выбранную папку или скачиваются по запросу
->
-> ■ РЕЗЕРВНЫЕ КОПИИ И ВАШИ ДАННЫЕ
-> • Копии в аккаунт Google, на ваш HTTPS-сервер, на сервер WebDAV с историей версий или в папку на компьютере — по расписанию и с необязательным шифрованием AES-256
-> • Проверка копии без восстановления, предпросмотр перед восстановлением, восстановление только диапазона дат или только настроек и предупреждение, когда копии перестают создаваться
-> • Импорт из CSV (включая файлы в стиле RescueTime) и экспорт JSON или CSV в любой момент
->
-> ■ ПРИВАТНОСТЬ ПО УМОЛЧАНИЮ
-> • Без аккаунта, аналитики, удалённого кода и сторонних трекеров; значки сайтов создаются локально, поэтому ни один посещённый домен не покидает устройство
-> • Старые данные удаляются автоматически через выбранный вами срок
->
-> ■ ДЛЯ ВСЕХ
-> • Шесть языков с мгновенным переключением: иврит, английский, арабский, русский, испанский, французский (поддерживается письмо справа налево)
-> • Светлая и тёмная темы, горячие клавиши, доступность для клавиатуры и экранных дикторов и короткая первоначальная настройка
-
-
-**Español**
-
-> TimeTrack te muestra adónde va realmente tu tiempo, con la privacidad y el almacenamiento local por delante. Todo se queda en tu dispositivo; nada se envía a ningún sitio salvo que actives una copia de seguridad que tú controlas.
->
-> ■ SEGUIMIENTO Y ANÁLISIS
-> • Tiempo activo preciso: solo cuenta el tiempo con la ventana en primer plano y sin inactividad (opcionalmente también mientras suena audio)
-> • Categorías inteligentes para cientos de sitios populares en cada idioma admitido, todas editables, y una puntuación de enfoque de 0 a 100 con tendencia semanal y tu mejor semana
-> • Mapa de calor día × hora, ideas en lenguaje claro (uso nocturno, sitios nuevos, tu hora más productiva) y comparación de dos rangos de fechas cualesquiera
-> • Detalle por sitio con líneas de tiempo diarias y por hora, y un registro de visitas opcional
-> • Una pestaña de sitios pensada para historiales grandes: busca en todo, fija sitios, fusiona un sitio que cambió de nombre y categoriza, limita o deja de seguir varios a la vez
->
-> ■ OBJETIVOS Y ENFOQUE
-> • Objetivos diarios y semanales, límites por sitio y presupuestos semanales para categorías y para tus propias etiquetas, con avisos al 80 % y al 100 %
-> • Modo concentración (Pomodoro): bloquea sitios que distraen o permite solo lo que necesitas; sesiones programadas, modo estricto o una pausa de 10 minutos
-> • Logros por rachas, sesiones de enfoque y más, guardados solo en tu dispositivo
->
-> ■ A TU MANERA
-> • Etiquetas: agrupa sitios a tu modo (Trabajo, Estudios…) con vista de tiempo por etiqueta y presupuestos semanales
-> • Paleta de comandos (Ctrl/Cmd+K): salta a cualquier pantalla o sitio, o ejecuta una acción desde el teclado
-> • Informes HTML semanales o mensuales, guardados en la carpeta que elijas o descargados cuando quieras
->
-> ■ COPIAS DE SEGURIDAD Y TUS DATOS
-> • Copias a tu cuenta de Google, a tu propio servidor HTTPS, a un servidor WebDAV con historial de versiones o a una carpeta de tu equipo, programadas y con cifrado AES-256 opcional
-> • Verifica una copia sin restaurarla, previsualiza antes de restaurar, restaura solo un rango de fechas o solo los ajustes y recibe un aviso si las copias dejan de funcionar
-> • Importa desde CSV (incluidos archivos al estilo RescueTime) y exporta JSON o CSV cuando quieras
->
-> ■ PRIVADO POR DISEÑO
-> • Sin cuenta, sin analíticas, sin código remoto y sin rastreadores de terceros; los iconos de los sitios se generan en local, así que ningún dominio que visitas sale de tu dispositivo
-> • Los datos antiguos se borran automáticamente tras el plazo que elijas
->
-> ■ PARA TODOS
-> • Seis idiomas con cambio en vivo: hebreo, inglés, árabe, ruso, español y francés (con escritura de derecha a izquierda)
-> • Temas claro y oscuro, atajos de teclado, accesibilidad para teclado y lectores de pantalla y una breve configuración inicial
-
-
-**Français**
-
-> TimeTrack montre où va vraiment votre temps, en privilégiant la confidentialité et le stockage local. Tout reste sur votre appareil ; rien n'est envoyé nulle part sauf si vous activez une sauvegarde que vous contrôlez.
->
-> ■ SUIVI ET ANALYSES
-> • Temps actif précis : seul compte le temps où la fenêtre est au premier plan et où vous n'êtes pas inactif (en option, aussi pendant la lecture audio)
-> • Catégories intelligentes pour des centaines de sites populaires dans chaque langue prise en charge, toutes modifiables, avec un score de concentration de 0 à 100, sa tendance hebdomadaire et votre meilleure semaine
-> • Carte thermique jour × heure, analyses en langage clair (usage nocturne, nouveaux sites, votre heure la plus productive) et comparaison de deux plages de dates au choix
-> • Détail par site avec chronologies quotidienne et horaire, et un journal de visites facultatif
-> • Un onglet Sites conçu pour les gros historiques : recherche partout, épinglage, fusion d'un site renommé, et catégorisation, limite ou exclusion de plusieurs sites à la fois
->
-> ■ OBJECTIFS ET CONCENTRATION
-> • Objectifs quotidiens et hebdomadaires, limites par site et budgets hebdomadaires pour les catégories et pour vos propres tags, avec alertes à 80 % et 100 %
-> • Mode concentration (Pomodoro) : bloquez les sites distrayants ou n'autorisez que l'essentiel ; sessions planifiées, mode strict ou pause de 10 minutes
-> • Des réussites pour les séries, les sessions de concentration et plus, conservées uniquement sur votre appareil
->
-> ■ À VOTRE FAÇON
-> • Tags : regroupez les sites à votre manière (Travail, Études…) avec une vue du temps par tag et des budgets hebdomadaires
-> • Palette de commandes (Ctrl/Cmd+K) : accédez à n'importe quel écran ou site, ou lancez une action au clavier
-> • Rapports HTML hebdomadaires ou mensuels, enregistrés dans le dossier de votre choix ou téléchargés à la demande
->
-> ■ SAUVEGARDE ET VOS DONNÉES
-> • Sauvegardes vers votre compte Google, votre propre serveur HTTPS, un serveur WebDAV avec historique des versions ou un dossier de votre ordinateur, planifiées et avec chiffrement AES-256 facultatif
-> • Vérifiez une sauvegarde sans la restaurer, prévisualisez avant de restaurer, restaurez seulement une plage de dates ou les réglages, et soyez averti quand les sauvegardes cessent de fonctionner
-> • Import depuis CSV (y compris les fichiers de type RescueTime) et export JSON ou CSV à tout moment
->
-> ■ CONFIDENTIEL PAR CONCEPTION
-> • Pas de compte, pas d'analytique, pas de code distant, pas de traceurs tiers ; les icônes de sites sont générées localement, donc aucun domaine visité ne quitte votre appareil
-> • Les anciennes données sont supprimées automatiquement après la durée que vous choisissez
->
-> ■ POUR TOUS
-> • Six langues avec changement en direct : hébreu, anglais, arabe, russe, espagnol, français (écriture de droite à gauche prise en charge)
-> • Thèmes clair et sombre, raccourcis clavier, accessibilité au clavier et aux lecteurs d'écran, et une courte configuration au premier lancement
 
 ---
 
